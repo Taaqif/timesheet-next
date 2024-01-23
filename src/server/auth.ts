@@ -20,7 +20,8 @@ import { pgTable } from "./db/schema";
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      id: string;
+      sub: string;
+      accessToken: string;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
@@ -40,30 +41,36 @@ declare module "next-auth" {
 
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async jwt({ token, account, profile }) {
+      // Persist the OAuth access_token and or the user id to the token right after signin
+      if (account) {
+        token.accessToken = account.access_token;
+        token.id = profile?.sub;
+      }
+      return token;
+    },
+    session: ({ session, token }) => {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token?.sub,
+          accessToken: token?.accessToken,
+        },
+      };
+    },
   },
   adapter: DrizzleAdapter(db, pgTable) as Adapter,
+
+  session: {
+    strategy: "jwt",
+  },
   providers: [
     AzureADProvider({
       clientId: env.AZURE_AD_CLIENT_ID,
       clientSecret: env.AZURE_AD_CLIENT_SECRET,
       tenantId: env.AZURE_AD_TENANT_ID,
     }),
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
   ],
 };
 

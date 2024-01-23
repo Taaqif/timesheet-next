@@ -4,6 +4,7 @@ import {
   primaryKey,
   integer,
   pgTableCreator,
+  serial,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "@auth/core/adapters";
 
@@ -62,3 +63,11 @@ export const verificationTokens = pgTable(
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
   }),
 );
+
+export const timers = pgTable("timer", {
+  id: serial("id").primaryKey(),
+  startedAt: timestamp("startedAt").notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
