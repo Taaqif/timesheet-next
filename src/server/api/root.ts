@@ -1,7 +1,7 @@
 import { postRouter } from "~/server/api/routers/post";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { timerRouter } from "./routers/timer";
-import { outlookEventRouter } from "./routers/outlookEvent";
+import { outlookRouter } from "./routers/outlook";
 
 /**
  * This is the primary router for your server.
@@ -10,7 +10,7 @@ import { outlookEventRouter } from "./routers/outlookEvent";
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
-  outlookEvent: outlookEventRouter,
+  outlook: outlookRouter,
   timer: timerRouter,
 });
 

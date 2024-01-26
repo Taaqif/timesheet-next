@@ -34,9 +34,9 @@ const getGraphApiClient = (accessToken: string) => {
   return graph;
 };
 
-export const outlookEventRouter = createTRPCRouter({
+export const outlookRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    const client = getGraphApiClient(ctx.session.user.accessToken);
+    const client = getGraphApiClient(ctx.session.user.access_token);
 
     const me = await client.me.calendars();
     console.log(me);
