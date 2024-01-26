@@ -3,6 +3,7 @@ import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
+  type TokenSet,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import AzureADProvider from "next-auth/providers/azure-ad";
@@ -11,6 +12,7 @@ import { env } from "~/env";
 import { db } from "~/server/db";
 import { pgTable } from "./db/schema";
 
+type SessionError = "RefreshAccessTokenError" | "ExpiredToken";
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
  * object and keep type safety.
@@ -19,12 +21,21 @@ import { pgTable } from "./db/schema";
  */
 declare module "next-auth" {
   interface Session extends DefaultSession {
+    error?: SessionError;
     user: {
       sub: string;
-      accessToken: string;
+      access_token: string;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
+  }
+
+  interface Profile {
+    oid: string;
+  }
+
+  interface Account {
+    expires_at: number;
   }
 
   // interface User {
@@ -33,6 +44,16 @@ declare module "next-auth" {
   // }
 }
 
+declare module "next-auth/jwt" {
+  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+  interface JWT {
+    expires_at: number;
+    access_token: string;
+    refresh_token: string;
+    id: string;
+    error?: SessionError;
+  }
+}
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -42,20 +63,66 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account, profile }) {
+      console.log("token", token);
+      console.log("account", account);
+      console.log("profile", profile);
       // Persist the OAuth access_token and or the user id to the token right after signin
-      if (account) {
-        token.accessToken = account.access_token;
-        token.id = profile?.sub;
+      if (account && profile) {
+        return {
+          ...token,
+          access_token: account.access_token!,
+          refresh_token: account.refresh_token!,
+          expires_at: account.expires_at,
+          id: profile.oid,
+        };
+      } else if (Date.now() < token.expires_at * 1000) {
+        return token;
+      } else if (token.refresh_token) {
+        // If the access token has expired, try to refresh it
+        try {
+          const url = `https://login.microsoftonline.com/${env.AZURE_AD_TENANT_ID}/oauth2/v2.0/token`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              grant_type: "refresh_token",
+              client_secret: env.AZURE_AD_CLIENT_SECRET,
+              refresh_token: token.refresh_token,
+              client_id: env.AZURE_AD_CLIENT_ID,
+            }),
+          });
+          const tokens = (await response.json()) as TokenSet;
+          if (!response.ok) throw tokens;
+          return {
+            ...token,
+            access_token: tokens.access_token!,
+            expires_at: Date.now() + (tokens.expires_in as number) * 1000,
+            refresh_token: tokens.refresh_token! ?? token.refreshToken, // Fall backto old refresh token
+          };
+        } catch (error) {
+          console.error("Error refreshing access token", error);
+          return {
+            ...token,
+            error: "RefreshAccessTokenError" as const,
+          };
+        }
+      } else {
+        return {
+          ...token,
+          error: "ExpiredToken" as const,
+        };
       }
-      return token;
     },
     session: ({ session, token }) => {
       return {
         ...session,
+        error: token.error,
         user: {
           ...session.user,
           id: token?.sub,
-          accessToken: token?.accessToken,
+          access_token: token?.access_token,
         },
       };
     },
@@ -70,6 +137,11 @@ export const authOptions: NextAuthOptions = {
       clientId: env.AZURE_AD_CLIENT_ID,
       clientSecret: env.AZURE_AD_CLIENT_SECRET,
       tenantId: env.AZURE_AD_TENANT_ID,
+      authorization: {
+        params: {
+          scope: "openid profile email User.Read offline_access",
+        },
+      },
     }),
   ],
 };
