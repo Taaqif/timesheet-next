@@ -23,7 +23,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     error?: SessionError;
     user: {
-      sub: string;
+      id: string;
       access_token: string;
       // ...other properties
       // role: UserRole;
