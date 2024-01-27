@@ -49,10 +49,20 @@
   --border: 0 0% 14.9%;
   --input: 0 0% 14.9%;
   --ring: 0 0% 83.1%;
+
+  --fc-non-business-color: hsl(0 0% 84% / 11%);
 }
 .fc-timegrid-event,
 .fc-timegrid-more-link {
-  border-radius: 0;
+  border-radius: 6px;
+}
+.fc-highlight,
+.fc-timegrid-event {
+  min-height: 18px;
+}
+.fc-event-mirror {
+  background: transparent;
+  box-shadow: none !important;
 }
 * {
   @apply border-border;

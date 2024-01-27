@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction"; // for selectable
@@ -22,6 +22,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const [calendarBusinessHours, setBusinessHours] = useState<EventInput>();
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const calendarRef = useRef<FullCalendar>(null);
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
       start: startDate!,
@@ -31,6 +32,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
       enabled: !!startDate && !!endDate,
     },
   );
+  const { data: activeTimer } = api.timer.getActive.useQuery();
 
   useEffect(() => {
     setStartDate(dayjs().startOf("week").toDate());
@@ -39,7 +41,16 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
 
   useEffect(() => {
     setEvents();
-  }, [schedule]);
+  }, [schedule, activeTimer]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateTimerEvent();
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [activeTimer]);
 
   const setEvents = () => {
     let newEvents: EventInput[] = [];
@@ -60,7 +71,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
               extendedProps: {
                 type: "MEETING",
               },
-              backgroundColor: "#864142",
+              backgroundColor: "#e07a5f",
               start: `${scheduleItem.start.dateTime}Z`,
               end: `${scheduleItem.end.dateTime}Z`,
               title: scheduleItem.subject
@@ -72,12 +83,34 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         );
       });
     }
+    if (activeTimer) {
+      const now = new Date();
+      newEvents.push({
+        extendedProps: {
+          type: "TIMER",
+        },
+        id: "TIMER",
+        backgroundColor: "#f2cc8f",
+        textColor: "black",
+        start: activeTimer.startedAt,
+        end: now,
+      });
+    }
     setCalendarEvents(newEvents);
+  };
+
+  const updateTimerEvent = () => {
+    const calendarApi = calendarRef.current!.getApi();
+    const timerEvent = calendarApi.getEventById("TIMER");
+    if (timerEvent) {
+      timerEvent.moveEnd("00:00:01");
+    }
   };
 
   return (
     <div className="h-full p-4">
       <FullCalendar
+        ref={calendarRef}
         events={calendarEvents}
         businessHours={calendarBusinessHours}
         slotDuration="00:15"

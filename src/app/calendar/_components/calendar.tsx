@@ -13,9 +13,9 @@ import { Nav } from "./nav";
 import { File, Inbox, Search, Timer } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Progress } from "~/components/ui/progress";
 import { TimesheetProgress } from "./timesheet-progress";
 import { CalendarDisplay } from "./calendar-display";
+import { api } from "~/trpc/react";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -27,6 +27,12 @@ export function Calendar({
 }: CalendarProps) {
   const navCollapsedSize = 4;
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const utils = api.useUtils();
+  const startTimer = api.timer.start.useMutation({
+    async onSuccess() {
+      await utils.timer.invalidate();
+    },
+  });
   return (
     <div className="h-svh">
       <TooltipProvider delayDuration={0}>
@@ -111,14 +117,19 @@ export function Calendar({
                 </TabsList>
               </div>
               <Separator />
-              <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="bg-background/95 p-4 backdrop-blur @container supports-[backdrop-filter]:bg-background/60">
                 <form>
                   <div className="relative">
                     <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Task" className="pl-8" />
                   </div>
-                  <div className="mt-4 flex justify-end gap-4">
-                    <Button>
+                  <div className="mt-4 flex flex-col justify-end gap-4 @md:flex-row">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        startTimer.mutate();
+                      }}
+                    >
                       <Timer className="mr-1 h-4 w-4" />
                       Start timer
                     </Button>
