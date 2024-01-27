@@ -18,6 +18,13 @@ export const users = pgTable("user", {
   image: text("image"),
 });
 
+export const userProfiles = pgTable("userProfile", {
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  timezone: text("timezone").notNull().default("Etc/GMT"),
+});
+
 export const accounts = pgTable(
   "account",
   {

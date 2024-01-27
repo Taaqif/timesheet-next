@@ -38,10 +38,10 @@ export interface TimeZoneClass {
 }
 
 export interface IGetScheduleRequest {
-  Schedules: string[];
-  StartTime: ScheduleItemDate;
-  EndTime: ScheduleItemDate;
-  availabilityViewInterval: string;
+  schedules: string[];
+  startTime: ScheduleItemDate;
+  endTime: ScheduleItemDate;
+  availabilityViewInterval?: number;
 }
 
 declare module "@pnp/graph/calendars/types" {

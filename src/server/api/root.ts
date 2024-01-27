@@ -1,4 +1,3 @@
-import { postRouter } from "~/server/api/routers/post";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { timerRouter } from "./routers/timer";
 import { outlookRouter } from "./routers/outlook";
@@ -9,7 +8,6 @@ import { outlookRouter } from "./routers/outlook";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  post: postRouter,
   outlook: outlookRouter,
   timer: timerRouter,
 });

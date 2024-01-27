@@ -11,11 +11,11 @@ import { TooltipProvider } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { Nav } from "./nav";
 import { File, Inbox, Search, Timer } from "lucide-react";
-import { TimelineDisplay } from "./timeline-display";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Progress } from "~/components/ui/progress";
 import { TimesheetProgress } from "./timesheet-progress";
+import { CalendarDisplay } from "./calendar-display";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -146,7 +146,7 @@ export function Calendar({
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={defaultLayout[2]}>
-            <TimelineDisplay />
+            <CalendarDisplay />
             {/* <MailDisplay */}
             {/*   mail={mails.find((item) => item.id === mail.selected) || null} */}
             {/* /> */}

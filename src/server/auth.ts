@@ -10,7 +10,8 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 
 import { env } from "~/env";
 import { db } from "~/server/db";
-import { pgTable } from "./db/schema";
+import { pgTable, userProfiles } from "./db/schema";
+import { eq } from "drizzle-orm";
 
 type SessionError = "RefreshAccessTokenError" | "ExpiredToken";
 /**
@@ -24,6 +25,7 @@ declare module "next-auth" {
     error?: SessionError;
     user: {
       id: string;
+      email: string;
       access_token: string;
       // ...other properties
       // role: UserRole;
@@ -63,9 +65,6 @@ declare module "next-auth/jwt" {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account, profile }) {
-      console.log("token", token);
-      console.log("account", account);
-      console.log("profile", profile);
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (account && profile) {
         return {
@@ -127,6 +126,21 @@ export const authOptions: NextAuthOptions = {
       };
     },
   },
+
+  events: {
+    signIn: async ({ user }) => {
+      //creare a user profile
+      const existingProfile = await db.query.userProfiles.findFirst({
+        where: eq(userProfiles.userId, user.id),
+      });
+      if (!existingProfile) {
+        await db.insert(userProfiles).values({
+          userId: user.id,
+        });
+      }
+    },
+  },
+
   adapter: DrizzleAdapter(db, pgTable) as Adapter,
 
   session: {

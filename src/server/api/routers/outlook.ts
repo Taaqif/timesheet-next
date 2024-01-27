@@ -35,11 +35,22 @@ const getGraphApiClient = (accessToken: string) => {
 };
 
 export const outlookRouter = createTRPCRouter({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    const client = getGraphApiClient(ctx.session.user.access_token);
+  getMySchedule: protectedProcedure
+    .input(z.object({ start: z.date(), end: z.date() }))
+    .query(async ({ ctx, input }) => {
+      const client = getGraphApiClient(ctx.session.user.access_token);
 
-    const me = await client.me.calendars();
-    console.log(me);
-    return me;
-  }),
+      const schedule = await client.me.calendar.getSchedule({
+        schedules: [ctx.session.user.email],
+        startTime: {
+          dateTime: input.start.toISOString(),
+          timeZone: "Etc/GMT",
+        },
+        endTime: {
+          dateTime: input.end.toISOString(),
+          timeZone: "Etc/GMT",
+        },
+      });
+      return schedule;
+    }),
 });
