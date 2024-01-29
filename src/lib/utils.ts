@@ -1,6 +1,13 @@
 import { type ClassValue, clsx } from "clsx";
 import dayjs from "dayjs";
+import { type InferSelectModel } from "drizzle-orm";
 import { twMerge } from "tailwind-merge";
+import {
+  type tasks as tasksSchema,
+  type timers as timersSchema,
+} from "~/server/db/schema";
+import { CalendarScheduleItemType, ScheduleItem } from "./pnp/getSchedule";
+import { EventInput } from "@fullcalendar/core/index.js";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,4 +61,92 @@ export const getHoursMinutesTextFromMinutes = (
       (minutes > 0 ? `${minutes} minutes` : "")
     );
   }
+};
+
+const weekMap: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+export const getCalendarEvents = ({
+  timer,
+  tasks,
+  schedule,
+}: {
+  timer?: InferSelectModel<typeof timersSchema> | null;
+  tasks?: InferSelectModel<typeof tasksSchema>[] | null;
+  schedule?: CalendarScheduleItemType[] | null;
+}) => {
+  let newEvents: EventInput[] = [];
+  let businessHours: EventInput | null = null;
+  if (schedule) {
+    schedule.forEach((schedule) => {
+      const daysOfWeek = schedule.workingHours.daysOfWeek.map(
+        (day) => weekMap[day],
+      );
+      businessHours = {
+        daysOfWeek,
+        startTime: schedule.workingHours.startTime,
+        endTime: schedule.workingHours.endTime,
+      };
+      newEvents = newEvents.concat(
+        schedule.scheduleItems.map((scheduleItem) => {
+          const mappedEvent: EventInput = {
+            extendedProps: {
+              type: "MEETING",
+            },
+            backgroundColor: "#e07a5f",
+            start: `${scheduleItem.start.dateTime}Z`,
+            end: `${scheduleItem.end.dateTime}Z`,
+            title: scheduleItem.subject
+              ? scheduleItem.subject
+              : scheduleItem.status,
+          };
+          return mappedEvent;
+        }),
+      );
+    });
+  }
+  if (tasks) {
+    newEvents = newEvents.concat(
+      tasks.map((task) => {
+        const mappedEvent: EventInput = {
+          start: task.start,
+          end: task.end ?? undefined,
+          backgroundColor: "#006d77",
+          title: task.title ?? "",
+          id: `TASK_${task.id}`,
+          extendedProps: {
+            type: "TASK",
+            description: task.description,
+          },
+        };
+        return mappedEvent;
+      }),
+    );
+  }
+  if (timer) {
+    const now = new Date();
+    newEvents.push({
+      extendedProps: {
+        type: "TIMER",
+      },
+      id: "TIMER",
+      backgroundColor: "#f2cc8f",
+      textColor: "black",
+      start: timer.startedAt,
+      end: now,
+    });
+  }
+
+  newEvents = newEvents.sort((a, b) => a.start! - b.start!);
+
+  return {
+    newEvents,
+    businessHours,
+  };
 };

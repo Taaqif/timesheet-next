@@ -5,7 +5,7 @@ import interactionPlugin from "@fullcalendar/interaction"; // for selectable
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import { type EventInput } from "@fullcalendar/core";
-import { getHoursMinutesTextFromDates } from "~/lib/utils";
+import { getCalendarEvents, getHoursMinutesTextFromDates } from "~/lib/utils";
 import {
   HoverCard,
   HoverCardContent,
@@ -54,7 +54,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     setStartDate(dayjs().startOf("week").toDate());
     setEndDate(dayjs().endOf("week").toDate());
     const calendarApi = calendarRef?.current?.getApi();
-    calendarApi?.scrollToTime(dayjs().add(-3, "hours").format("HH:mm:ss"));
+    calendarApi?.scrollToTime(dayjs().add(-2, "hours").format("HH:mm:ss"));
   }, []);
 
   useEffect(() => {
@@ -71,66 +71,13 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   }, [activeTimer]);
 
   const setEvents = () => {
-    let newEvents: EventInput[] = [];
-    if (schedule) {
-      schedule.forEach((schedule) => {
-        const daysOfWeek = schedule.workingHours.daysOfWeek.map(
-          (day) => weekMap[day],
-        );
-        const businessHours = {
-          daysOfWeek,
-          startTime: schedule.workingHours.startTime,
-          endTime: schedule.workingHours.endTime,
-        };
-        setBusinessHours(businessHours);
-        newEvents = newEvents.concat(
-          schedule.scheduleItems.map((scheduleItem) => {
-            const mappedEvent: EventInput = {
-              extendedProps: {
-                type: "MEETING",
-              },
-              backgroundColor: "#e07a5f",
-              start: `${scheduleItem.start.dateTime}Z`,
-              end: `${scheduleItem.end.dateTime}Z`,
-              title: scheduleItem.subject
-                ? scheduleItem.subject
-                : scheduleItem.status,
-            };
-            return mappedEvent;
-          }),
-        );
-      });
-    }
-    if (personalTasks) {
-      newEvents = newEvents.concat(
-        personalTasks.map((task) => {
-          const mappedEvent: EventInput = {
-            start: task.start,
-            end: task.end ?? undefined,
-            backgroundColor: "#006d77",
-            title: task.title ?? "",
-            id: `TASK_${task.id}`,
-            extendedProps: {
-              type: "TASK",
-              description: task.description,
-            },
-          };
-          return mappedEvent;
-        }),
-      );
-    }
-    if (activeTimer) {
-      const now = new Date();
-      newEvents.push({
-        extendedProps: {
-          type: "TIMER",
-        },
-        id: "TIMER",
-        backgroundColor: "#f2cc8f",
-        textColor: "black",
-        start: activeTimer.startedAt,
-        end: now,
-      });
+    const { newEvents, businessHours } = getCalendarEvents({
+      timer: activeTimer,
+      tasks: personalTasks,
+      schedule,
+    });
+    if (businessHours) {
+      setBusinessHours(businessHours);
     }
     setCalendarEvents(newEvents);
   };
