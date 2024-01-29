@@ -12,16 +12,8 @@ import {
   HoverCardTrigger,
   HoverCardPortal,
 } from "~/components/ui/hover-card";
-
-const weekMap: Record<string, number> = {
-  sunday: 0,
-  monday: 1,
-  tuesday: 2,
-  wednesday: 3,
-  thursday: 4,
-  friday: 5,
-  saturday: 6,
-};
+import { useCalendarStore } from "~/app/_store";
+import { Input } from "~/components/ui/input";
 
 export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
@@ -30,6 +22,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const calendarRef = useRef<FullCalendar>(null);
+  const selectedDate = useCalendarStore((s) => s.selectedDate);
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
       start: startDate!,
@@ -51,11 +44,11 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   );
 
   useEffect(() => {
-    setStartDate(dayjs().startOf("week").toDate());
-    setEndDate(dayjs().endOf("week").toDate());
+    setStartDate(dayjs(selectedDate).startOf("week").toDate());
+    setEndDate(dayjs(selectedDate).endOf("week").toDate());
     const calendarApi = calendarRef?.current?.getApi();
     calendarApi?.scrollToTime(dayjs().add(-2, "hours").format("HH:mm:ss"));
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => {
     setEvents();
@@ -100,7 +93,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         snapDuration="00:01"
         eventContent={(arg) => {
           return (
-            <HoverCard>
+            <HoverCard openDelay={500}>
               <HoverCardTrigger asChild>
                 <div className="fc-event-main-frame">
                   {!!arg.timeText && (
@@ -143,6 +136,9 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
                     )}
                     <div className="">
                       <div className="">{arg.event.title || <>&nbsp;</>}</div>
+                      <div>
+                        <Input />
+                      </div>
                     </div>
                   </div>
                 </HoverCardContent>

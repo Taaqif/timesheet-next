@@ -6,25 +6,25 @@ import {
   type tasks as tasksSchema,
   type timers as timersSchema,
 } from "~/server/db/schema";
-import { CalendarScheduleItemType, ScheduleItem } from "./pnp/getSchedule";
-import { EventInput } from "@fullcalendar/core/index.js";
+import { type CalendarScheduleItemType } from "./pnp/getSchedule";
+import { type DateInput, type EventInput } from "@fullcalendar/core/index.js";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export const getHoursMinutesTextFromDates = (
-  start: Date | string,
-  end: Date | string,
+  start: Date | string | DateInput,
+  end: Date | string | DateInput,
   condensed = false,
 ) => {
   try {
-    const ds = dayjs(end);
-    const minsTotal = ds.diff(start, "minute");
+    const ds = dayjs(end as unknown as Date);
+    const minsTotal = ds.diff(start as unknown as Date, "minute");
     if (minsTotal > 0) {
       return getHoursMinutesTextFromMinutes(minsTotal, condensed);
     } else {
-      const secTotal = ds.diff(start, "second");
+      const secTotal = ds.diff(start as unknown as Date, "second");
       return getSecondsTextFromSeconds(secTotal, condensed);
     }
   } catch (error) {
@@ -143,7 +143,13 @@ export const getCalendarEvents = ({
     });
   }
 
-  newEvents = newEvents.sort((a, b) => a.start! - b.start!);
+  newEvents = newEvents.sort((a, b) =>
+    dayjs(a.start! as unknown as Date).isAfter(
+      dayjs(b.start! as unknown as Date),
+    )
+      ? 1
+      : -1,
+  );
 
   return {
     newEvents,

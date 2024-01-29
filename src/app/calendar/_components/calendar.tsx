@@ -169,7 +169,7 @@ export function Calendar({
                   <TimesheetProgress />
                 </div>
               </div>
-              <div className="flex min-h-0 flex-grow">
+              <div className="mr-2 flex min-h-0 flex-grow">
                 <TaskListDisplay />
               </div>
             </div>
