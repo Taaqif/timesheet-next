@@ -5,6 +5,13 @@ import interactionPlugin from "@fullcalendar/interaction"; // for selectable
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import { type EventInput } from "@fullcalendar/core";
+import { getHoursMinutesTextFromDates } from "~/lib/utils";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+  HoverCardPortal,
+} from "~/components/ui/hover-card";
 
 const weekMap: Record<string, number> = {
   sunday: 0,
@@ -33,15 +40,26 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     },
   );
   const { data: activeTimer } = api.timer.getActive.useQuery();
+  const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
+    {
+      start: startDate!,
+      end: endDate!,
+    },
+    {
+      enabled: !!startDate && !!endDate,
+    },
+  );
 
   useEffect(() => {
     setStartDate(dayjs().startOf("week").toDate());
     setEndDate(dayjs().endOf("week").toDate());
+    const calendarApi = calendarRef?.current?.getApi();
+    calendarApi?.scrollToTime(dayjs().add(-3, "hours").format("HH:mm:ss"));
   }, []);
 
   useEffect(() => {
     setEvents();
-  }, [schedule, activeTimer]);
+  }, [schedule, activeTimer, personalTasks]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -83,6 +101,24 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         );
       });
     }
+    if (personalTasks) {
+      newEvents = newEvents.concat(
+        personalTasks.map((task) => {
+          const mappedEvent: EventInput = {
+            start: task.start,
+            end: task.end ?? undefined,
+            backgroundColor: "#006d77",
+            title: task.title ?? "",
+            id: `TASK_${task.id}`,
+            extendedProps: {
+              type: "TASK",
+              description: task.description,
+            },
+          };
+          return mappedEvent;
+        }),
+      );
+    }
     if (activeTimer) {
       const now = new Date();
       newEvents.push({
@@ -115,6 +151,58 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         businessHours={calendarBusinessHours}
         slotDuration="00:15"
         snapDuration="00:01"
+        eventContent={(arg) => {
+          return (
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="fc-event-main-frame">
+                  {!!arg.timeText && (
+                    <div className="fc-event-time">
+                      <span className="mr-1">{arg.timeText}</span>
+                      <span>
+                        (
+                        {getHoursMinutesTextFromDates(
+                          arg.event.start!,
+                          arg.event.end!,
+                          true,
+                        )}
+                        )
+                      </span>
+                    </div>
+                  )}
+                  <div className="fc-event-title-container">
+                    <div className="fc-event-title fc-sticky">
+                      {arg.event.title || <>&nbsp;</>}
+                    </div>
+                  </div>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardPortal>
+                <HoverCardContent align="start" side="left" sideOffset={10}>
+                  <div>
+                    {!!arg.timeText && (
+                      <div className="">
+                        <span className="mr-1">{arg.timeText}</span>
+                        <span>
+                          (
+                          {getHoursMinutesTextFromDates(
+                            arg.event.start!,
+                            arg.event.end!,
+                            true,
+                          )}
+                          )
+                        </span>
+                      </div>
+                    )}
+                    <div className="">
+                      <div className="">{arg.event.title || <>&nbsp;</>}</div>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCardPortal>
+            </HoverCard>
+          );
+        }}
         plugins={[interactionPlugin, timeGridPlugin]}
         initialView="timeGridDay"
         height={"100%"}

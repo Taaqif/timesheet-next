@@ -81,3 +81,14 @@ export const timers = pgTable("timer", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 });
+
+export const tasks = pgTable("task", {
+  id: serial("id").primaryKey(),
+  start: timestamp("start").notNull(),
+  end: timestamp("end"),
+  title: text("text"),
+  description: text("description"),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});

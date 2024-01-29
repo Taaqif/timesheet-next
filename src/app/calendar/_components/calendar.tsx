@@ -28,7 +28,20 @@ export function Calendar({
   const navCollapsedSize = 4;
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const utils = api.useUtils();
+  const { data: activeTimer } = api.timer.getActive.useQuery();
+  const createTask = api.task.createPersonalTask.useMutation({
+    async onSuccess() {
+      await utils.task.getPersonalTasks.invalidate();
+    },
+  });
+  const updateTask = api.task.updatePersonalTask.useMutation();
+  const deleteTask = api.task.deletePersonalTask.useMutation();
   const startTimer = api.timer.start.useMutation({
+    async onSuccess() {
+      await utils.timer.invalidate();
+    },
+  });
+  const stopTimer = api.timer.stop.useMutation({
     async onSuccess() {
       await utils.timer.invalidate();
     },
@@ -126,20 +139,41 @@ export function Calendar({
                   <div className="mt-4 flex flex-col justify-end gap-4 @md:flex-row">
                     <Button
                       type="button"
-                      onClick={() => {
-                        startTimer.mutate();
+                      onClick={async () => {
+                        if (activeTimer) {
+                          createTask.mutate({
+                            task: {
+                              start: activeTimer.startedAt,
+                              end: new Date(),
+                            },
+                          });
+                        }
+                        startTimer.mutate({
+                          id: activeTimer?.id,
+                        });
                       }}
                     >
                       <Timer className="mr-1 h-4 w-4" />
-                      Start timer
+                      Start Task
                     </Button>
-                    <Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (activeTimer) {
+                          createTask.mutate({
+                            task: {
+                              start: activeTimer.startedAt,
+                              end: new Date(),
+                            },
+                          });
+                          stopTimer.mutate({
+                            id: activeTimer?.id,
+                          });
+                        }
+                      }}
+                    >
                       <Timer className="mr-1 h-4 w-4" />
-                      New Task
-                    </Button>
-                    <Button>
-                      <Timer className="mr-1 h-4 w-4" />
-                      Stop Timer
+                      Stop Task
                     </Button>
                   </div>
                 </form>

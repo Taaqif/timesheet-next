@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "~/server/api/trpc";
 import { timerRouter } from "./routers/timer";
 import { outlookRouter } from "./routers/outlook";
+import { taskRouter } from "./routers/task";
 
 /**
  * This is the primary router for your server.
@@ -10,6 +11,7 @@ import { outlookRouter } from "./routers/outlook";
 export const appRouter = createTRPCRouter({
   outlook: outlookRouter,
   timer: timerRouter,
+  task: taskRouter,
 });
 
 // export type definition of API
