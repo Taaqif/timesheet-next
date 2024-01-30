@@ -8,6 +8,7 @@ import {
 } from "~/server/db/schema";
 import { type CalendarScheduleItemType } from "./pnp/getSchedule";
 import { type DateInput, type EventInput } from "@fullcalendar/core/index.js";
+import { InferResultType } from "~/server/db";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -72,13 +73,18 @@ const weekMap: Record<string, number> = {
   friday: 5,
   saturday: 6,
 };
+export type TimerSelectSchema = InferSelectModel<typeof timersSchema>;
+export type TasksWithTeamworkTaskSelectSchema = InferResultType<
+  "tasks",
+  { teamworkTask: true }
+>;
 export const getCalendarEvents = ({
   timer,
   tasks,
   schedule,
 }: {
-  timer?: InferSelectModel<typeof timersSchema> | null;
-  tasks?: InferSelectModel<typeof tasksSchema>[] | null;
+  timer?: TimerSelectSchema | null;
+  tasks?: TasksWithTeamworkTaskSelectSchema[] | null;
   schedule?: CalendarScheduleItemType[] | null;
 }) => {
   let newEvents: EventInput[] = [];
@@ -123,6 +129,7 @@ export const getCalendarEvents = ({
           extendedProps: {
             type: "TASK",
             description: task.description,
+            task: task,
           },
         };
         return mappedEvent;

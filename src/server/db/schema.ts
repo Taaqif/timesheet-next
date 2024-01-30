@@ -8,6 +8,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "@auth/core/adapters";
+import { relations } from "drizzle-orm";
 
 export const pgTable = pgTableCreator((name) => `timesheet-next_${name}`);
 
@@ -91,4 +92,20 @@ export const tasks = pgTable("task", {
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  teamworkTask: one(teamworkTasks, {
+    fields: [tasks.id],
+    references: [teamworkTasks.taskId],
+  }),
+}));
+
+export const teamworkTasks = pgTable("teamworkTask", {
+  taskId: integer("taskId")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  teamworkProjectId: text("teamworkProjectId"),
+  teamworkTaskId: text("teamworkTaskId"),
+  teamworkTimeEntryId: text("teamworkLogTimeId"),
 });

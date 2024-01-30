@@ -10,10 +10,7 @@ export const env = createEnv({
     POSTGRES_URL: z
       .string()
       .url()
-      .refine(
-        (str) => !str.includes("YOUR_POSTGRES_URL"),
-        "You forgot to change the default URL",
-      ),
+      .refine((str) => !!str, "You forgot to change the default URL"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -32,6 +29,12 @@ export const env = createEnv({
       .string()
       .refine((str) => !!str, "You forgot to add a value"),
     AZURE_AD_TENANT_ID: z
+      .string()
+      .refine((str) => !!str, "You forgot to add a value"),
+    TEAMWORK_BASE_URL: z
+      .string()
+      .refine((str) => !!str, "You forgot to add a value"),
+    TEAMWORK_API_KEY: z
       .string()
       .refine((str) => !!str, "You forgot to add a value"),
   },
@@ -57,6 +60,8 @@ export const env = createEnv({
     AZURE_AD_TENANT_ID: process.env.AZURE_AD_TENANT_ID,
     AZURE_AD_CLIENT_SECRET: process.env.AZURE_AD_CLIENT_SECRET,
     AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID,
+    TEAMWORK_BASE_URL: process.env.TEAMWORK_BASE_URL,
+    TEAMWORK_API_KEY: process.env.TEAMWORK_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

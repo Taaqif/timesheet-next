@@ -10,6 +10,7 @@ import { type TimelinePipe } from "@pnp/core";
 import "@pnp/graph/users";
 import "@pnp/graph/calendars";
 import "~/lib/pnp/getSchedule";
+import dayjs from "dayjs";
 export function AccessToken(accessToken: string): TimelinePipe<Queryable> {
   return (instance: Queryable) => {
     instance.on.auth.replace(async function (url: URL, init: RequestInit) {
@@ -36,18 +37,20 @@ const getGraphApiClient = (accessToken: string) => {
 
 export const outlookRouter = createTRPCRouter({
   getMySchedule: protectedProcedure
-    .input(z.object({ start: z.date(), end: z.date() }))
+    .input(z.object({ weekOf: z.date() }))
     .query(async ({ ctx, input }) => {
       const client = getGraphApiClient(ctx.session.user.access_token);
+      const start = dayjs(input.weekOf).startOf("week").toDate();
+      const end = dayjs(input.weekOf).endOf("week").toDate();
 
       const schedule = await client.me.calendar.getSchedule({
         schedules: [ctx.session.user.email],
         startTime: {
-          dateTime: input.start.toISOString(),
+          dateTime: start.toISOString(),
           timeZone: "Etc/GMT",
         },
         endTime: {
-          dateTime: input.end.toISOString(),
+          dateTime: end.toISOString(),
           timeZone: "Etc/GMT",
         },
       });

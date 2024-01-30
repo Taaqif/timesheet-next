@@ -19,33 +19,27 @@ export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [calendarBusinessHours, setBusinessHours] = useState<EventInput>();
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
   const calendarRef = useRef<FullCalendar>(null);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
-      start: startDate!,
-      end: endDate!,
+      weekOf: selectedDate,
     },
     {
-      enabled: !!startDate && !!endDate,
+      enabled: !!selectedDate,
     },
   );
   const { data: activeTimer } = api.timer.getActive.useQuery();
   const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
     {
-      start: startDate!,
-      end: endDate!,
+      weekOf: selectedDate,
     },
     {
-      enabled: !!startDate && !!endDate,
+      enabled: !!selectedDate,
     },
   );
 
   useEffect(() => {
-    setStartDate(dayjs(selectedDate).startOf("week").toDate());
-    setEndDate(dayjs(selectedDate).endOf("week").toDate());
     const calendarApi = calendarRef?.current?.getApi();
     calendarApi?.scrollToTime(dayjs().add(-2, "hours").format("HH:mm:ss"));
   }, [selectedDate]);

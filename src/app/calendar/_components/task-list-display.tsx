@@ -3,43 +3,44 @@ import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import { formatRange, type EventInput } from "@fullcalendar/core";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { getCalendarEvents, getHoursMinutesTextFromDates } from "~/lib/utils";
+import {
+  TasksWithTeamworkTaskSelectSchema,
+  getCalendarEvents,
+  getHoursMinutesTextFromDates,
+} from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
+import { TeamworkProjectsSelect } from "./teamwork-projects-select";
+import { TaskListItem } from "./task-list-item";
 
 export type TaskListDisplayProps = {};
 export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
-      start: startDate!,
-      end: endDate!,
+      weekOf: selectedDate,
     },
     {
-      enabled: !!startDate && !!endDate,
+      enabled: !!selectedDate,
     },
   );
   const { data: activeTimer } = api.timer.getActive.useQuery();
+  const updateTask = api.task.updatePersonalTask.useMutation();
+  const deleteTask = api.task.deletePersonalTask.useMutation();
   const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
     {
-      start: startDate!,
-      end: endDate!,
+      weekOf: selectedDate,
     },
     {
-      enabled: !!startDate && !!endDate,
+      enabled: !!selectedDate,
     },
   );
 
-  useEffect(() => {
-    setStartDate(dayjs(selectedDate).startOf("week").toDate());
-    setEndDate(dayjs(selectedDate).endOf("week").toDate());
-  }, [selectedDate]);
+  useEffect(() => {}, [selectedDate]);
 
   useEffect(() => {
     setEvents();
@@ -74,53 +75,9 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   return (
     <ScrollArea className="w-full">
       <div className="flex flex-col gap-4 p-4 ">
-        {calendarEvents.map((event, index) => {
-          const time = formatRange(event.start!, event.end!, {
-            hour: "numeric",
-            minute: "numeric",
-          });
-          return (
-            <div
-              key={index}
-              className="flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all"
-            >
-              <div className="text-sm text-muted-foreground">
-                <span className="mr-1">{time}</span>
-                <span>
-                  (
-                  {getHoursMinutesTextFromDates(event.start!, event.end!, true)}
-                  )
-                </span>
-              </div>
-              <div>{event.title}</div>
-              <div className="grid w-full grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor={`project_${index}`}>Project</Label>
-                  <Input
-                    id={`project_${index}`}
-                    placeholder="Select a project..."
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor={`task_${index}`}>Task</Label>
-                  <Input id={`task_${index}`} placeholder="Select a task..." />
-                </div>
-                <div className="col-span-2 grid gap-2">
-                  <Label htmlFor={`description_${index}`}>Description</Label>
-                  <Textarea
-                    id={`description_${index}`}
-                    placeholder="Add some notes..."
-                  />
-                </div>
-                <div className="col-span-2 flex justify-end">
-                  <Button size="sm" variant="outline">
-                    Save
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {calendarEvents.map((event, index) => (
+          <TaskListItem key={`event_${index}`} event={event} />
+        ))}
       </div>
     </ScrollArea>
   );
