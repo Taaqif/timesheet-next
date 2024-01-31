@@ -124,12 +124,12 @@ export const getCalendarEvents = ({
         const mappedEvent: EventInput = {
           start: task.start,
           end: task.end ?? undefined,
+          editable: true,
           backgroundColor: "#006d77",
           title: task.title ?? "",
           id: `TASK_${task.id}`,
           extendedProps: {
             type: "TASK",
-            description: task.description,
             task: task,
           },
         };

@@ -18,12 +18,16 @@ import { Button } from "~/components/ui/button";
 import { TeamworkProjectsSelect } from "./teamwork-projects-select";
 import { TeamworkTaskSelect } from "./teamwork-task-select";
 import { TeamworkProject, TeamworkTask } from "~/server/api/routers/teamwork";
+import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
+import dayjs from "dayjs";
 
 export type TaskListItemProps = { event: EventInput };
 export const TaskListItem = ({ event }: TaskListItemProps) => {
   const task = event.extendedProps?.task as
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
+  const [time, setTime] = useState<string>("");
+  const [endDate, setEndDate] = useState<Date>(event.end as Date);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
     task?.teamworkTask?.teamworkProjectId ?? "",
   );
@@ -36,7 +40,6 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   );
   const [description, setDescription] = useState("");
 
-  const utils = api.useUtils();
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
     api.teamwork.getAllProjects.useQuery();
   const { data: selectedTeamworkTask, isLoading: teamworkTaskLoading } =
@@ -48,18 +51,8 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
         enabled: !!selectedTeamworkTaskId,
       },
     );
-  const updateTask = api.task.updatePersonalTask.useMutation({
-    async onSuccess() {
-      await utils.task.getPersonalTasks.invalidate();
-      await utils.task.getActiveTask.invalidate();
-    },
-  });
-  const deleteTask = api.task.deletePersonalTask.useMutation({
-    async onSuccess() {
-      await utils.task.getPersonalTasks.invalidate();
-      await utils.task.getActiveTask.invalidate();
-    },
-  });
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   const selectedProject = useMemo(
     () => teamworkProjects?.find((project) => project.id === selectedProjectId),
     [selectedProjectId, teamworkProjects],
@@ -90,15 +83,36 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
       });
     }
   };
-
-  const time = useMemo(
-    () =>
-      formatRange(event.start!, event.end!, {
+  useEffect(() => {
+    if (event.extendedProps?.type === "TIMER") {
+      setEndDate(new Date());
+      const interval = setInterval(() => {
+        updateTimerEvent();
+      }, 1000);
+      return () => {
+        clearInterval(interval);
+      };
+    } else {
+      setEndDate(event.end as Date);
+      setTime(
+        formatRange(event.start!, event.end!, {
+          hour: "numeric",
+          minute: "numeric",
+        }),
+      );
+    }
+  }, [event]);
+  const updateTimerEvent = () => {
+    const plusOneSecond = dayjs(endDate).add(1, "second").toDate();
+    setEndDate(plusOneSecond);
+    setTime(
+      formatRange(event.start!, plusOneSecond, {
         hour: "numeric",
         minute: "numeric",
       }),
-    [event.start, event.end],
-  );
+    );
+  };
+
   useEffect(() => {
     setSelectedProjectId(task?.teamworkTask?.teamworkProjectId ?? "");
     setSelectedTeamworkTaskId(task?.teamworkTask?.teamworkTaskId ?? "");
@@ -139,7 +153,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
       <div className="text-sm text-muted-foreground">
         <span className="mr-1">{time}</span>
         <span>
-          ({getHoursMinutesTextFromDates(event.start!, event.end!, true)})
+          ({getHoursMinutesTextFromDates(event.start!, endDate, true)})
         </span>
       </div>
       <div>{event.title}</div>

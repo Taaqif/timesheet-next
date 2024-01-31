@@ -18,6 +18,11 @@ import { CalendarDisplay } from "./calendar-display";
 import { api } from "~/trpc/react";
 import { TaskListDisplay } from "./task-list-display";
 import { update } from "lodash";
+import {
+  useCreateTask,
+  useDeleteTask,
+  useUpdateTask,
+} from "~/lib/hooks/use-task-api";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -31,29 +36,9 @@ export function Calendar({
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const createTask = api.task.createPersonalTask.useMutation({
-    async onSuccess() {
-      await utils.task.getPersonalTasks.invalidate();
-      await utils.task.getActiveTask.invalidate();
-    },
-  });
-  const updateTask = api.task.updatePersonalTask.useMutation({
-    async onSuccess() {
-      await utils.task.getPersonalTasks.invalidate();
-      await utils.task.getActiveTask.invalidate();
-    },
-  });
-  const deleteTask = api.task.deletePersonalTask.useMutation();
-  // const startTimer = api.timer.start.useMutation({
-  //   async onSuccess() {
-  //     await utils.timer.invalidate();
-  //   },
-  // });
-  // const stopTimer = api.timer.stop.useMutation({
-  //   async onSuccess() {
-  //     await utils.timer.invalidate();
-  //   },
-  // });
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   return (
     <div className="h-svh">
       <TooltipProvider delayDuration={0}>

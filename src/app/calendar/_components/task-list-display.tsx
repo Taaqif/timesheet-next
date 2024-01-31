@@ -21,8 +21,6 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
     },
   );
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const updateTask = api.task.updatePersonalTask.useMutation();
-  const deleteTask = api.task.deletePersonalTask.useMutation();
   const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
     {
       weekOf: weekOf,

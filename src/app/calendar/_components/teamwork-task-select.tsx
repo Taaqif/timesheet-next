@@ -19,9 +19,7 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { TeamworkTask } from "~/server/api/routers/teamwork";
-import { usePrevious } from "~/lib/hooks/use-previous";
 import { MagnifyingGlassIcon, SymbolIcon } from "@radix-ui/react-icons";
-import { utils } from "prettier/doc.js";
 
 type TeamworkTaskWithChildren = TeamworkTask & {
   children: TeamworkTaskWithChildren[];
@@ -78,7 +76,7 @@ const RenderTeamworkTaskWithChildren = ({
                 task.id === selectedTaskId ? "opacity-100" : "opacity-0",
               )}
             />
-            <div style={{ width: `${8 * level}px`, height: "16px" }}></div>
+            <div style={{ width: `${10 * level}px`, height: "16px" }}></div>
             {task.content}
           </CommandItem>
           {task.children?.length > 0 && (

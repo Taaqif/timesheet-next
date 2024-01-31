@@ -19,7 +19,6 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { type TeamworkProject } from "~/server/api/routers/teamwork";
-import { usePrevious } from "~/lib/hooks/use-previous";
 
 type TeamworkProjectGroup = {
   company: string;

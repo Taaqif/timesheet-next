@@ -5,7 +5,11 @@ import interactionPlugin from "@fullcalendar/interaction"; // for selectable
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import { EventApi, type EventInput } from "@fullcalendar/core";
-import { getCalendarEvents, getHoursMinutesTextFromDates } from "~/lib/utils";
+import {
+  TasksWithTeamworkTaskSelectSchema,
+  getCalendarEvents,
+  getHoursMinutesTextFromDates,
+} from "~/lib/utils";
 import {
   HoverCard,
   HoverCardContent,
@@ -15,6 +19,7 @@ import {
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useDebounceCallback } from "~/lib/hooks/use-debounce-callback";
+import { useCreateTask, useUpdateTask } from "~/lib/hooks/use-task-api";
 
 export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
@@ -26,6 +31,8 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const weekOf = useCalendarStore((s) => s.weekOf);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
+  const updateTask = useUpdateTask();
+  const createTask = useCreateTask();
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
       weekOf: weekOf,
@@ -48,7 +55,16 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     (start: Date, end: Date) => {
       if (closestEventsAtEnd.current && closestEventsAtEnd.current.length > 0) {
         closestEventsAtEnd.current.forEach((event) => {
+          if (end <= event.end!) {
+            return;
+          }
+          if (event.extendedProps?.type === "TIMER") {
+            event.setProp("editable", true);
+          }
           event.setStart(end);
+          if (event.extendedProps?.type === "TIMER") {
+            event.setProp("editable", false);
+          }
         });
       }
       if (
@@ -56,6 +72,9 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         closestEventsAtStart.current.length > 0
       ) {
         closestEventsAtStart.current.forEach((event) => {
+          if (start <= event.start!) {
+            return;
+          }
           event.setEnd(start);
         });
       }
@@ -199,23 +218,68 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         initialView="timeGridDay"
         height={"100%"}
         selectable
+        selectMinDistance={5}
+        select={async (arg) => {
+          const start = arg.start;
+          const end = arg.end;
+          if (start && end) {
+            await createTask.mutateAsync({
+              task: {
+                start,
+                end,
+              },
+            });
+
+            const calendarApi = calendarRef?.current?.getApi();
+            calendarApi?.unselect();
+          }
+        }}
         eventDurationEditable
         eventResizableFromStart
         eventResizeStart={(e) => {
           const allEvents = e.view.calendar.getEvents();
           const start = e.event.start;
           const end = e.event.end;
-          closestEventsAtEnd.current = allEvents?.filter((event) => {
-            const diff = Math.abs(dayjs(event.start).diff(end, "minute"));
-            return diff >= 0 && diff <= 5;
-          });
-          closestEventsAtStart.current = allEvents?.filter((event) => {
-            const diff = Math.abs(dayjs(event.end).diff(start, "minute"));
-            return diff >= 0 && diff <= 5;
+
+          closestEventsAtEnd.current = [];
+          allEvents?.forEach((event) => {
+            const type = event.extendedProps?.type as string;
+            if (type === "TASK" || type === "TIMER") {
+              const diffEnd = Math.abs(dayjs(event.start).diff(end, "minute"));
+              const diffStart = Math.abs(
+                dayjs(event.end).diff(start, "minute"),
+              );
+              if (diffEnd >= 0 && diffEnd <= 5) {
+                closestEventsAtEnd.current.push(event);
+              } else if (diffStart >= 0 && diffStart <= 5) {
+                closestEventsAtStart.current.push(event);
+              }
+            }
           });
           setIsDragging(true);
         }}
-        eventResizeStop={() => {
+        eventResize={(arg) => {
+          const changedEvents = [
+            arg.event,
+            ...closestEventsAtStart.current,
+            ...closestEventsAtEnd.current,
+          ];
+          changedEvents.forEach((event) => {
+            const task = event.extendedProps?.task as
+              | TasksWithTeamworkTaskSelectSchema
+              | undefined;
+            const start = event.start;
+            const end = event.end;
+            if (task && start && end) {
+              updateTask.mutate({
+                id: task.id,
+                task: {
+                  start,
+                  end,
+                },
+              });
+            }
+          });
           closestEventsAtEnd.current = [];
           closestEventsAtStart.current = [];
           setIsDragging(false);
