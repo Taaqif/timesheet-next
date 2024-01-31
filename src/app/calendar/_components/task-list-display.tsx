@@ -36,15 +36,6 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
     setEvents();
   }, [activeTask, personalTasks, selectedDate]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      updateTimerEvent();
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [activeTask]);
-
   const setEvents = () => {
     const { newEvents } = getCalendarEvents({
       activeTask: activeTask,
@@ -59,8 +50,6 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
       ),
     );
   };
-
-  const updateTimerEvent = () => {};
 
   return (
     <ScrollArea className="w-full">

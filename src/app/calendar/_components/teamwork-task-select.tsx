@@ -18,8 +18,9 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
-import { TeamworkTask } from "~/server/api/routers/teamwork";
+import { Tag, TeamworkTask } from "~/server/api/routers/teamwork";
 import { MagnifyingGlassIcon, SymbolIcon } from "@radix-ui/react-icons";
+import { TeamworkTags } from "~/components/ui/teamwork-tags";
 
 type TeamworkTaskWithChildren = TeamworkTask & {
   children: TeamworkTaskWithChildren[];
@@ -70,14 +71,21 @@ const RenderTeamworkTaskWithChildren = ({
               onSelect(task);
             }}
           >
-            <Check
-              className={cn(
-                "mr-2 h-4 w-4 flex-shrink-0",
-                task.id === selectedTaskId ? "opacity-100" : "opacity-0",
-              )}
-            />
-            <div style={{ width: `${10 * level}px`, height: "16px" }}></div>
-            {task.content}
+            <div className="flex">
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4 flex-shrink-0",
+                  task.id === selectedTaskId ? "opacity-100" : "opacity-0",
+                )}
+              />
+              <div style={{ width: `${10 * level}px`, height: "16px" }}></div>
+              {task.content}
+            </div>
+            {task.tags && (
+              <div className="mt-1 flex flex-wrap justify-end gap-2">
+                <TeamworkTags tags={task.tags} />
+              </div>
+            )}
           </CommandItem>
           {task.children?.length > 0 && (
             <RenderTeamworkTaskWithChildren
@@ -206,7 +214,7 @@ export const TeamworkTaskSelect = ({
       </PopoverTrigger>
       {!!projectId && (
         <PopoverContent
-          className="w-full min-w-[300px] max-w-lg p-0"
+          className="w-full min-w-[400px] max-w-lg p-0"
           align="start"
         >
           <Command loop>

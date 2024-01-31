@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { type TeamworkProject } from "~/server/api/routers/teamwork";
+import { TeamworkTags } from "~/components/ui/teamwork-tags";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -101,7 +102,7 @@ export const TeamworkProjectsSelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full min-w-[300px] max-w-lg p-0"
+        className="w-full min-w-[400px] max-w-lg p-0"
         align="start"
       >
         <Command loop>
@@ -131,15 +132,17 @@ export const TeamworkProjectsSelect = ({
                           setOpen(false);
                         }}
                       >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            projectId === project.id
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        {project.name}
+                        <div className="flex">
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              projectId === project.id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {project.name}
+                        </div>
                       </CommandItem>
                     ))}
                   </CommandGroup>

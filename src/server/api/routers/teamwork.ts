@@ -9,7 +9,7 @@ const teamworkBasicAuth = `Basic ${btoa(`${teamworkApiKey}:X`)}`;
 export type TeamworkProject = {
   announcement?: string;
   announcementHTML?: string;
-  category?: Category;
+  category?: Tag;
   company?: Company;
   completedByUserFirstName?: string;
   completedByUserId?: string;
@@ -38,7 +38,7 @@ export type TeamworkProject = {
   "start-page"?: string;
   status?: string;
   subStatus?: string;
-  tags?: Category[];
+  tags?: Tag[];
   "tasks-start-page"?: string;
 };
 export interface TeamworkTask {
@@ -109,7 +109,7 @@ export interface TeamworkTask {
   canLogTime?: boolean;
   userFollowingComments?: string;
   userFollowingChanges?: string;
-  tags?: Tags[];
+  tags?: Tag[];
   /**
    * DLM is a time stamp and stands for Date Last Modified. We use this internally for our caching system to make sure we can return data to the API calls quickly. Its not guaranteed to be in the response and can be safely ignored if you see it.
    */
@@ -122,19 +122,12 @@ export interface BoardColumnProperties {
   color?: string;
 }
 
-export interface Tags {
+export interface Tag {
   id: string;
   name: string;
   color: string;
   projectId: string;
 }
-
-export type Category = {
-  color?: string;
-  id?: string;
-  name?: string;
-  projectId?: string;
-};
 
 export type Company = {
   id?: string;

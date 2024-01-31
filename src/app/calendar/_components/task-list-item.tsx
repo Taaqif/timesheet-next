@@ -20,6 +20,7 @@ import { TeamworkTaskSelect } from "./teamwork-task-select";
 import { TeamworkProject, TeamworkTask } from "~/server/api/routers/teamwork";
 import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
 import dayjs from "dayjs";
+import { Badge } from "~/components/ui/badge";
 
 export type TaskListItemProps = { event: EventInput };
 export const TaskListItem = ({ event }: TaskListItemProps) => {
