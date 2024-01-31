@@ -44,21 +44,24 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     },
   );
 
-  const debouncedCallback = useDebounceCallback((start: Date, end: Date) => {
-    if (closestEventsAtEnd.current && closestEventsAtEnd.current.length > 0) {
-      closestEventsAtEnd.current.forEach((event) => {
-        event.setStart(end);
-      });
-    }
-    if (
-      closestEventsAtStart.current &&
-      closestEventsAtStart.current.length > 0
-    ) {
-      closestEventsAtStart.current.forEach((event) => {
-        event.setEnd(start);
-      });
-    }
-  }, 10);
+  const debouncedEventResizeCallback = useDebounceCallback(
+    (start: Date, end: Date) => {
+      if (closestEventsAtEnd.current && closestEventsAtEnd.current.length > 0) {
+        closestEventsAtEnd.current.forEach((event) => {
+          event.setStart(end);
+        });
+      }
+      if (
+        closestEventsAtStart.current &&
+        closestEventsAtStart.current.length > 0
+      ) {
+        closestEventsAtStart.current.forEach((event) => {
+          event.setEnd(start);
+        });
+      }
+    },
+    10,
+  );
 
   useEffect(() => {
     const calendarApi = calendarRef?.current?.getApi();
@@ -130,7 +133,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
             const start = arg.event.start;
             const end = arg.event.end;
             if (start && end) {
-              debouncedCallback(start, end);
+              debouncedEventResizeCallback(start, end);
             }
           }
           return (
