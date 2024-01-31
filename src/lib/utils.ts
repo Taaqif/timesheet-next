@@ -79,11 +79,11 @@ export type TasksWithTeamworkTaskSelectSchema = InferResultType<
   { teamworkTask: true }
 >;
 export const getCalendarEvents = ({
-  timer,
+  activeTask,
   tasks,
   schedule,
 }: {
-  timer?: TimerSelectSchema | null;
+  activeTask?: TasksWithTeamworkTaskSelectSchema | null;
   tasks?: TasksWithTeamworkTaskSelectSchema[] | null;
   schedule?: CalendarScheduleItemType[] | null;
 }) => {
@@ -107,6 +107,7 @@ export const getCalendarEvents = ({
             },
             backgroundColor: "#e07a5f",
             start: `${scheduleItem.start.dateTime}Z`,
+            editable: false,
             end: `${scheduleItem.end.dateTime}Z`,
             title: scheduleItem.subject
               ? scheduleItem.subject
@@ -136,16 +137,18 @@ export const getCalendarEvents = ({
       }),
     );
   }
-  if (timer) {
+  if (activeTask) {
     const now = new Date();
     newEvents.push({
       extendedProps: {
         type: "TIMER",
+        task: activeTask,
       },
       id: "TIMER",
       backgroundColor: "#f2cc8f",
+      editable: false,
       textColor: "black",
-      start: timer.startedAt,
+      start: activeTask.start,
       end: now,
     });
   }

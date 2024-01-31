@@ -89,6 +89,7 @@ export const tasks = pgTable("task", {
   end: timestamp("end"),
   title: text("text"),
   description: text("description"),
+  activeTimerRunning: boolean("activeTimerRunning").default(false),
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

@@ -18,29 +18,8 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
-import { TeamworkProject } from "~/server/api/routers/teamwork";
-const frameworks = [
-  {
-    value: "next.js",
-    label: "Next.js",
-  },
-  {
-    value: "sveltekit",
-    label: "SvelteKit",
-  },
-  {
-    value: "nuxt.js",
-    label: "Nuxt.js",
-  },
-  {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
-  },
-];
+import { type TeamworkProject } from "~/server/api/routers/teamwork";
+import { usePrevious } from "~/lib/hooks/use-previous";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -48,39 +27,27 @@ type TeamworkProjectGroup = {
 };
 export type TeamworkProjectsSelectProps = {
   projectId?: string | null;
-  onChange?: (selectedProjectId: string) => void;
+  onChange: (selectedProject?: TeamworkProject) => void;
 };
 export const TeamworkProjectsSelect = ({
   projectId,
   onChange,
 }: TeamworkProjectsSelectProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
     api.teamwork.getAllProjects.useQuery();
 
   const selectedProject = useMemo(
-    () => teamworkProjects?.find((project) => project.id === selectedProjectId),
-    [selectedProjectId, teamworkProjects],
+    () => teamworkProjects?.find((project) => project.id === projectId),
+    [projectId, teamworkProjects],
   );
+
   useEffect(() => {
     if (teamworkProjects && teamworkProjects.length > 0) {
       setTeamworkProjectOptions();
     }
   }, [teamworkProjects]);
-
-  useEffect(() => {
-    if (projectId && projectId !== selectedProjectId) {
-      setSelectedProjectId(projectId);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    if (projectId !== selectedProjectId && onChange) {
-      onChange(selectedProjectId);
-    }
-  }, [selectedProjectId, onChange]);
 
   const setTeamworkProjectOptions = () => {
     const userTeamworkProjects =
@@ -113,23 +80,31 @@ export const TeamworkProjectsSelect = ({
         <Button
           variant="outline"
           role="combobox"
+          onKeyDown={(e) => {
+            if (open === false && e.key !== "Tab") {
+              setOpen(true);
+            }
+          }}
           aria-expanded={open}
           className={cn(
             "h-auto w-full justify-between whitespace-normal bg-transparent text-left font-normal",
             {
-              "text-muted-foreground": !selectedProjectId,
+              "text-muted-foreground": !projectId,
             },
           )}
         >
           {teamworkProjectsLoading
             ? "Fetching projects..."
-            : selectedProjectId
+            : projectId
               ? `${selectedProject?.name} (${selectedProject?.company?.name})`
-              : "Select project..."}
+              : "Select a project..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent
+        className="w-full min-w-[300px] max-w-lg p-0"
+        align="start"
+      >
         <Command loop>
           <CommandInput placeholder="Search project..." />
           <CommandEmpty>No projects found.</CommandEmpty>
@@ -149,14 +124,18 @@ export const TeamworkProjectsSelect = ({
                         key={project.id}
                         value={`${project.name} - ${project.company?.name}`}
                         onSelect={() => {
-                          setSelectedProjectId(project.id);
+                          if ((projectId ?? "") === (project.id ?? "")) {
+                            setOpen(false);
+                            return;
+                          }
+                          onChange(project);
                           setOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            selectedProjectId === project.id
+                            projectId === project.id
                               ? "opacity-100"
                               : "opacity-0",
                           )}

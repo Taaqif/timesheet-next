@@ -1,50 +1,42 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
-import { formatRange, type EventInput } from "@fullcalendar/core";
+import { type EventInput } from "@fullcalendar/core";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import {
-  TasksWithTeamworkTaskSelectSchema,
-  getCalendarEvents,
-  getHoursMinutesTextFromDates,
-} from "~/lib/utils";
+import { getCalendarEvents } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
-import { Button } from "~/components/ui/button";
-import { TeamworkProjectsSelect } from "./teamwork-projects-select";
 import { TaskListItem } from "./task-list-item";
 
 export type TaskListDisplayProps = {};
 export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
+  const weekOf = useCalendarStore((s) => s.weekOf);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
-      weekOf: selectedDate,
+      weekOf: weekOf,
     },
     {
-      enabled: !!selectedDate,
+      enabled: !!weekOf,
     },
   );
-  const { data: activeTimer } = api.timer.getActive.useQuery();
+  const { data: activeTask } = api.task.getActiveTask.useQuery();
   const updateTask = api.task.updatePersonalTask.useMutation();
   const deleteTask = api.task.deletePersonalTask.useMutation();
   const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
     {
-      weekOf: selectedDate,
+      weekOf: weekOf,
     },
     {
-      enabled: !!selectedDate,
+      enabled: !!weekOf,
     },
   );
 
-  useEffect(() => {}, [selectedDate]);
+  useEffect(() => {}, [weekOf]);
 
   useEffect(() => {
     setEvents();
-  }, [activeTimer, personalTasks]);
+  }, [activeTask, personalTasks, selectedDate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -53,11 +45,11 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
     return () => {
       clearInterval(interval);
     };
-  }, [activeTimer]);
+  }, [activeTask]);
 
   const setEvents = () => {
     const { newEvents } = getCalendarEvents({
-      timer: activeTimer,
+      activeTask: activeTask,
       tasks: personalTasks,
     });
     setCalendarEvents(
@@ -76,7 +68,13 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
     <ScrollArea className="w-full">
       <div className="flex flex-col gap-4 p-4 ">
         {calendarEvents.map((event, index) => (
-          <TaskListItem key={`event_${index}`} event={event} />
+          <div
+            key={`event_${selectedDate.toISOString()}_${index}`}
+            id={`event_${selectedDate.toISOString()}_${index}`}
+            className="rounded-lg border p-3"
+          >
+            <TaskListItem event={event} />
+          </div>
         ))}
       </div>
     </ScrollArea>

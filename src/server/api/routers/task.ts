@@ -1,4 +1,4 @@
-import { and, between, eq, or } from "drizzle-orm";
+import { InferInsertModel, and, between, eq, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -17,6 +17,7 @@ export const taskRouter = createTRPCRouter({
           teamworkTask: true,
         },
         where: and(
+          ne(tasks.activeTimerRunning, true),
           eq(tasks.userId, ctx.session?.user.id),
           or(between(tasks.start, start, end), between(tasks.end, start, end)),
         ),
@@ -44,7 +45,7 @@ export const taskRouter = createTRPCRouter({
         .values({ ...input.task, userId: ctx.session.user.id })
         .returning();
       const createdTask = createdTasks[0];
-      if (createdTask && input.teamworkTask) {
+      if (createdTask) {
         const createdTeamworkTasks = await ctx.db
           .insert(teamworkTasks)
           .values({ ...input.teamworkTask, taskId: createdTask.id })
@@ -132,4 +133,17 @@ export const taskRouter = createTRPCRouter({
         );
       return true;
     }),
+
+  getActiveTask: protectedProcedure.query(async ({ ctx }) => {
+    const timer = await ctx.db.query.tasks.findFirst({
+      with: {
+        teamworkTask: true,
+      },
+      where: and(
+        eq(tasks.userId, ctx.session?.user.id),
+        eq(tasks.activeTimerRunning, true),
+      ),
+    });
+    return timer ?? null;
+  }),
 });

@@ -4,6 +4,7 @@ import * as React from "react";
 import { type DialogProps } from "@radix-ui/react-dialog";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
+import { Virtualizer, CustomItemComponentProps } from "virtua";
 
 import { cn } from "~/lib/utils";
 import { Dialog, DialogContent } from "~/components/ui/dialog";
@@ -40,8 +41,10 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
 
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
+    rightActions?: React.ReactNode;
+  }
+>(({ className, rightActions, ...props }, ref) => (
   <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
     <MagnifyingGlassIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
@@ -52,10 +55,23 @@ const CommandInput = React.forwardRef<
       )}
       {...props}
     />
+    {rightActions}
   </div>
 ));
 
 CommandInput.displayName = CommandPrimitive.Input.displayName;
+
+const Item = React.forwardRef<HTMLDivElement, CustomItemComponentProps>(
+  ({ children, style }, ref) => {
+    children = children as ReactElement;
+
+    return React.cloneElement(children, {
+      ref,
+      style: { ...children.props.style, ...style },
+    });
+  },
+);
+Item.displayName = "Item";
 
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
@@ -65,11 +81,13 @@ const CommandList = React.forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <ScrollArea className="h-full" viewportClassName="max-h-[300px]">
-      <CommandPrimitive.List
-        ref={ref}
-        className={cn("", className)}
-        {...props}
-      />
+      <Virtualizer scrollRef={ref} item={Item}>
+        <CommandPrimitive.List
+          ref={ref}
+          className={cn("", className)}
+          {...props}
+        />
+      </Virtualizer>
     </ScrollArea>
   );
 });

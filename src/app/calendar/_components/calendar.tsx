@@ -17,6 +17,7 @@ import { TimesheetProgress } from "./timesheet-progress";
 import { CalendarDisplay } from "./calendar-display";
 import { api } from "~/trpc/react";
 import { TaskListDisplay } from "./task-list-display";
+import { update } from "lodash";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -29,24 +30,30 @@ export function Calendar({
   const navCollapsedSize = 4;
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const utils = api.useUtils();
-  const { data: activeTimer } = api.timer.getActive.useQuery();
+  const { data: activeTask } = api.task.getActiveTask.useQuery();
   const createTask = api.task.createPersonalTask.useMutation({
     async onSuccess() {
       await utils.task.getPersonalTasks.invalidate();
+      await utils.task.getActiveTask.invalidate();
     },
   });
-  const updateTask = api.task.updatePersonalTask.useMutation();
+  const updateTask = api.task.updatePersonalTask.useMutation({
+    async onSuccess() {
+      await utils.task.getPersonalTasks.invalidate();
+      await utils.task.getActiveTask.invalidate();
+    },
+  });
   const deleteTask = api.task.deletePersonalTask.useMutation();
-  const startTimer = api.timer.start.useMutation({
-    async onSuccess() {
-      await utils.timer.invalidate();
-    },
-  });
-  const stopTimer = api.timer.stop.useMutation({
-    async onSuccess() {
-      await utils.timer.invalidate();
-    },
-  });
+  // const startTimer = api.timer.start.useMutation({
+  //   async onSuccess() {
+  //     await utils.timer.invalidate();
+  //   },
+  // });
+  // const stopTimer = api.timer.stop.useMutation({
+  //   async onSuccess() {
+  //     await utils.timer.invalidate();
+  //   },
+  // });
   return (
     <div className="h-svh">
       <TooltipProvider delayDuration={0}>
@@ -128,16 +135,21 @@ export function Calendar({
                     <Button
                       type="button"
                       onClick={async () => {
-                        if (activeTimer) {
-                          createTask.mutate({
+                        if (activeTask) {
+                          updateTask.mutate({
+                            id: activeTask.id,
                             task: {
-                              start: activeTimer.startedAt,
+                              ...activeTask,
+                              activeTimerRunning: false,
                               end: new Date(),
                             },
                           });
                         }
-                        startTimer.mutate({
-                          id: activeTimer?.id,
+                        createTask.mutate({
+                          task: {
+                            activeTimerRunning: true,
+                            start: new Date(),
+                          },
                         });
                       }}
                     >
@@ -147,15 +159,14 @@ export function Calendar({
                     <Button
                       type="button"
                       onClick={() => {
-                        if (activeTimer) {
-                          createTask.mutate({
+                        if (activeTask) {
+                          updateTask.mutate({
+                            id: activeTask.id,
                             task: {
-                              start: activeTimer.startedAt,
+                              ...activeTask,
+                              activeTimerRunning: false,
                               end: new Date(),
                             },
-                          });
-                          stopTimer.mutate({
-                            id: activeTimer?.id,
                           });
                         }
                       }}
