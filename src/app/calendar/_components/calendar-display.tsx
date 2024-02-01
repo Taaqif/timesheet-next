@@ -37,7 +37,9 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const closestEventsAtEnd = useRef<EventApi[]>([]);
   const weekOf = useCalendarStore((s) => s.weekOf);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
+  const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
+  const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const updateTask = useUpdateTask();
   const createTask = useCreateTask();
   const { data: calendarEvents } = api.outlook.getMyCalendarEvents.useQuery(
@@ -179,7 +181,15 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
           return (
             <HoverCard openDelay={500}>
               <HoverCardTrigger asChild>
-                <div className="fc-event-main-frame">
+                <div
+                  className="fc-event-main-frame"
+                  onMouseEnter={() => {
+                    setSelectedEventId(arg.event.id);
+                  }}
+                  onMouseLeave={() => {
+                    // setSelectedEventId(undefined);
+                  }}
+                >
                   {!!arg.timeText && (
                     <div className="fc-event-time">
                       <span className="mr-1">{arg.timeText}</span>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import { formatRange, type EventInput } from "@fullcalendar/core";
 import {
@@ -14,6 +14,7 @@ import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
 import dayjs from "dayjs";
 import { History } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
+import { useCalendarStore } from "~/app/_store";
 
 export type TaskListItemProps = { event: EventInput };
 export const TaskListItem = ({ event }: TaskListItemProps) => {
@@ -30,6 +31,8 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   const [hasChange, setHasChange] = useState(false);
   const [hasProjectChange, setHasProjectChange] = useState(false);
   const [hasTaskChange, setHasTaskChange] = useState(false);
+  const selectedEventId = useCalendarStore((s) => s.selectedEventId);
+  const eventRef = useRef<HTMLDivElement>(null);
   const [selectedTeamworkTaskId, setSelectedTeamworkTaskId] = useState<string>(
     task?.teamworkTask?.teamworkTaskId ?? "",
   );
@@ -109,6 +112,14 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   }, [event]);
 
   useEffect(() => {
+    if (selectedEventId === event.id) {
+      eventRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [selectedEventId, event]);
+
+  useEffect(() => {
     if (shouldSave === true) {
       if (hasChange === true) {
         let save = true;
@@ -138,7 +149,10 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   ]);
 
   return (
-    <div className="flex flex-col gap-2 @container/event">
+    <div
+      className="flex scroll-m-5 flex-col gap-2 @container/event"
+      ref={eventRef}
+    >
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
           {isActiveTimer && <History className="w-4" />}
@@ -161,8 +175,10 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
             projectId={selectedProjectId}
             onChange={(selectedProject) => {
               setSelectedProjectId(selectedProject?.id ?? "");
-              setHasChange(true);
               setHasProjectChange(true);
+              setSelectedTeamworkTaskId("");
+              setHasTaskChange(true);
+              setHasChange(true);
               setShouldSave(true);
             }}
           />
