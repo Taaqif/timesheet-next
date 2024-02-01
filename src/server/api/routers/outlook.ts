@@ -36,6 +36,16 @@ const getGraphApiClient = (accessToken: string) => {
 };
 
 export const outlookRouter = createTRPCRouter({
+  getMyCalendarEvents: protectedProcedure
+    .input(z.object({ weekOf: z.date() }))
+    .query(async ({ ctx, input }) => {
+      const client = getGraphApiClient(ctx.session.user.access_token);
+      const start = dayjs(input.weekOf).startOf("week").toISOString();
+      const end = dayjs(input.weekOf).endOf("week").toISOString();
+
+      const events = await client.me.calendarView(start, end).top(999)();
+      return events;
+    }),
   getMySchedule: protectedProcedure
     .input(z.object({ weekOf: z.date() }))
     .query(async ({ ctx, input }) => {

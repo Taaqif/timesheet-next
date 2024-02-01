@@ -9,6 +9,7 @@ import {
   type TasksWithTeamworkTaskSelectSchema,
   getCalendarEvents,
   getHoursMinutesTextFromDates,
+  CalendarEventType,
 } from "~/lib/utils";
 import {
   HoverCard,
@@ -24,11 +25,13 @@ import {
   useGetTasks,
   useUpdateTask,
 } from "~/lib/hooks/use-task-api";
+import { ICalendarViewInfo } from "@pnp/graph/calendars";
+import { CalendarEventItem } from "./calendar-event-item";
 
 export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
-  const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
-  const [calendarBusinessHours, setBusinessHours] = useState<EventInput>();
+  const [events, setEvents] = useState<EventInput[]>([]);
+  const [businessHours, setBusinessHours] = useState<EventInput>();
   const calendarRef = useRef<FullCalendar>(null);
   const closestEventsAtStart = useRef<EventApi[]>([]);
   const closestEventsAtEnd = useRef<EventApi[]>([]);
@@ -37,6 +40,14 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const updateTask = useUpdateTask();
   const createTask = useCreateTask();
+  const { data: calendarEvents } = api.outlook.getMyCalendarEvents.useQuery(
+    {
+      weekOf: weekOf,
+    },
+    {
+      enabled: !!weekOf,
+    },
+  );
   const { data: schedule } = api.outlook.getMySchedule.useQuery(
     {
       weekOf: weekOf,
@@ -89,8 +100,8 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   }, [weekOf]);
 
   useEffect(() => {
-    setEvents();
-  }, [schedule, personalTasks]);
+    setEventData();
+  }, [schedule, personalTasks, calendarEvents]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -111,15 +122,16 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     };
   }, [activeTask]);
 
-  const setEvents = () => {
+  const setEventData = () => {
     const { newEvents, businessHours } = getCalendarEvents({
       tasks: personalTasks,
       schedule,
+      calendarEvents,
     });
     if (businessHours) {
       setBusinessHours(businessHours);
     }
-    setCalendarEvents(newEvents);
+    setEvents(newEvents);
   };
 
   const updateTimerEvent = () => {
@@ -142,8 +154,8 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     <div className="h-full p-4">
       <FullCalendar
         ref={calendarRef}
-        events={calendarEvents}
-        businessHours={calendarBusinessHours}
+        events={events}
+        businessHours={businessHours}
         slotDuration="00:15"
         snapDuration="00:01"
         datesSet={({ view }) => {
@@ -160,7 +172,10 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
               debouncedEventResizeCallback(start, end);
             }
           }
-          const isActiveTimer = arg.event.extendedProps?.type === "TIMER";
+          const isActiveTimer =
+            arg.event.extendedProps?.type === CalendarEventType.TIMER;
+          const calendarEvent =
+            (arg.event.extendedProps.event as ICalendarViewInfo) ?? null;
           return (
             <HoverCard openDelay={500}>
               <HoverCardTrigger asChild>
@@ -214,6 +229,11 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
                           </div>
                         )}
                       </>
+                    )}
+                    {calendarEvent && (
+                      <div className="mt-2">
+                        <CalendarEventItem calendarEvent={calendarEvent} />
+                      </div>
                     )}
                   </div>
                 </HoverCardContent>

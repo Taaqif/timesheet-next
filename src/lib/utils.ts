@@ -9,6 +9,7 @@ import {
 import { type CalendarScheduleItemType } from "./pnp/getSchedule";
 import { type DateInput, type EventInput } from "@fullcalendar/core/index.js";
 import { type InferResultType } from "~/server/db";
+import { ICalendarViewInfo } from "@pnp/graph/calendars";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -70,12 +71,20 @@ export type TasksWithTeamworkTaskSelectSchema = InferResultType<
   "tasks",
   { teamworkTask: true }
 >;
+export enum CalendarEventType {
+  "SCHEDULE" = "SCHEDULE",
+  "CALENDAR_EVENT" = "CALENDAR_EVENT",
+  "TASK" = "TASK",
+  "TIMER" = "TIMER",
+}
 export const getCalendarEvents = ({
   tasks,
   schedule,
+  calendarEvents,
 }: {
   tasks?: TasksWithTeamworkTaskSelectSchema[] | null;
   schedule?: CalendarScheduleItemType[] | null;
+  calendarEvents?: ICalendarViewInfo[] | null;
 }) => {
   let newEvents: EventInput[] = [];
   let businessHours: EventInput | null = null;
@@ -89,24 +98,45 @@ export const getCalendarEvents = ({
         startTime: schedule.workingHours.startTime,
         endTime: schedule.workingHours.endTime,
       };
-      newEvents = newEvents.concat(
-        schedule.scheduleItems.map((scheduleItem) => {
-          const mappedEvent: EventInput = {
-            extendedProps: {
-              type: "MEETING",
-            },
-            backgroundColor: "#e07a5f",
-            start: `${scheduleItem.start.dateTime}Z`,
-            editable: false,
-            end: `${scheduleItem.end.dateTime}Z`,
-            title: scheduleItem.subject
-              ? scheduleItem.subject
-              : scheduleItem.status,
-          };
-          return mappedEvent;
-        }),
-      );
+
+      if (!calendarEvents) {
+        newEvents = newEvents.concat(
+          schedule.scheduleItems.map((scheduleItem) => {
+            const mappedEvent: EventInput = {
+              extendedProps: {
+                type: CalendarEventType.SCHEDULE,
+              },
+              backgroundColor: "#e07a5f",
+              start: `${scheduleItem.start.dateTime}Z`,
+              editable: false,
+              end: `${scheduleItem.end.dateTime}Z`,
+              title: scheduleItem.subject
+                ? scheduleItem.subject
+                : scheduleItem.status,
+            };
+            return mappedEvent;
+          }),
+        );
+      }
     });
+  }
+  if (calendarEvents) {
+    newEvents = newEvents.concat(
+      calendarEvents.map((event) => {
+        const mappedEvent: EventInput = {
+          extendedProps: {
+            type: CalendarEventType.CALENDAR_EVENT,
+            event: event,
+          },
+          backgroundColor: "#e07a5f",
+          start: `${event.start?.dateTime}Z`,
+          editable: false,
+          end: event.end ? `${event.end.dateTime}Z` : undefined,
+          title: event.subject ?? "",
+        };
+        return mappedEvent;
+      }),
+    );
   }
   if (tasks) {
     newEvents = newEvents.concat(
@@ -119,7 +149,7 @@ export const getCalendarEvents = ({
           backgroundColor: "#006d77",
           title: task.title ?? "",
           extendedProps: {
-            type: "TASK",
+            type: CalendarEventType.TASK,
             task: task,
           },
         };
@@ -129,7 +159,7 @@ export const getCalendarEvents = ({
           mappedEvent.backgroundColor = "#f2cc8f";
           mappedEvent.editable = false;
           mappedEvent.textColor = "black";
-          mappedEvent.extendedProps!.type = "TIMER";
+          mappedEvent.extendedProps!.type = CalendarEventType.TIMER;
         }
         return mappedEvent;
       }),

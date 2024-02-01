@@ -4,6 +4,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const teamworkBaseUrl = env.TEAMWORK_BASE_URL;
 const teamworkApiKey = env.TEAMWORK_API_KEY;
+export const teamworkCompanyId = "";
 const teamworkBasicAuth = `Basic ${btoa(`${teamworkApiKey}:X`)}`;
 
 export type TeamworkProject = {
@@ -57,7 +58,7 @@ export interface TeamworkTask {
   order: number;
   "project-id"?: string;
   "project-name"?: string;
-  "todo-list-id"?: number;
+  "todo-list-id"?: string;
   "todo-list-name"?: string;
   "tasklist-private"?: string;
   "tasklist-isTemplate"?: string;
@@ -138,8 +139,70 @@ export type Company = {
 export type Defaults = {
   privacy?: string;
 };
-
+export interface TeamworkPerson {
+  "avatar-url"?: string;
+  "last-changed-on"?: string;
+  "email-address"?: string;
+  "last-login"?: string;
+  "address-country"?: string;
+  textFormat?: string;
+  "user-name"?: string;
+  id?: string;
+  "phone-number-fax"?: string;
+  "site-owner"?: boolean;
+  "address-city"?: string;
+  "company-name"?: string;
+  "user-invited-date"?: string;
+  "user-type"?: string;
+  "phone-number-mobile"?: string;
+  useShorthandDurations?: boolean;
+  "address-zip"?: string;
+  openId?: string;
+  "phone-number-office"?: string;
+  "im-handle"?: string;
+  twoFactorAuthEnabled?: boolean;
+  tags?: object[];
+  "has-access-to-new-projects"?: boolean;
+  "last-active"?: string;
+  "im-service"?: string;
+  deleted?: string;
+  notes?: string;
+  "in-owner-company"?: boolean;
+  "user-invited-status"?: string;
+  profile?: string;
+  userUUID?: string;
+  "user-invited"?: string;
+  "created-at"?: string;
+  companyId?: string;
+  "phone-number-home"?: string;
+  "profile-text"?: string;
+  "company-id"?: string;
+  pid?: string;
+  "address-line-2"?: string;
+  "address-state"?: string;
+  "login-count"?: string;
+  "address-line-1"?: string;
+  administrator?: string;
+  "email-alt-1"?: string;
+  "email-alt-2"?: string;
+  "email-alt-3"?: string;
+  "last-name"?: string;
+  title?: string;
+  "first-name"?: string;
+  "phone-number-office-ext"?: string;
+  twitter?: string;
+  lengthOfDay?: string;
+}
+export type TeamworkConfig = {
+  teamworkBaseUrl: string;
+};
 export const teamworkRouter = createTRPCRouter({
+  getTeamworkConfig: protectedProcedure.query(async ({ ctx, input }) => {
+    return {
+      teamworkBaseUrl,
+    } as TeamworkConfig;
+  }),
+
   getAllProjects: protectedProcedure.query(async ({ ctx, input }) => {
     const params = new URLSearchParams({
       status: "active",
@@ -234,5 +297,56 @@ export const teamworkRouter = createTRPCRouter({
       };
       const allItems = await getTeamworkItemsForProjectPaged();
       return allItems;
+    }),
+  getPeopleBySearchTerm: protectedProcedure
+    .input(
+      z.object({
+        searchTerm: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const params = new URLSearchParams({
+        searchTerm: input.searchTerm,
+      });
+      const response = await fetch(
+        `${teamworkBaseUrl}/people.json${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      const { people } = (await response.json()) as {
+        status: string;
+        people: TeamworkPerson[];
+      };
+      if (people.length > 0) {
+        return people[0];
+      }
+      return null;
+    }),
+  getPeopleInCompany: protectedProcedure
+    .input(
+      z.object({
+        companyId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const params = new URLSearchParams({});
+      const response = await fetch(
+        `${teamworkBaseUrl}/companies/${input.companyId}/people.json${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      const { people } = (await response.json()) as {
+        status: string;
+        people: TeamworkPerson[];
+      };
+      return people;
     }),
 });

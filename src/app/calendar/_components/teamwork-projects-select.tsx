@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Link } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
@@ -23,6 +23,7 @@ import { TeamworkTags } from "~/components/ui/teamwork-tags";
 
 type TeamworkProjectGroup = {
   company: string;
+  companyId: string;
   projects: TeamworkProject[];
 };
 export type TeamworkProjectsSelectProps = {
@@ -35,6 +36,7 @@ export const TeamworkProjectsSelect = ({
 }: TeamworkProjectsSelectProps) => {
   const [open, setOpen] = useState(false);
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
+  const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
     api.teamwork.getAllProjects.useQuery();
 
@@ -68,6 +70,9 @@ export const TeamworkProjectsSelect = ({
       .forEach((companyKey) => {
         options.push({
           company: companyKey,
+          companyId:
+            userTeamworkProjects.find((a) => a.company?.name === companyKey)
+              ?.company?.id ?? "",
           projects: groupedByCompany[companyKey] ?? [],
         });
       });
@@ -116,7 +121,18 @@ export const TeamworkProjectsSelect = ({
               {projectGroups.map((projectGroup, index) => {
                 return (
                   <CommandGroup
-                    heading={projectGroup.company}
+                    heading={
+                      <span className="group flex items-center gap-2">
+                        {projectGroup.company}
+                        <a
+                          href={`${teamworkConfig?.teamworkBaseUrl}/#/company/${projectGroup.companyId}`}
+                          target="_blank"
+                          className="flex h-full w-3 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                        >
+                          <Link className={"h-3 w-3"} />
+                        </a>
+                      </span>
+                    }
                     key={`project_${index}`}
                   >
                     {projectGroup.projects.map((project) => (
@@ -131,16 +147,24 @@ export const TeamworkProjectsSelect = ({
                           onChange(project);
                           setOpen(false);
                         }}
+                        className="group relative"
                       >
                         <div className="flex">
                           <Check
                             className={cn(
-                              "mr-2 h-4 w-4",
-                              projectId === project.id
+                              "mr-2 h-4 w-4 flex-shrink-0 group-hover:opacity-0",
+                              project.id === projectId
                                 ? "opacity-100"
                                 : "opacity-0",
                             )}
                           />
+                          <a
+                            href={`${teamworkConfig?.teamworkBaseUrl}/#/projects/${project.id}`}
+                            target="_blank"
+                            className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                          >
+                            <Link className={"h-4 w-4"} />
+                          </a>
                           {project.name}
                         </div>
                       </CommandItem>

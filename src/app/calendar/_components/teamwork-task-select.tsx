@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Link } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
@@ -18,7 +18,11 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
-import { Tag, TeamworkTask } from "~/server/api/routers/teamwork";
+import {
+  Tag,
+  type TeamworkConfig,
+  TeamworkTask,
+} from "~/server/api/routers/teamwork";
 import { MagnifyingGlassIcon, SymbolIcon } from "@radix-ui/react-icons";
 import { TeamworkTags } from "~/components/ui/teamwork-tags";
 
@@ -53,12 +57,14 @@ const RenderTeamworkTaskWithChildren = ({
   onSelect,
   level = 0,
   parent,
+  teamworkConfig,
 }: {
   tasks: TeamworkTaskWithChildren[];
   selectedTaskId?: string | null;
   onSelect: (task: TeamworkTask) => void;
   level?: number;
   parent: string;
+  teamworkConfig?: TeamworkConfig;
 }) => {
   return (
     <>
@@ -70,14 +76,22 @@ const RenderTeamworkTaskWithChildren = ({
             onSelect={() => {
               onSelect(task);
             }}
+            className="group relative"
           >
             <div className="flex">
               <Check
                 className={cn(
-                  "mr-2 h-4 w-4 flex-shrink-0",
+                  "mr-2 h-4 w-4 flex-shrink-0 group-hover:opacity-0",
                   task.id === selectedTaskId ? "opacity-100" : "opacity-0",
                 )}
               />
+              <a
+                href={`${teamworkConfig?.teamworkBaseUrl}/#/tasks/${task.id}`}
+                target="_blank"
+                className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+              >
+                <Link className={"h-4 w-4"} />
+              </a>
               <div style={{ width: `${10 * level}px`, height: "16px" }}></div>
               {task.content}
             </div>
@@ -94,6 +108,7 @@ const RenderTeamworkTaskWithChildren = ({
               level={level + 1}
               parent={task.content}
               selectedTaskId={selectedTaskId}
+              teamworkConfig={teamworkConfig}
             />
           )}
         </>
@@ -103,6 +118,7 @@ const RenderTeamworkTaskWithChildren = ({
 };
 type TeamworkTaskGroup = {
   tasklist: string;
+  tasklistId: string;
   tasks: TeamworkTaskWithChildren[];
 };
 export type TeamworkTaskSelectProps = {
@@ -120,6 +136,7 @@ export const TeamworkTaskSelect = ({
   const utils = api.useUtils();
 
   const [taskGroups, setTaskGroups] = useState<TeamworkTaskGroup[]>([]);
+  const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
   const { data: teamworkTask, isLoading: teamworkTaskLoading } =
     api.teamwork.getTask.useQuery(
       {
@@ -129,15 +146,18 @@ export const TeamworkTaskSelect = ({
         enabled: !!teamworkTaskId && !firstOpen,
       },
     );
-  const { data: teamworkProjectTasks, isLoading: teamworkProjectTasksLoading } =
-    api.teamwork.getAllProjectTasks.useQuery(
-      {
-        projectId: projectId!,
-      },
-      {
-        enabled: !!projectId && firstOpen,
-      },
-    );
+  const {
+    data: teamworkProjectTasks,
+    isLoading: teamworkProjectTasksLoading,
+    isFetching: teamworkProjectTasksFetching,
+  } = api.teamwork.getAllProjectTasks.useQuery(
+    {
+      projectId: projectId!,
+    },
+    {
+      enabled: !!projectId && firstOpen,
+    },
+  );
 
   const selectedTask = useMemo(
     () =>
@@ -165,6 +185,9 @@ export const TeamworkTaskSelect = ({
     const options: TeamworkTaskGroup[] = [];
 
     Object.keys(groupedByTasklist).forEach((taskListKey) => {
+      const tasklistId = groupedByTasklist[taskListKey]?.find(
+        (a) => a["todo-list-name"] === taskListKey,
+      )?.["todo-list-id"];
       const sorted = groupedByTasklist[taskListKey]?.sort(
         (a, b) => a.order - b.order,
       );
@@ -173,6 +196,7 @@ export const TeamworkTaskSelect = ({
         const tree = createDataTree(sorted);
         options.push({
           tasklist: taskListKey,
+          tasklistId: tasklistId!,
           tasks: tree ?? [],
         });
       }
@@ -222,9 +246,14 @@ export const TeamworkTaskSelect = ({
               placeholder="Search tasks..."
               rightActions={
                 <Button
-                  variant="ghost"
+                  variant="link"
                   size="icon"
-                  className="ml-1 shrink-0 opacity-50"
+                  className={cn(
+                    "ml-1 flex shrink-0 items-center justify-center opacity-50",
+                    {
+                      "animate-spin": teamworkProjectTasksFetching,
+                    },
+                  )}
                   onClick={async () => {
                     await utils.teamwork.getAllProjectTasks.refetch({
                       projectId: projectId,
@@ -245,11 +274,23 @@ export const TeamworkTaskSelect = ({
                   {taskGroups.map((taskGroup, index) => {
                     return (
                       <CommandGroup
-                        heading={taskGroup.tasklist}
+                        heading={
+                          <span className="group flex items-center gap-2">
+                            {taskGroup.tasklist}
+                            <a
+                              href={`${teamworkConfig?.teamworkBaseUrl}/#/tasklists/${taskGroup.tasklistId}`}
+                              target="_blank"
+                              className="flex h-full w-3 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                            >
+                              <Link className={"h-3 w-3"} />
+                            </a>
+                          </span>
+                        }
                         key={`project_${index}`}
                       >
                         <RenderTeamworkTaskWithChildren
                           tasks={taskGroup.tasks}
+                          teamworkConfig={teamworkConfig}
                           parent={taskGroup.tasklist}
                           selectedTaskId={teamworkTaskId}
                           onSelect={(task) => {
