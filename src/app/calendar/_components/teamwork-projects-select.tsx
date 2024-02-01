@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, Link } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -19,7 +19,6 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { type TeamworkProject } from "~/server/api/routers/teamwork";
-import { TeamworkTags } from "~/components/ui/teamwork-tags";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -35,6 +34,7 @@ export const TeamworkProjectsSelect = ({
   onChange,
 }: TeamworkProjectsSelectProps) => {
   const [open, setOpen] = useState(false);
+  const [firstOpen, setFirstOpen] = useState(false);
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
   const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
@@ -44,6 +44,11 @@ export const TeamworkProjectsSelect = ({
     () => teamworkProjects?.find((project) => project.id === projectId),
     [projectId, teamworkProjects],
   );
+  useEffect(() => {
+    if (firstOpen === false && open === true) {
+      setFirstOpen(true);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (teamworkProjects && teamworkProjects.length > 0) {
@@ -98,11 +103,13 @@ export const TeamworkProjectsSelect = ({
             },
           )}
         >
-          {teamworkProjectsLoading
-            ? "Fetching projects..."
-            : projectId
-              ? `${selectedProject?.name} (${selectedProject?.company?.name})`
-              : "Select a project..."}
+          <span className="overflow-hidden text-ellipsis text-nowrap">
+            {teamworkProjectsLoading
+              ? "Fetching projects..."
+              : projectId
+                ? `${selectedProject?.name} (${selectedProject?.company?.name})`
+                : "Select a project..."}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

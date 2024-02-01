@@ -25,7 +25,7 @@ import {
   useGetTasks,
   useUpdateTask,
 } from "~/lib/hooks/use-task-api";
-import { ICalendarViewInfo } from "@pnp/graph/calendars";
+import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
 
 export type CalendarDisplayProps = {};
@@ -67,7 +67,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     (start: Date, end: Date) => {
       if (closestEventsAtEnd.current && closestEventsAtEnd.current.length > 0) {
         closestEventsAtEnd.current.forEach((event) => {
-          if (end <= event.end!) {
+          if (end >= event.end!) {
             return;
           }
           if (event.extendedProps?.type === "TIMER") {

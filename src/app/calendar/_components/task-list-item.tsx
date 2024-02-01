@@ -12,6 +12,8 @@ import { TeamworkProjectsSelect } from "./teamwork-projects-select";
 import { TeamworkTaskSelect } from "./teamwork-task-select";
 import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
 import dayjs from "dayjs";
+import { History } from "lucide-react";
+import { Badge } from "~/components/ui/badge";
 
 export type TaskListItemProps = { event: EventInput };
 export const TaskListItem = ({ event }: TaskListItemProps) => {
@@ -138,22 +140,23 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   return (
     <div className="flex flex-col gap-2 @container/event">
       <div className="text-sm text-muted-foreground">
-        <span className="mr-1">{time}</span>
-        <span>
-          (
-          {getHoursMinutesTextFromDates(
-            event.start!,
-            endDate,
-            true,
-            isActiveTimer,
-          )}
-          )
+        <span className="mr-1 flex items-center gap-1">
+          {isActiveTimer && <History className="w-4" />}
+          <span>{time}</span>
+          <Badge variant="outline" className="text-muted-foreground">
+            {getHoursMinutesTextFromDates(
+              event.start!,
+              endDate,
+              true,
+              isActiveTimer,
+            )}
+          </Badge>
         </span>
       </div>
-      <div>{event.title}</div>
+      <div className="mb-2 text-lg">{event.title}</div>
       <div className="grid w-full grid-cols-1 gap-4 @md/event:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <Label>Project</Label>
+          <Label className="text-muted-foreground">Project</Label>
           <TeamworkProjectsSelect
             projectId={selectedProjectId}
             onChange={(selectedProject) => {
@@ -165,7 +168,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label>Task</Label>
+          <Label className="text-muted-foreground">Task</Label>
           <TeamworkTaskSelect
             projectId={selectedProjectId}
             teamworkTaskId={selectedTeamworkTaskId}
@@ -178,7 +181,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
           />
         </div>
         <div className="col-span-full grid gap-2">
-          <Label>Description</Label>
+          <Label className="text-muted-foreground">Description</Label>
           <Textarea
             placeholder="Add some notes..."
             value={description}

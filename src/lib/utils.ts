@@ -2,14 +2,10 @@ import { type ClassValue, clsx } from "clsx";
 import dayjs from "dayjs";
 import { type InferSelectModel } from "drizzle-orm";
 import { twMerge } from "tailwind-merge";
-import {
-  type tasks as tasksSchema,
-  type timers as timersSchema,
-} from "~/server/db/schema";
 import { type CalendarScheduleItemType } from "./pnp/getSchedule";
 import { type DateInput, type EventInput } from "@fullcalendar/core/index.js";
 import { type InferResultType } from "~/server/db";
-import { ICalendarViewInfo } from "@pnp/graph/calendars";
+import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -53,6 +49,22 @@ export const getHoursMinutesSecondsTextFromSeconds = (
     if (totalSeconds === 0 || seconds > 0) {
       display.push(`${seconds}${condensed ? "s" : " seconds"}`);
     }
+  }
+  return display.join(condensed ? " " : " and ");
+};
+
+export const getHoursMinutesTextFromMinutes = (
+  totalMinutes: number,
+  condensed = false,
+) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const display = [];
+  if (hours > 0) {
+    display.push(`${hours}${condensed ? "h" : " hours"}`);
+  }
+  if (minutes > 0) {
+    display.push(`${minutes}${condensed ? "m" : " minutes"}`);
   }
   return display.join(condensed ? " " : " and ");
 };

@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { cn } from "~/lib/utils";
+import { cn, getHoursMinutesTextFromMinutes } from "~/lib/utils";
 import {
   Tag,
   type TeamworkConfig,
@@ -25,6 +25,7 @@ import {
 } from "~/server/api/routers/teamwork";
 import { MagnifyingGlassIcon, SymbolIcon } from "@radix-ui/react-icons";
 import { TeamworkTags } from "~/components/ui/teamwork-tags";
+import { Badge } from "~/components/ui/badge";
 
 type TeamworkTaskWithChildren = TeamworkTask & {
   children: TeamworkTaskWithChildren[];
@@ -100,6 +101,17 @@ const RenderTeamworkTaskWithChildren = ({
                 <TeamworkTags tags={task.tags} />
               </div>
             )}
+            {!!task["estimated-minutes"] && task["estimated-minutes"] > 0 && (
+              <div className="mt-1 flex flex-wrap justify-end gap-2">
+                <Badge variant="outline">
+                  Est{" "}
+                  {getHoursMinutesTextFromMinutes(
+                    task["estimated-minutes"],
+                    true,
+                  )}
+                </Badge>
+              </div>
+            )}
           </CommandItem>
           {task.children?.length > 0 && (
             <RenderTeamworkTaskWithChildren
@@ -133,6 +145,7 @@ export const TeamworkTaskSelect = ({
 }: TeamworkTaskSelectProps) => {
   const [open, setOpen] = useState(false);
   const [firstOpen, setFirstOpen] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
   const utils = api.useUtils();
 
   const [taskGroups, setTaskGroups] = useState<TeamworkTaskGroup[]>([]);
@@ -167,6 +180,7 @@ export const TeamworkTaskSelect = ({
   );
   useEffect(() => {
     if (firstOpen === false && open === true) {
+      setHasFocus(true);
       setFirstOpen(true);
     }
   }, [open]);
@@ -224,15 +238,17 @@ export const TeamworkTaskSelect = ({
             },
           )}
         >
-          {!projectId
-            ? "Select a project first..."
-            : (teamworkProjectTasksLoading || teamworkTaskLoading) &&
-                !selectedTask &&
-                teamworkTaskId
-              ? "Fetching tasks..."
-              : teamworkTaskId && selectedTask
-                ? `${selectedTask?.content} (${selectedTask?.["todo-list-name"]})`
-                : "Select task..."}
+          <span className="overflow-hidden text-ellipsis text-nowrap">
+            {!projectId
+              ? "Select a project first..."
+              : (teamworkProjectTasksLoading || teamworkTaskLoading) &&
+                  !selectedTask &&
+                  teamworkTaskId
+                ? "Fetching tasks..."
+                : teamworkTaskId && selectedTask
+                  ? `${selectedTask?.content} (${selectedTask?.["todo-list-name"]})`
+                  : "Select task..."}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
