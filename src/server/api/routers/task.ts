@@ -17,7 +17,6 @@ export const taskRouter = createTRPCRouter({
           teamworkTask: true,
         },
         where: and(
-          ne(tasks.activeTimerRunning, true),
           eq(tasks.userId, ctx.session?.user.id),
           or(between(tasks.start, start, end), between(tasks.end, start, end)),
         ),

@@ -1,32 +1,24 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import { formatRange, type EventInput } from "@fullcalendar/core";
 import {
-  TasksWithTeamworkTaskSelectSchema,
+  type TasksWithTeamworkTaskSelectSchema,
   getHoursMinutesTextFromDates,
 } from "~/lib/utils";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
 import { TeamworkProjectsSelect } from "./teamwork-projects-select";
 import { TeamworkTaskSelect } from "./teamwork-task-select";
-import { TeamworkProject, TeamworkTask } from "~/server/api/routers/teamwork";
 import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
 import dayjs from "dayjs";
-import { Badge } from "~/components/ui/badge";
 
 export type TaskListItemProps = { event: EventInput };
 export const TaskListItem = ({ event }: TaskListItemProps) => {
   const task = event.extendedProps?.task as
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
+  const isActiveTimer = event.extendedProps?.type === "TIMER";
   const [time, setTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(event.end as Date);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
@@ -85,29 +77,23 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
     }
   };
   useEffect(() => {
-    if (event.extendedProps?.type === "TIMER") {
-      setEndDate(new Date());
+    if (isActiveTimer) {
       const interval = setInterval(() => {
-        updateTimerEvent();
+        const plusOneSecond = dayjs().add(1, "second").toDate();
+        updateEventTimeDisplay(plusOneSecond);
       }, 1000);
+      updateEventTimeDisplay(new Date());
       return () => {
         clearInterval(interval);
       };
     } else {
-      setEndDate(event.end as Date);
-      setTime(
-        formatRange(event.start!, event.end!, {
-          hour: "numeric",
-          minute: "numeric",
-        }),
-      );
+      updateEventTimeDisplay(event.end as Date);
     }
   }, [event]);
-  const updateTimerEvent = () => {
-    const plusOneSecond = dayjs(endDate).add(1, "second").toDate();
-    setEndDate(plusOneSecond);
+  const updateEventTimeDisplay = (endDate: Date) => {
+    setEndDate(endDate);
     setTime(
-      formatRange(event.start!, plusOneSecond, {
+      formatRange(event.start!, endDate, {
         hour: "numeric",
         minute: "numeric",
       }),
@@ -154,7 +140,14 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
       <div className="text-sm text-muted-foreground">
         <span className="mr-1">{time}</span>
         <span>
-          ({getHoursMinutesTextFromDates(event.start!, endDate, true)})
+          (
+          {getHoursMinutesTextFromDates(
+            event.start!,
+            endDate,
+            true,
+            isActiveTimer,
+          )}
+          )
         </span>
       </div>
       <div>{event.title}</div>

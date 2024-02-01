@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction"; // for selectable
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
-import { EventApi, type EventInput } from "@fullcalendar/core";
+import { type EventApi, type EventInput } from "@fullcalendar/core";
 import {
-  TasksWithTeamworkTaskSelectSchema,
+  type TasksWithTeamworkTaskSelectSchema,
   getCalendarEvents,
   getHoursMinutesTextFromDates,
 } from "~/lib/utils";
@@ -19,7 +19,11 @@ import {
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useDebounceCallback } from "~/lib/hooks/use-debounce-callback";
-import { useCreateTask, useUpdateTask } from "~/lib/hooks/use-task-api";
+import {
+  useCreateTask,
+  useGetTasks,
+  useUpdateTask,
+} from "~/lib/hooks/use-task-api";
 
 export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
@@ -41,14 +45,11 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
       enabled: !!weekOf,
     },
   );
-  const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
-    {
-      weekOf: weekOf,
-    },
-    {
-      enabled: !!weekOf,
-    },
+  const { data: personalTasks } = useGetTasks();
+
+  const activeTask = useMemo(
+    () => personalTasks?.find((f) => f.activeTimerRunning),
+    [personalTasks],
   );
 
   const debouncedEventResizeCallback = useDebounceCallback(
@@ -89,7 +90,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
 
   useEffect(() => {
     setEvents();
-  }, [schedule, activeTask, personalTasks]);
+  }, [schedule, personalTasks]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -112,7 +113,6 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
 
   const setEvents = () => {
     const { newEvents, businessHours } = getCalendarEvents({
-      activeTask: activeTask,
       tasks: personalTasks,
       schedule,
     });
@@ -124,11 +124,16 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
 
   const updateTimerEvent = () => {
     const calendarApi = calendarRef.current!.getApi();
-    const timerEvent = calendarApi.getEventById("TIMER");
-    if (timerEvent) {
-      timerEvent.setProp("editable", true);
-      timerEvent.moveEnd("00:00:01");
-      timerEvent.setProp("editable", false);
+    const allEvents = calendarApi.getEvents();
+    const timerEvents = allEvents.filter(
+      (f) => f.extendedProps?.type === "TIMER",
+    );
+    if (timerEvents && timerEvents.length > 0) {
+      timerEvents.forEach((timerEvent) => {
+        timerEvent.setProp("editable", true);
+        timerEvent.moveEnd("00:00:01");
+        timerEvent.setProp("editable", false);
+      });
     }
   };
   const [isDragging, setIsDragging] = useState(false);
@@ -155,6 +160,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
               debouncedEventResizeCallback(start, end);
             }
           }
+          const isActiveTimer = arg.event.extendedProps?.type === "TIMER";
           return (
             <HoverCard openDelay={500}>
               <HoverCardTrigger asChild>
@@ -168,6 +174,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
                           arg.event.start!,
                           arg.event.end!,
                           true,
+                          isActiveTimer,
                         )}
                         )
                       </span>

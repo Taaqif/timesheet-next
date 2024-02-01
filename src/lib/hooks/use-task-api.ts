@@ -1,3 +1,4 @@
+import { useCalendarStore } from "~/app/_store";
 import { api } from "~/trpc/react";
 
 export const useUpdateTask = () => {
@@ -34,4 +35,17 @@ export const useCreateTask = () => {
     },
   });
   return createTask;
+};
+
+export const useGetTasks = () => {
+  const weekOf = useCalendarStore((s) => s.weekOf);
+  const tasks = api.task.getPersonalTasks.useQuery(
+    {
+      weekOf: weekOf,
+    },
+    {
+      enabled: !!weekOf,
+    },
+  );
+  return tasks;
 };

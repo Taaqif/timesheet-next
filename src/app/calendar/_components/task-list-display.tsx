@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import { type EventInput } from "@fullcalendar/core";
@@ -6,6 +12,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { getCalendarEvents } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
+import { useGetTasks } from "~/lib/hooks/use-task-api";
 
 export type TaskListDisplayProps = {};
 export const TaskListDisplay = ({}: TaskListDisplayProps) => {
@@ -20,25 +27,16 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
       enabled: !!weekOf,
     },
   );
-  const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const { data: personalTasks } = api.task.getPersonalTasks.useQuery(
-    {
-      weekOf: weekOf,
-    },
-    {
-      enabled: !!weekOf,
-    },
-  );
+  const { data: personalTasks } = useGetTasks();
 
   useEffect(() => {}, [weekOf]);
 
   useEffect(() => {
     setEvents();
-  }, [activeTask, personalTasks, selectedDate]);
+  }, [personalTasks, selectedDate]);
 
   const setEvents = () => {
     const { newEvents } = getCalendarEvents({
-      activeTask: activeTask,
       tasks: personalTasks,
     });
     setCalendarEvents(
