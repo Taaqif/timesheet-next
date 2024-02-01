@@ -73,16 +73,6 @@ export const verificationTokens = pgTable(
   }),
 );
 
-export const timers = pgTable("timer", {
-  id: serial("id").primaryKey(),
-  startedAt: timestamp("startedAt").notNull(),
-  stoppedAt: timestamp("stoppedAt"),
-  active: boolean("active"),
-  userId: text("userId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-});
-
 export const tasks = pgTable("task", {
   id: serial("id").primaryKey(),
   start: timestamp("start").notNull(),
