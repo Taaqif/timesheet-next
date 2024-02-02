@@ -4,6 +4,8 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction"; // for selectable
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 import { type EventApi, type EventInput } from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
@@ -27,6 +29,7 @@ import {
 } from "~/lib/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
+import { createDuration } from "@fullcalendar/core/internal";
 
 export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
@@ -138,16 +141,13 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
 
   const updateTimerEvent = () => {
     const calendarApi = calendarRef.current!.getApi();
-    const allEvents = calendarApi.getEvents();
-    const timerEvents = allEvents.filter(
-      (f) => f.extendedProps?.type === "TIMER",
-    );
-    if (timerEvents && timerEvents.length > 0) {
-      timerEvents.forEach((timerEvent) => {
+    if (activeTask) {
+      const timerEvent = calendarApi.getEventById(`TASK_${activeTask?.id}`);
+      if (timerEvent) {
         timerEvent.setProp("editable", true);
         timerEvent.moveEnd("00:00:01");
         timerEvent.setProp("editable", false);
-      });
+      }
     }
   };
   const [isDragging, setIsDragging] = useState(false);
@@ -252,9 +252,35 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
           );
         }}
         plugins={[interactionPlugin, timeGridPlugin]}
+        nowIndicatorContent={(arg) => {
+          if (arg.isAxis) {
+            const formatTime = dayjs(arg.date).format("h:mma");
+            return <span className="">{formatTime}</span>;
+          } else {
+          }
+        }}
+        slotLabelClassNames={(arg) => {
+          const slotDuration = arg.view.calendar.getOption("slotDuration");
+          const duration = createDuration(slotDuration as string);
+          const nowTime = dayjs().format("HH:mm");
+          const now = dayjs(`1970-01-01T${nowTime}`);
+          if (
+            duration &&
+            now.isBetween(
+              arg.date,
+              dayjs(arg.date).add(duration.milliseconds, "milliseconds"),
+              "milliseconds",
+              "[]",
+            )
+          ) {
+            return "transition opacity-0";
+          }
+          return "transition";
+        }}
         initialView="timeGridDay"
         height={"100%"}
         selectable
+        headerToolbar={false}
         selectMinDistance={5}
         select={async (arg) => {
           const start = arg.start;

@@ -78,7 +78,6 @@ const weekMap: Record<string, number> = {
   friday: 5,
   saturday: 6,
 };
-export type TimerSelectSchema = InferSelectModel<typeof timersSchema>;
 export type TasksWithTeamworkTaskSelectSchema = InferResultType<
   "tasks",
   { teamworkTask: true }

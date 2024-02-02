@@ -27,6 +27,8 @@
   --fc-border-color: hsl(var(--border));
   --fc-page-bg-color: hsl(var(--background));
   --fc-event-border-color: transparent;
+  --fc-today-bg-color: transparent;
+  --fc-now-indicator-color: #e35757;
 }
 
 .dark {
@@ -55,6 +57,31 @@
 .fc-timegrid-event,
 .fc-timegrid-more-link {
   border-radius: 6px;
+}
+.fc .fc-timegrid-now-indicator-arrow {
+  margin-top: -12px;
+  margin-right: 1px;
+  color: var(--fc-now-indicator-color);
+  position: absolute;
+  right: 0;
+  text-align: right;
+  left: 0;
+  font-size: 15px;
+  text-wrap: nowrap;
+  border: none;
+  /* background: var(--color-background); */
+}
+.fc .fc-timegrid-now-indicator-line::before {
+  position: absolute;
+  display: block;
+  content: "";
+  margin-top: -7px;
+  width: 13px;
+  height: 13px;
+  border-radius: 13px;
+  border: 1px solid var(--fc-now-indicator-color);
+  background-color: var(--fc-now-indicator-color);
+  left: calc(var(--fc-now-indicator-shift) - 3px);
 }
 .fc-highlight,
 .fc-timegrid-event {

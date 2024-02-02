@@ -33,6 +33,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   const [hasTaskChange, setHasTaskChange] = useState(false);
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const eventRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [selectedTeamworkTaskId, setSelectedTeamworkTaskId] = useState<string>(
     task?.teamworkTask?.teamworkTaskId ?? "",
   );
@@ -108,10 +109,17 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   useEffect(() => {
     setSelectedProjectId(task?.teamworkTask?.teamworkProjectId ?? "");
     setSelectedTeamworkTaskId(task?.teamworkTask?.teamworkTaskId ?? "");
-    setDescription(task?.description ?? "");
+    if (document.activeElement !== descriptionRef.current) {
+      setDescription(task?.description ?? "");
+    }
   }, [event]);
 
   useEffect(() => {
+    const activeElement = document.activeElement;
+    const tag = activeElement?.tagName.toLowerCase();
+    if (tag === "input" || tag === "textarea") {
+      return;
+    }
     if (selectedEventId === event.id) {
       eventRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -199,6 +207,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
         <div className="col-span-full grid gap-2">
           <Label className="text-muted-foreground">Description</Label>
           <Textarea
+            ref={descriptionRef}
             placeholder="Add some notes..."
             value={description}
             onChange={(e) => {

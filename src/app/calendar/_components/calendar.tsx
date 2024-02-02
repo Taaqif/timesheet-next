@@ -10,7 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TooltipProvider } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { Nav } from "./nav";
-import { File, Inbox, Search, Timer } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  File,
+  Inbox,
+  Search,
+  Timer,
+} from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { TimesheetProgress } from "./timesheet-progress";
@@ -23,6 +30,8 @@ import {
   useDeleteTask,
   useUpdateTask,
 } from "~/lib/hooks/use-task-api";
+import { useCalendarStore } from "~/app/_store";
+import dayjs from "dayjs";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -33,8 +42,10 @@ export function Calendar({
   defaultLayout = [265, 440, 655],
 }: CalendarProps) {
   const navCollapsedSize = 4;
+  const selectedDate = useCalendarStore((s) => s.selectedDate);
+  const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
+
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
-  const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -105,8 +116,43 @@ export function Calendar({
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
             <div className="flex h-full flex-col">
-              <div className="flex items-center px-4 py-2">
-                <h1 className="text-xl font-bold">Inbox</h1>
+              <div className="flex items-center justify-between px-4 py-4">
+                <h1 className="flex-1 text-3xl">
+                  {dayjs(selectedDate).format("dddd, DD MMMM YYYY")}
+                </h1>
+                <div className="flex gap-2">
+                  <Button
+                    className="mr-2"
+                    variant="secondary"
+                    onClick={() => {
+                      setSelectedDate(new Date());
+                    }}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedDate(
+                        dayjs(selectedDate).add(-1, "day").toDate(),
+                      );
+                    }}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedDate(
+                        dayjs(selectedDate).add(1, "day").toDate(),
+                      );
+                    }}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </div>
               </div>
               <Separator />
 
