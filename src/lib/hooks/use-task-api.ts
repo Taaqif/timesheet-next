@@ -6,17 +6,38 @@ import { type TimeEntry } from "~/server/api/routers/teamwork";
 import { type RouterInputs, type RouterOutputs } from "~/trpc/shared";
 import { type InferSelectModel } from "drizzle-orm";
 import { type tasks } from "~/server/db/schema";
+import { ex } from "node_modules/@fullcalendar/core/internal-common";
+import { toast } from "sonner";
 
 export const useDeleteTask = () => {
   const utils = api.useUtils();
-
-  const deleteTask = api.task.deletePersonalTask.useMutation({
-    async onSuccess() {
-      await utils.task.getPersonalTasks.invalidate();
-      await utils.task.getActiveTask.invalidate();
-    },
-  });
-  return deleteTask;
+  const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
+  const {
+    mutate: mutateOrig,
+    mutateAsync: mutateAsyncOrig,
+    ...rest
+  } = api.task.deletePersonalTask.useMutation();
+  const mutateAsync = async (
+    payload: RouterInputs["task"]["deletePersonalTask"],
+  ): Promise<RouterOutputs["task"]["deletePersonalTask"]> => {
+    const result = await mutateAsyncOrig(payload);
+    const { existingTask } = result;
+    if (existingTask.teamworkTask?.teamworkTimeEntryId) {
+      await deleteTimeEntry.mutateAsync({
+        timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
+      });
+    }
+    await utils.task.getPersonalTasks.invalidate();
+    await utils.task.getActiveTask.invalidate();
+    toast("Task deleted");
+    return result;
+  };
+  const mutate = (payload: RouterInputs["task"]["deletePersonalTask"]) => {
+    mutateAsync(payload).catch(() => {
+      //noop
+    });
+  };
+  return { mutate, mutateAsync, ...rest };
 };
 
 export const useSessionTeamworkPerson = () => {
@@ -75,20 +96,24 @@ export const useUpdateTask = () => {
   ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
     const result = await mutateAsyncOrig(payload);
     const { existingTask, updatedTask } = result;
+    let timeEntryDeleted = false;
     if (
       !updatedTask?.logTime &&
-      updatedTask?.teamworkTask?.teamworkTimeEntryId
+      existingTask?.teamworkTask?.teamworkTimeEntryId
     ) {
       await deleteTimeEntry.mutateAsync({
-        timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
+        timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
       });
-    } else if (
-      updatedTask?.logTime &&
-      teamworkPerson?.id &&
-      updatedTask?.teamworkTask?.teamworkTaskId
-    ) {
+      timeEntryDeleted = true;
+      await updateTask.mutateAsync({
+        id: payload.id,
+        task: { ...updatedTask! },
+        teamworkTask: {
+          teamworkTimeEntryId: "",
+        },
+      });
+    } else if (updatedTask?.logTime && teamworkPerson?.id) {
       const timeEntry = getTimeEntry(updatedTask, teamworkPerson.id);
-
       if (
         existingTask.teamworkTask.teamworkTaskId !==
           updatedTask?.teamworkTask.teamworkTaskId &&
@@ -98,15 +123,19 @@ export const useUpdateTask = () => {
         await deleteTimeEntry.mutateAsync({
           timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
         });
+        timeEntryDeleted = true;
       }
 
-      if (updatedTask?.teamworkTask?.teamworkTimeEntryId) {
+      if (
+        updatedTask?.teamworkTask?.teamworkTimeEntryId &&
+        timeEntryDeleted === false
+      ) {
         // update time entry
         await updateTimeEntry.mutateAsync({
           timeEntryId: updatedTask?.teamworkTask?.teamworkTimeEntryId,
           timeEntry,
         });
-      } else {
+      } else if (updatedTask?.teamworkTask?.teamworkTaskId) {
         // create new time entry
         const id = await createTimeEntry.mutateAsync({
           taskId: updatedTask?.teamworkTask?.teamworkTaskId,
@@ -117,11 +146,19 @@ export const useUpdateTask = () => {
             id: updatedTask.id,
             task: { ...updatedTask },
             teamworkTask: {
-              teamworkTimeEntryId: `${id}`,
+              teamworkTimeEntryId: id,
             },
           });
         }
       }
+    } else if (
+      updatedTask?.logTime &&
+      !updatedTask?.teamworkTask.teamworkTimeEntryId
+    ) {
+      await updateTask.mutateAsync({
+        id: updatedTask.id,
+        task: { ...updatedTask, logTime: false, billable: false },
+      });
     }
     await utils.task.getPersonalTasks.invalidate();
     await utils.task.getActiveTask.invalidate();
@@ -166,11 +203,12 @@ export const useCreateTask = () => {
           id: createdTask.id,
           task: { ...createdTask },
           teamworkTask: {
-            teamworkTimeEntryId: `${id}`,
+            teamworkTimeEntryId: id,
           },
         });
       }
     }
+    toast("Task created");
     await utils.task.getPersonalTasks.invalidate();
     await utils.task.getActiveTask.invalidate();
     return result;

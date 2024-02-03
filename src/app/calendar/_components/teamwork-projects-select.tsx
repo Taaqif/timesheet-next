@@ -97,7 +97,7 @@ export const TeamworkProjectsSelect = ({
           }}
           aria-expanded={open}
           className={cn(
-            "h-auto w-full justify-between whitespace-normal bg-transparent text-left font-normal",
+            "h-auto w-full min-w-0 justify-between whitespace-normal bg-transparent text-left font-normal",
             {
               "text-muted-foreground": !projectId,
             },

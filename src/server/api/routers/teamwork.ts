@@ -204,7 +204,7 @@ export interface TimeEntry {
   tags?: string;
 }
 
-const TimeEntryInput = z.object({
+const TimeEntrySchema = z.object({
   description: z.string().optional(),
   "person-id": z.string().optional(),
   date: z.string(),
@@ -373,36 +373,43 @@ export const teamworkRouter = createTRPCRouter({
     .input(
       z.object({
         taskId: z.string(),
-        timeEntry: TimeEntryInput,
+        timeEntry: TimeEntrySchema,
       }),
     )
     .mutation(async ({ input }) => {
       const response = await fetch(
-        `${teamworkBaseUrl}/task/${input.taskId}/time_entries.json}`,
+        `${teamworkBaseUrl}/tasks/${input.taskId}/time_entries.json`,
         {
           method: "POST",
-          body: JSON.stringify({ "time-entry": input.timeEntry }),
+          body: JSON.stringify({
+            "time-entry": input.timeEntry,
+          }),
           headers: {
             Authorization: teamworkBasicAuth,
+            "content-type": "application/json",
           },
         },
       );
-      const { id } = (await response.json()) as {
-        id: number;
+      const { timeLogId } = (await response.json()) as {
+        timeLogId: string;
         status: string;
       };
-      return id;
+      if (!timeLogId) {
+        throw "could not create time entry";
+      }
+
+      return timeLogId;
     }),
   updateTimeEntry: protectedProcedure
     .input(
       z.object({
         timeEntryId: z.string(),
-        timeEntry: TimeEntryInput,
+        timeEntry: TimeEntrySchema,
       }),
     )
     .mutation(async ({ input }) => {
       const response = await fetch(
-        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json}`,
+        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json`,
         {
           method: "PUT",
           body: JSON.stringify({ "time-entry": input.timeEntry }),
@@ -421,7 +428,7 @@ export const teamworkRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const response = await fetch(
-        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json}`,
+        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json`,
         {
           method: "DELETE",
           headers: {
@@ -439,7 +446,7 @@ export const teamworkRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const response = await fetch(
-        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json}`,
+        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json`,
         {
           method: "GET",
           headers: {

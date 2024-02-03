@@ -117,10 +117,12 @@ export const taskRouter = createTRPCRouter({
           },
         );
         if (existingTeamworkTask) {
-          await ctx.db
-            .update(teamworkTasks)
-            .set({ ...input.teamworkTask })
-            .where(and(eq(teamworkTasks.taskId, input.id)));
+          if (input.teamworkTask) {
+            await ctx.db
+              .update(teamworkTasks)
+              .set({ ...input.teamworkTask })
+              .where(and(eq(teamworkTasks.taskId, input.id)));
+          }
         } else {
           await ctx.db
             .insert(teamworkTasks)
@@ -146,12 +148,24 @@ export const taskRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const existingTask = await ctx.db.query.tasks.findFirst({
+        with: {
+          teamworkTask: true,
+        },
+        where: and(
+          eq(tasks.id, input.id),
+          eq(tasks.userId, ctx.session.user.id),
+        ),
+      });
+      if (!existingTask) {
+        throw "could not delete task";
+      }
       await ctx.db
         .delete(tasks)
         .where(
           and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
         );
-      return true;
+      return { existingTask };
     }),
 
   getActiveTask: protectedProcedure.query(async ({ ctx }) => {
