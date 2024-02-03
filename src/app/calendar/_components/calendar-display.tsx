@@ -101,7 +101,12 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
 
   useEffect(() => {
     const calendarApi = calendarRef?.current?.getApi();
-    calendarApi?.scrollToTime(dayjs().add(-2, "hours").format("HH:mm:ss"));
+    const now = dayjs();
+    let scrollToTime = now.add(-2, "hours");
+    if (now.hour() > 10) {
+      scrollToTime = now.add(-4, "hours");
+    }
+    calendarApi?.scrollToTime(scrollToTime.format("HH:mm:ss"));
   }, [weekOf]);
 
   useEffect(() => {

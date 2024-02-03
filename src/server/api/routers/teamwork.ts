@@ -193,6 +193,28 @@ export interface TeamworkPerson {
   twitter?: string;
   lengthOfDay?: string;
 }
+export interface TimeEntry {
+  description?: string;
+  "person-id"?: string;
+  date: string;
+  time: string;
+  hours: number;
+  minutes: number;
+  isbillable?: boolean;
+  tags?: string;
+}
+
+const TimeEntryInput = z.object({
+  description: z.string().optional(),
+  "person-id": z.string().optional(),
+  date: z.string(),
+  time: z.string(),
+  hours: z.number(),
+  minutes: z.number(),
+  isbillable: z.boolean().optional(),
+  tags: z.string().optional(),
+}) satisfies z.ZodType<TimeEntry>;
+
 export type TeamworkConfig = {
   teamworkBaseUrl: string;
 };
@@ -233,7 +255,7 @@ export const teamworkRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const params = new URLSearchParams({});
       const response = await fetch(
-        `${teamworkBaseUrl}/tasks/${input.taskId}.json${params.toString()}`,
+        `${teamworkBaseUrl}/tasks/${input.taskId}.json?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -309,33 +331,7 @@ export const teamworkRouter = createTRPCRouter({
         searchTerm: input.searchTerm,
       });
       const response = await fetch(
-        `${teamworkBaseUrl}/people.json${params.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: teamworkBasicAuth,
-          },
-        },
-      );
-      const { people } = (await response.json()) as {
-        status: string;
-        people: TeamworkPerson[];
-      };
-      if (people.length > 0) {
-        return people[0];
-      }
-      return null;
-    }),
-  getPeopleInCompany: protectedProcedure
-    .input(
-      z.object({
-        companyId: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const params = new URLSearchParams({});
-      const response = await fetch(
-        `${teamworkBaseUrl}/companies/${input.companyId}/people.json${params.toString()}`,
+        `${teamworkBaseUrl}/people.json?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -348,5 +344,113 @@ export const teamworkRouter = createTRPCRouter({
         people: TeamworkPerson[];
       };
       return people;
+    }),
+  getPeopleInCompany: protectedProcedure
+    .input(
+      z.object({
+        companyId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const params = new URLSearchParams({});
+      const response = await fetch(
+        `${teamworkBaseUrl}/companies/${input.companyId}/people.json?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      const { people } = (await response.json()) as {
+        status: string;
+        people: TeamworkPerson[];
+      };
+      return people;
+    }),
+
+  createTimeEntryForTask: protectedProcedure
+    .input(
+      z.object({
+        taskId: z.string(),
+        timeEntry: TimeEntryInput,
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const response = await fetch(
+        `${teamworkBaseUrl}/task/${input.taskId}/time_entries.json}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ "time-entry": input.timeEntry }),
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      const { id } = (await response.json()) as {
+        id: number;
+        status: string;
+      };
+      return id;
+    }),
+  updateTimeEntry: protectedProcedure
+    .input(
+      z.object({
+        timeEntryId: z.string(),
+        timeEntry: TimeEntryInput,
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const response = await fetch(
+        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ "time-entry": input.timeEntry }),
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      await response.json();
+    }),
+  deleteTimeEntry: protectedProcedure
+    .input(
+      z.object({
+        timeEntryId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const response = await fetch(
+        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      await response.json();
+    }),
+  getTimeEntry: protectedProcedure
+    .input(
+      z.object({
+        timeEntryId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const response = await fetch(
+        `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      const { "time-entry": timeEntry } = (await response.json()) as {
+        ["time-entry"]: TimeEntry;
+        status: string;
+      };
+      return timeEntry;
     }),
 });

@@ -71,6 +71,9 @@
   border: none;
   /* background: var(--color-background); */
 }
+.fc .fc-timegrid-now-indicator-line {
+  border-width: 2px 0px 0px;
+}
 .fc .fc-timegrid-now-indicator-line::before {
   position: absolute;
   display: block;

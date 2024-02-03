@@ -15,6 +15,8 @@ import dayjs from "dayjs";
 import { History } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { useCalendarStore } from "~/app/_store";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Switch } from "~/components/ui/switch";
 
 export type TaskListItemProps = { event: EventInput };
 export const TaskListItem = ({ event }: TaskListItemProps) => {
@@ -38,6 +40,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
     task?.teamworkTask?.teamworkTaskId ?? "",
   );
   const [description, setDescription] = useState("");
+  const [logTime, setLogTime] = useState(false);
 
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
     api.teamwork.getAllProjects.useQuery();
@@ -71,6 +74,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
           ...task,
           title: title,
           description: description,
+          logTime: logTime,
         },
         teamworkTask: {
           ...task.teamworkTask,
@@ -109,6 +113,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   useEffect(() => {
     setSelectedProjectId(task?.teamworkTask?.teamworkProjectId ?? "");
     setSelectedTeamworkTaskId(task?.teamworkTask?.teamworkTaskId ?? "");
+    setLogTime(task?.logTime ?? false);
     if (document.activeElement !== descriptionRef.current) {
       setDescription(task?.description ?? "");
     }
@@ -125,13 +130,13 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
         behavior: "smooth",
       });
     }
-  }, [selectedEventId, event]);
+  }, [selectedEventId]);
 
   useEffect(() => {
     if (shouldSave === true) {
       if (hasChange === true) {
         let save = true;
-        if (hasTaskChange && !selectedTeamworkTask) {
+        if (hasTaskChange && !selectedTeamworkTask && !selectedProject) {
           save = false;
         }
         if (hasProjectChange && !selectedProject) {
@@ -182,10 +187,10 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
           <TeamworkProjectsSelect
             projectId={selectedProjectId}
             onChange={(selectedProject) => {
-              setSelectedProjectId(selectedProject?.id ?? "");
-              setHasProjectChange(true);
-              setSelectedTeamworkTaskId("");
               setHasTaskChange(true);
+              setHasProjectChange(true);
+              setSelectedProjectId(selectedProject?.id ?? "");
+              setSelectedTeamworkTaskId("");
               setHasChange(true);
               setShouldSave(true);
             }}
@@ -197,9 +202,9 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
             projectId={selectedProjectId}
             teamworkTaskId={selectedTeamworkTaskId}
             onChange={(selectedTeamworkTask) => {
-              setSelectedTeamworkTaskId(selectedTeamworkTask?.id ?? "");
               setHasChange(true);
               setHasTaskChange(true);
+              setSelectedTeamworkTaskId(selectedTeamworkTask?.id ?? "");
               setShouldSave(true);
             }}
           />
@@ -219,6 +224,38 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
             }}
           />
         </div>
+        {selectedTeamworkTaskId && (
+          <>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={`task_${task?.id}_log`}
+                checked={logTime}
+                onCheckedChange={(checked) => {
+                  setLogTime(checked === true);
+                  setHasChange(true);
+                  setShouldSave(true);
+                }}
+              />
+              <Label
+                htmlFor={`task_${task?.id}_log`}
+                className=" cursor-pointer text-muted-foreground"
+              >
+                Log time
+              </Label>
+              {logTime && (
+                <div className="flex items-center space-x-2">
+                  <Switch id={`task_${task?.id}_billable`} />
+                  <Label
+                    htmlFor={`task_${task?.id}_billable`}
+                    className=" cursor-pointer text-muted-foreground"
+                  >
+                    Billable
+                  </Label>
+                </div>
+              )}
+            </div>
+          </>
+        )}
         <div className="col-span-full flex justify-end gap-4">
           <Button
             size="sm"

@@ -7,6 +7,20 @@ import { tasks, teamworkTasks } from "~/server/db/schema";
 import dayjs from "dayjs";
 
 export const taskRouter = createTRPCRouter({
+  getPersonalTask: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const myTasks = await ctx.db.query.tasks.findFirst({
+        with: {
+          teamworkTask: true,
+        },
+        where: and(
+          eq(tasks.userId, ctx.session?.user.id),
+          eq(tasks.id, input.taskId),
+        ),
+      });
+      return myTasks ?? [];
+    }),
   getPersonalTasks: protectedProcedure
     .input(z.object({ weekOf: z.date() }))
     .query(async ({ ctx, input }) => {
@@ -34,6 +48,7 @@ export const taskRouter = createTRPCRouter({
           .omit({
             id: true,
             taskId: true,
+            teamworkTimeEntryId: true,
           })
           .optional(),
       }),
@@ -42,21 +57,24 @@ export const taskRouter = createTRPCRouter({
       const createdTasks = await ctx.db
         .insert(tasks)
         .values({ ...input.task, userId: ctx.session.user.id })
-        .returning();
-      const createdTask = createdTasks[0];
-      if (createdTask) {
-        const createdTeamworkTasks = await ctx.db
+        .returning({ id: tasks.id });
+      const createdTaskId = createdTasks[0]?.id;
+      if (createdTaskId) {
+        await ctx.db
           .insert(teamworkTasks)
-          .values({ ...input.teamworkTask, taskId: createdTask.id })
-          .returning();
-        const createdTeamworkTask = createdTeamworkTasks[0];
-        if (createdTeamworkTask) {
-          return { createdTask, createdTeamworkTask };
-        } else {
-          return { createdTask };
-        }
-      } else {
+          .values({ ...input.teamworkTask, taskId: createdTaskId });
+        const createdTask = await ctx.db.query.tasks.findFirst({
+          with: {
+            teamworkTask: true,
+          },
+          where: and(
+            eq(tasks.id, createdTaskId),
+            eq(tasks.userId, ctx.session.user.id),
+          ),
+        });
         return { createdTask };
+      } else {
+        throw "could not create task";
       }
     }),
   updatePersonalTask: protectedProcedure
@@ -76,15 +94,22 @@ export const taskRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const updatedTasks = await ctx.db
-        .update(tasks)
-        .set({ ...input.task })
-        .where(
-          and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
-        )
-        .returning();
-      const updatedTask = updatedTasks[0];
-      if (updatedTask && input.teamworkTask) {
+      const existingTask = await ctx.db.query.tasks.findFirst({
+        with: {
+          teamworkTask: true,
+        },
+        where: and(
+          eq(tasks.id, input.id),
+          eq(tasks.userId, ctx.session.user.id),
+        ),
+      });
+      if (existingTask) {
+        await ctx.db
+          .update(tasks)
+          .set({ ...input.task })
+          .where(
+            and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
+          );
         //check if teamwork task exists?
         const existingTeamworkTask = await ctx.db.query.teamworkTasks.findFirst(
           {
@@ -92,31 +117,27 @@ export const taskRouter = createTRPCRouter({
           },
         );
         if (existingTeamworkTask) {
-          const updatedTeamWorkTasks = await ctx.db
+          await ctx.db
             .update(teamworkTasks)
             .set({ ...input.teamworkTask })
-            .where(and(eq(teamworkTasks.taskId, input.id)))
-            .returning();
-          const updatedTeamWorkTask = updatedTeamWorkTasks[0];
-          if (updatedTeamWorkTask) {
-            return { updatedTask, updatedTeamWorkTask };
-          } else {
-            return { updatedTask };
-          }
+            .where(and(eq(teamworkTasks.taskId, input.id)));
         } else {
-          const updatedTeamWorkTasks = await ctx.db
+          await ctx.db
             .insert(teamworkTasks)
-            .values({ ...input.teamworkTask, taskId: input.id })
-            .returning();
-          const updatedTeamWorkTask = updatedTeamWorkTasks[0];
-          if (updatedTeamWorkTask) {
-            return { updatedTask, updatedTeamWorkTask };
-          } else {
-            return { updatedTask };
-          }
+            .values({ ...input.teamworkTask, taskId: input.id });
         }
+        const updatedTask = await ctx.db.query.tasks.findFirst({
+          with: {
+            teamworkTask: true,
+          },
+          where: and(
+            eq(tasks.id, input.id),
+            eq(tasks.userId, ctx.session.user.id),
+          ),
+        });
+        return { existingTask, updatedTask };
       }
-      return { updatedTask };
+      throw "cannot find task";
     }),
   deletePersonalTask: protectedProcedure
     .input(

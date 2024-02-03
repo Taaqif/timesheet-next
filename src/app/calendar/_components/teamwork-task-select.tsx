@@ -70,9 +70,8 @@ const RenderTeamworkTaskWithChildren = ({
   return (
     <>
       {tasks.map((task, index) => (
-        <>
+        <React.Fragment key={`${task.id}_${index}`}>
           <CommandItem
-            key={task.id}
             value={`${task.id} - ${task.content} - ${parent}`}
             onSelect={() => {
               onSelect(task);
@@ -123,7 +122,7 @@ const RenderTeamworkTaskWithChildren = ({
               teamworkConfig={teamworkConfig}
             />
           )}
-        </>
+        </React.Fragment>
       ))}
     </>
   );

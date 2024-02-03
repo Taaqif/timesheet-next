@@ -80,6 +80,8 @@ export const tasks = pgTable("task", {
   title: text("text"),
   description: text("description"),
   activeTimerRunning: boolean("activeTimerRunning").default(false),
+  logTime: boolean("logTime").default(false),
+  billable: boolean("billable").default(false),
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

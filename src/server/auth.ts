@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
           expires_at: account.expires_at,
           id: profile.oid,
         };
-      } else if (Date.now() < token.expires_at * 1000) {
+      } else if (Date.now() < token.expires_at) {
         return token;
       } else if (token.refresh_token) {
         // If the access token has expired, try to refresh it
@@ -97,8 +97,8 @@ export const authOptions: NextAuthOptions = {
           return {
             ...token,
             access_token: tokens.access_token!,
-            expires_at: Date.now() + (tokens.expires_in as number) * 1000,
-            refresh_token: tokens.refresh_token! ?? token.refreshToken, // Fall backto old refresh token
+            expires_at: Date.now() + (tokens.expires_in as number),
+            refresh_token: tokens.refresh_token! ?? token.refreshToken,
           };
         } catch (error) {
           console.error("Error refreshing access token", error);

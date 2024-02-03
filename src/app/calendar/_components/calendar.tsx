@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -50,6 +50,22 @@ export function Calendar({
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  useEffect(() => {
+    if (activeTask) {
+      const now = dayjs();
+      const timerStart = dayjs(activeTask.start);
+      if (now.isAfter(timerStart, "day")) {
+        updateTask.mutate({
+          id: activeTask.id,
+          task: {
+            ...activeTask,
+            activeTimerRunning: false,
+            end: timerStart.endOf("day").toDate(),
+          },
+        });
+      }
+    }
+  }, [activeTask]);
   return (
     <div className="h-svh">
       <TooltipProvider delayDuration={0}>
@@ -115,9 +131,9 @@ export function Calendar({
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-            <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between px-4 py-4">
-                <h1 className="flex-1 text-3xl">
+            <div className="flex h-full flex-col @container/calendar-task-list">
+              <div className="flex flex-col justify-between gap-2 px-4 py-4 @md/calendar-task-list:flex-row @md/calendar-task-list:items-center">
+                <h1 className="flex-1 text-xl md:text-2xl">
                   {dayjs(selectedDate).format("dddd, DD MMMM YYYY")}
                 </h1>
                 <div className="flex gap-2">
@@ -156,13 +172,13 @@ export function Calendar({
               </div>
               <Separator />
 
-              <div className="bg-background/95 p-4 backdrop-blur @container supports-[backdrop-filter]:bg-background/60">
+              <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <form>
                   <div className="relative">
                     <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Task" className="pl-8" />
                   </div>
-                  <div className="mt-4 flex flex-col justify-end gap-4 @md:flex-row">
+                  <div className="mt-4 flex flex-col justify-end gap-4 @md/calendar-task-list:flex-row">
                     <Button
                       type="button"
                       onClick={async () => {
