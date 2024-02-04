@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { type TeamworkProject } from "~/server/api/routers/teamwork";
+import { useSessionTeamworkPerson } from "~/lib/hooks/use-task-api";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -40,6 +41,7 @@ export const TeamworkProjectsSelect = ({
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
     api.teamwork.getAllProjects.useQuery();
 
+  const { data: teamworkPerson } = useSessionTeamworkPerson();
   const selectedProject = useMemo(
     () => teamworkProjects?.find((project) => project.id === projectId),
     [projectId, teamworkProjects],
@@ -58,9 +60,8 @@ export const TeamworkProjectsSelect = ({
 
   const setTeamworkProjectOptions = () => {
     const userTeamworkProjects =
-      teamworkProjects?.filter(
-        (t) => true,
-        // t.people.some((p) => +p === +teamworkPerson?.id)
+      teamworkProjects?.filter((t) =>
+        t.people?.some((p) => p == teamworkPerson?.id),
       ) ?? [];
 
     // eslint-disable-next-line

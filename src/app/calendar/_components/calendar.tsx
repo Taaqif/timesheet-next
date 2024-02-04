@@ -6,25 +6,23 @@ import {
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { Separator } from "~/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TooltipProvider } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { Nav } from "./nav";
 import {
+  CalendarIcon,
   ChevronLeft,
   ChevronRight,
   File,
   Inbox,
-  Search,
   Timer,
 } from "lucide-react";
-import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { TimesheetProgress } from "./timesheet-progress";
 import { CalendarDisplay } from "./calendar-display";
+import { Calendar as CalendarPicker } from "~/components/ui/calendar";
 import { api } from "~/trpc/react";
 import { TaskListDisplay } from "./task-list-display";
-import { update } from "lodash";
 import {
   useCreateTask,
   useDeleteTask,
@@ -32,6 +30,11 @@ import {
 } from "~/lib/hooks/use-task-api";
 import { useCalendarStore } from "~/app/_store";
 import dayjs from "dayjs";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -46,6 +49,7 @@ export function Calendar({
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const { data: activeTask } = api.task.getActiveTask.useQuery();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -133,13 +137,38 @@ export function Calendar({
           <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
             <div className="flex h-full flex-col @container/calendar-task-list">
               <div className="flex flex-col justify-between gap-2 px-4 py-4 @md/calendar-task-list:flex-row @md/calendar-task-list:items-center">
-                <h1 className="flex-1 text-xl md:text-2xl">
-                  {dayjs(selectedDate).format("dddd, DD MMMM YYYY")}
-                </h1>
+                <Popover
+                  open={isDatePickerOpen}
+                  onOpenChange={setIsDatePickerOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant={"ghost"} className="px-1">
+                      <h1 className="flex flex-1 items-center gap-1 text-xl md:text-2xl">
+                        <CalendarIcon className="h-6 w-6" />
+                        {dayjs(selectedDate).format("dddd, DD MMMM YYYY")}
+                      </h1>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarPicker
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date!);
+                        setIsDatePickerOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <div className="flex gap-2">
                   <Button
                     className="mr-2"
-                    variant="secondary"
+                    variant={
+                      dayjs(selectedDate).isSame(dayjs(), "day")
+                        ? "outline"
+                        : "secondary"
+                    }
                     onClick={() => {
                       setSelectedDate(new Date());
                     }}
@@ -174,11 +203,7 @@ export function Calendar({
 
               <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <form>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Task" className="pl-8" />
-                  </div>
-                  <div className="mt-4 flex flex-col justify-end gap-4 @md/calendar-task-list:flex-row">
+                  <div className="flex flex-col justify-end gap-4 @md/calendar-task-list:flex-row">
                     <Button
                       type="button"
                       onClick={async () => {

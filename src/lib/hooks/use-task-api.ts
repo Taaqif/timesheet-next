@@ -97,68 +97,70 @@ export const useUpdateTask = () => {
     const result = await mutateAsyncOrig(payload);
     const { existingTask, updatedTask } = result;
     let timeEntryDeleted = false;
-    if (
-      !updatedTask?.logTime &&
-      existingTask?.teamworkTask?.teamworkTimeEntryId
-    ) {
-      await deleteTimeEntry.mutateAsync({
-        timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
-      });
-      timeEntryDeleted = true;
-      await updateTask.mutateAsync({
-        id: payload.id,
-        task: { ...updatedTask! },
-        teamworkTask: {
-          teamworkTimeEntryId: "",
-        },
-      });
-    } else if (updatedTask?.logTime && teamworkPerson?.id) {
-      const timeEntry = getTimeEntry(updatedTask, teamworkPerson.id);
+    if (!updatedTask?.activeTimerRunning) {
       if (
-        existingTask.teamworkTask.teamworkTaskId !==
-          updatedTask?.teamworkTask.teamworkTaskId &&
-        updatedTask?.teamworkTask.teamworkTimeEntryId
+        !updatedTask?.logTime &&
+        existingTask?.teamworkTask?.teamworkTimeEntryId
       ) {
-        // delete the time entry if the task has changed
         await deleteTimeEntry.mutateAsync({
-          timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
+          timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
         });
         timeEntryDeleted = true;
-      }
-
-      if (
-        updatedTask?.teamworkTask?.teamworkTimeEntryId &&
-        timeEntryDeleted === false
-      ) {
-        // update time entry
-        await updateTimeEntry.mutateAsync({
-          timeEntryId: updatedTask?.teamworkTask?.teamworkTimeEntryId,
-          timeEntry,
+        await updateTask.mutateAsync({
+          id: payload.id,
+          task: { ...updatedTask! },
+          teamworkTask: {
+            teamworkTimeEntryId: "",
+          },
         });
-      } else if (updatedTask?.teamworkTask?.teamworkTaskId) {
-        // create new time entry
-        const id = await createTimeEntry.mutateAsync({
-          taskId: updatedTask?.teamworkTask?.teamworkTaskId,
-          timeEntry,
-        });
-        if (id) {
-          await updateTask.mutateAsync({
-            id: updatedTask.id,
-            task: { ...updatedTask },
-            teamworkTask: {
-              teamworkTimeEntryId: id,
-            },
+      } else if (updatedTask?.logTime && teamworkPerson?.id) {
+        const timeEntry = getTimeEntry(updatedTask, teamworkPerson.id);
+        if (
+          existingTask.teamworkTask.teamworkTaskId !==
+            updatedTask?.teamworkTask.teamworkTaskId &&
+          updatedTask?.teamworkTask.teamworkTimeEntryId
+        ) {
+          // delete the time entry if the task has changed
+          await deleteTimeEntry.mutateAsync({
+            timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
           });
+          timeEntryDeleted = true;
         }
+
+        if (
+          updatedTask?.teamworkTask?.teamworkTimeEntryId &&
+          timeEntryDeleted === false
+        ) {
+          // update time entry
+          await updateTimeEntry.mutateAsync({
+            timeEntryId: updatedTask?.teamworkTask?.teamworkTimeEntryId,
+            timeEntry,
+          });
+        } else if (updatedTask?.teamworkTask?.teamworkTaskId) {
+          // create new time entry
+          const id = await createTimeEntry.mutateAsync({
+            taskId: updatedTask?.teamworkTask?.teamworkTaskId,
+            timeEntry,
+          });
+          if (id) {
+            await updateTask.mutateAsync({
+              id: updatedTask.id,
+              task: { ...updatedTask },
+              teamworkTask: {
+                teamworkTimeEntryId: id,
+              },
+            });
+          }
+        }
+      } else if (
+        updatedTask?.logTime &&
+        !updatedTask?.teamworkTask.teamworkTimeEntryId
+      ) {
+        await updateTask.mutateAsync({
+          id: updatedTask.id,
+          task: { ...updatedTask, logTime: false, billable: false },
+        });
       }
-    } else if (
-      updatedTask?.logTime &&
-      !updatedTask?.teamworkTask.teamworkTimeEntryId
-    ) {
-      await updateTask.mutateAsync({
-        id: updatedTask.id,
-        task: { ...updatedTask, logTime: false, billable: false },
-      });
     }
     await utils.task.getPersonalTasks.invalidate();
     await utils.task.getActiveTask.invalidate();

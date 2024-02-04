@@ -360,15 +360,15 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
             >
               Delete
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                submitForm();
-              }}
-            >
-              Save
-            </Button>
+            {/* <Button */}
+            {/*   size="sm" */}
+            {/*   variant="outline" */}
+            {/*   onClick={() => { */}
+            {/*     submitForm(); */}
+            {/*   }} */}
+            {/* > */}
+            {/*   Save */}
+            {/* </Button> */}
           </div>
         </div>
       </Form>

@@ -25,6 +25,10 @@ export const useCalendarStore = create<CalendarState & CalendarActions>()(
     setSelectedDate: (date: Date) =>
       set((state) => {
         state.selectedDate = date;
+        const selectedWeekOf = dayjs(date).startOf("week");
+        if (!selectedWeekOf.isSame(state.weekOf, "week")) {
+          state.weekOf = selectedWeekOf.toDate();
+        }
       }),
     setWeekOf: (date: Date) =>
       set((state) => {

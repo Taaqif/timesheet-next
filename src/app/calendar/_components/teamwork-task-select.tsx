@@ -19,11 +19,10 @@ import {
 } from "~/components/ui/popover";
 import { cn, getHoursMinutesTextFromMinutes } from "~/lib/utils";
 import {
-  Tag,
   type TeamworkConfig,
-  TeamworkTask,
+  type TeamworkTask,
 } from "~/server/api/routers/teamwork";
-import { MagnifyingGlassIcon, SymbolIcon } from "@radix-ui/react-icons";
+import { SymbolIcon } from "@radix-ui/react-icons";
 import { TeamworkTags } from "~/components/ui/teamwork-tags";
 import { Badge } from "~/components/ui/badge";
 

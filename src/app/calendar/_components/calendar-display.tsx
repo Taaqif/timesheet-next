@@ -6,7 +6,11 @@ import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
-import { type EventApi, type EventInput } from "@fullcalendar/core";
+import {
+  EventContentArg,
+  type EventApi,
+  type EventInput,
+} from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
   getCalendarEvents,
@@ -29,7 +33,7 @@ import {
 } from "~/lib/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
-import { createDuration } from "@fullcalendar/core/internal";
+import { NowTimer, createDuration } from "@fullcalendar/core/internal";
 
 export type CalendarDisplayProps = {};
 export const CalendarDisplay = ({}: CalendarDisplayProps) => {
@@ -40,7 +44,6 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
   const closestEventsAtEnd = useRef<EventApi[]>([]);
   const weekOf = useCalendarStore((s) => s.weekOf);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
-  const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const updateTask = useUpdateTask();
@@ -172,88 +175,30 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
           }
         }}
         eventContent={(arg) => {
-          if (isDragging && arg.isResizing) {
-            const start = arg.event.start;
-            const end = arg.event.end;
-            if (start && end) {
-              debouncedEventResizeCallback(start, end);
-            }
-          }
-          const isActiveTimer =
-            arg.event.extendedProps?.type === CalendarEventType.TIMER;
-          const calendarEvent =
-            (arg.event.extendedProps.event as ICalendarViewInfo) ?? null;
           return (
-            <HoverCard openDelay={500}>
-              <HoverCardTrigger asChild>
-                <div
-                  className="fc-event-main-frame"
-                  onMouseEnter={() => {
-                    setSelectedEventId(arg.event.id);
-                  }}
-                  onMouseLeave={() => {
-                    // setSelectedEventId(undefined);
-                  }}
-                >
-                  {!!arg.timeText && (
-                    <div className="fc-event-time">
-                      <span className="mr-1">{arg.timeText}</span>
-                      <span>
-                        (
-                        {getHoursMinutesTextFromDates(
-                          arg.event.start!,
-                          arg.event.end!,
-                          true,
-                          isActiveTimer,
-                        )}
-                        )
-                      </span>
-                    </div>
-                  )}
-                  <div className="fc-event-title-container">
-                    <div className="fc-event-title fc-sticky">
-                      {arg.event.title || <>&nbsp;</>}
-                    </div>
-                  </div>
-                </div>
-              </HoverCardTrigger>
-              <HoverCardPortal>
-                <HoverCardContent
-                  align="start"
-                  side="left"
-                  sideOffset={10}
-                  className="min-w-[400px]"
-                >
-                  <div className="">
-                    {!!arg.event.extendedProps?.task ? (
-                      <TaskListItem event={arg.event.toPlainObject()} />
-                    ) : (
-                      <>
-                        {!!arg.timeText && (
-                          <div className="">
-                            <span className="mr-1">{arg.timeText}</span>
-                            <span>
-                              (
-                              {getHoursMinutesTextFromDates(
-                                arg.event.start!,
-                                arg.event.end!,
-                                true,
-                              )}
-                              )
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {calendarEvent && (
-                      <div className="mt-2">
-                        <CalendarEventItem calendarEvent={calendarEvent} />
-                      </div>
-                    )}
-                  </div>
-                </HoverCardContent>
-              </HoverCardPortal>
-            </HoverCard>
+            <RenderContent
+              arg={arg}
+              isDragging={isDragging}
+              setSelectedEventId={setSelectedEventId}
+              onEventResize={debouncedEventResizeCallback}
+              onClick={() => {
+                const type =
+                  (arg.event.extendedProps?.type as CalendarEventType) ?? "";
+                if (
+                  arg.event.start &&
+                  arg.event.end &&
+                  (type === CalendarEventType.CALENDAR_EVENT ||
+                    type === CalendarEventType.SCHEDULE)
+                ) {
+                  createTask.mutate({
+                    task: {
+                      start: arg.event.start,
+                      end: arg.event.end,
+                    },
+                  });
+                }
+              }}
+            />
           );
         }}
         plugins={[interactionPlugin, timeGridPlugin]}
@@ -265,22 +210,26 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
           }
         }}
         slotLabelClassNames={(arg) => {
-          const slotDuration = arg.view.calendar.getOption("slotDuration");
-          const duration = createDuration(slotDuration as string);
-          const nowTime = dayjs().format("HH:mm");
-          const now = dayjs(`1970-01-01T${nowTime}`);
-          if (
-            duration &&
-            now.isBetween(
-              arg.date,
-              dayjs(arg.date).add(duration.milliseconds, "milliseconds"),
-              "milliseconds",
-              "[]",
-            )
-          ) {
-            return "transition opacity-0";
+          const isToday = dayjs(arg.view.currentStart).isSame(dayjs(), "day");
+          let className = "transition";
+          if (isToday) {
+            const slotDuration = arg.view.calendar.getOption("slotDuration");
+            const duration = createDuration(slotDuration as string);
+            const nowTime = dayjs().format("HH:mm");
+            const compare = dayjs(`1970-01-01T${nowTime}`);
+            if (
+              duration &&
+              compare.isBetween(
+                arg.date,
+                dayjs(arg.date).add(duration.milliseconds, "milliseconds"),
+                "milliseconds",
+                "[]",
+              )
+            ) {
+              className = "transition opacity-0";
+            }
           }
-          return "transition";
+          return className;
         }}
         initialView="timeGridDay"
         height={"100%"}
@@ -356,5 +305,122 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
         nowIndicator
       />
     </div>
+  );
+};
+
+type RenderContentProps = {
+  arg: EventContentArg;
+  isDragging: boolean;
+  onEventResize: (start: Date, end: Date) => void;
+  setSelectedEventId: (id: string) => void;
+  onClick: () => void;
+};
+const RenderContent = ({
+  arg,
+  isDragging,
+  onEventResize,
+  setSelectedEventId,
+  onClick,
+}: RenderContentProps) => {
+  if (isDragging && arg.isResizing) {
+    const start = arg.event.start;
+    const end = arg.event.end;
+    if (start && end) {
+      onEventResize(start, end);
+    }
+  }
+  const [open, setOpen] = useState(false);
+
+  const isActiveTimer =
+    arg.event.extendedProps?.type === CalendarEventType.TIMER;
+  const calendarEvent =
+    (arg.event.extendedProps.event as ICalendarViewInfo) ?? null;
+  return (
+    <HoverCard
+      openDelay={500}
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          const activeElement = document.activeElement;
+          const tag = activeElement?.tagName.toLowerCase();
+          if (tag === "input" || tag === "textarea") {
+            return;
+          }
+        }
+        setOpen(isOpen);
+      }}
+    >
+      <HoverCardTrigger asChild>
+        <div
+          className="fc-event-main-frame"
+          onMouseEnter={() => {
+            setSelectedEventId(arg.event.id);
+          }}
+          onMouseLeave={() => {
+            // setSelectedEventId(undefined);
+          }}
+          onClick={() => {
+            onClick();
+          }}
+        >
+          {!!arg.timeText && (
+            <div className="fc-event-time">
+              <span className="mr-1">{arg.timeText}</span>
+              <span>
+                (
+                {getHoursMinutesTextFromDates(
+                  arg.event.start!,
+                  arg.event.end!,
+                  true,
+                  isActiveTimer,
+                )}
+                )
+              </span>
+            </div>
+          )}
+          <div className="fc-event-title-container">
+            <div className="fc-event-title fc-sticky">
+              {arg.event.title || <>&nbsp;</>}
+            </div>
+          </div>
+        </div>
+      </HoverCardTrigger>
+      <HoverCardPortal>
+        <HoverCardContent
+          align="start"
+          side="left"
+          sideOffset={10}
+          className="min-w-[400px]"
+        >
+          <div className="">
+            {!!arg.event.extendedProps?.task ? (
+              <TaskListItem event={arg.event.toPlainObject()} />
+            ) : (
+              <>
+                {!!arg.timeText && (
+                  <div className="">
+                    <span className="mr-1">{arg.timeText}</span>
+                    <span>
+                      (
+                      {getHoursMinutesTextFromDates(
+                        arg.event.start!,
+                        arg.event.end!,
+                        true,
+                      )}
+                      )
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+            {calendarEvent && (
+              <div className="mt-2">
+                <CalendarEventItem calendarEvent={calendarEvent} />
+              </div>
+            )}
+          </div>
+        </HoverCardContent>
+      </HoverCardPortal>
+    </HoverCard>
   );
 };

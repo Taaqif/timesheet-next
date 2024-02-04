@@ -41,6 +41,7 @@ export type TeamworkProject = {
   subStatus?: string;
   tags?: Tag[];
   "tasks-start-page"?: string;
+  people?: string[];
 };
 export interface TeamworkTask {
   id: string;

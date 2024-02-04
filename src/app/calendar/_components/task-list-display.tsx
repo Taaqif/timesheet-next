@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { type EventInput } from "@fullcalendar/core";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { getCalendarEvents } from "~/lib/utils";
+import { cn, getCalendarEvents } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useGetTasks } from "~/lib/hooks/use-task-api";
@@ -15,6 +15,7 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const { data: personalTasks } = useGetTasks();
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+  const selectedEventId = useCalendarStore((s) => s.selectedEventId);
 
   const selectedCalendarEvents = useMemo(() => {
     return calendarEvents.filter((event) =>
@@ -58,7 +59,9 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
         {selectedCalendarEvents.map((event, index) => (
           <div
             key={`event_${selectedDate.toISOString()}_${event.id}_${index}`}
-            className="rounded-lg border p-3"
+            className={cn("rounded-lg border p-3", {
+              "shadow-lg": selectedEventId === event.id,
+            })}
           >
             <TaskListItem event={event} />
           </div>
