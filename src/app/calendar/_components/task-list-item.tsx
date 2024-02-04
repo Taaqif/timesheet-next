@@ -199,7 +199,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
       className="flex scroll-m-5 flex-col gap-2 @container/event"
       ref={eventRef}
       onMouseEnter={() => {
-        setSelectedEventId(event.id);
+        // setSelectedEventId(event.id);
       }}
     >
       <div className="text-sm text-muted-foreground">
