@@ -16,6 +16,7 @@ import {
   File,
   Inbox,
   Timer,
+  TimerReset,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { TimesheetProgress } from "./timesheet-progress";
@@ -143,13 +144,17 @@ export function Calendar({
                 >
                   <PopoverTrigger asChild>
                     <Button variant={"ghost"} className="px-1">
-                      <h1 className="flex flex-1 items-center gap-1 text-xl md:text-2xl">
-                        <CalendarIcon className="h-6 w-6" />
+                      <h1 className="flex flex-1 items-center gap-2 text-xl md:text-2xl">
+                        <CalendarIcon className="h-5 w-5" />
                         {dayjs(selectedDate).format("dddd, DD MMMM YYYY")}
                       </h1>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent
+                    className="w-auto p-0"
+                    side="bottom"
+                    align="start"
+                  >
                     <CalendarPicker
                       mode="single"
                       selected={selectedDate}
@@ -206,6 +211,7 @@ export function Calendar({
                   <div className="flex flex-col justify-end gap-4 @md/calendar-task-list:flex-row">
                     <Button
                       type="button"
+                      variant="secondary"
                       onClick={async () => {
                         if (activeTask) {
                           updateTask.mutate({
@@ -226,29 +232,35 @@ export function Calendar({
                       }}
                     >
                       <Timer className="mr-1 h-4 w-4" />
-                      Start Task
+                      {activeTask ? "Start task" : "Start new task"}
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (activeTask) {
-                          updateTask.mutate({
-                            id: activeTask.id,
-                            task: {
-                              ...activeTask,
-                              activeTimerRunning: false,
-                              end: new Date(),
-                            },
-                          });
-                        }
-                      }}
-                    >
-                      <Timer className="mr-1 h-4 w-4" />
-                      Stop Task
-                    </Button>
+                    {activeTask && (
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => {
+                          if (activeTask) {
+                            updateTask.mutate({
+                              id: activeTask.id,
+                              task: {
+                                ...activeTask,
+                                activeTimerRunning: false,
+                                end: new Date(),
+                              },
+                            });
+                          }
+                        }}
+                      >
+                        <TimerReset className="mr-1 h-4 w-4" />
+                        Stop task
+                      </Button>
+                    )}
                   </div>
                 </form>
                 <div className="mt-4">
+                  {/* <div className="h-[150px]"> */}
+                  {/*   <CalendarDisplay view="timelineDayWorkHours" /> */}
+                  {/* </div> */}
                   <TimesheetProgress />
                 </div>
               </div>

@@ -11,7 +11,6 @@ export type TaskListDisplayProps = {};
 export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [firstScroll, setFirstScroll] = useState(false);
-  const weekOf = useCalendarStore((s) => s.weekOf);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const { data: personalTasks } = useGetTasks();
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);

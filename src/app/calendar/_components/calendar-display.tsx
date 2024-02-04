@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction"; // for selectable
+import interactionPlugin from "@fullcalendar/interaction";
+import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -33,10 +34,14 @@ import {
 } from "~/lib/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
-import { NowTimer, createDuration } from "@fullcalendar/core/internal";
+import { createDuration } from "@fullcalendar/core/internal";
 
-export type CalendarDisplayProps = {};
-export const CalendarDisplay = ({}: CalendarDisplayProps) => {
+export type CalendarDisplayProps = {
+  view?: "timelineDayWorkHours" | "timeGridDay";
+};
+export const CalendarDisplay = ({
+  view = "timeGridDay",
+}: CalendarDisplayProps) => {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [businessHours, setBusinessHours] = useState<EventInput>();
   const calendarRef = useRef<FullCalendar>(null);
@@ -164,7 +169,14 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
     <div className="h-full p-4">
       <FullCalendar
         ref={calendarRef}
+        schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
         events={events}
+        views={{
+          timelineDayWorkHours: {
+            type: "timeline",
+            nowIndicator: true,
+          },
+        }}
         businessHours={businessHours}
         slotDuration="00:15"
         snapDuration="00:01"
@@ -201,7 +213,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
             />
           );
         }}
-        plugins={[interactionPlugin, timeGridPlugin]}
+        plugins={[interactionPlugin, timeGridPlugin, resourceTimelinePlugin]}
         nowIndicatorContent={(arg) => {
           if (arg.isAxis) {
             const formatTime = dayjs(arg.date).format("h:mma");
@@ -231,7 +243,7 @@ export const CalendarDisplay = ({}: CalendarDisplayProps) => {
           }
           return className;
         }}
-        initialView="timeGridDay"
+        initialView={view}
         height={"100%"}
         selectable
         headerToolbar={false}
@@ -329,7 +341,21 @@ const RenderContent = ({
       onEventResize(start, end);
     }
   }
+  const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const [open, setOpen] = useState(false);
+  const eventRef = useRef<HTMLDivElement>(null);
+  // useEffect(() => {
+  //   const activeElement = document.activeElement;
+  //   const tag = activeElement?.tagName.toLowerCase();
+  //   if (tag === "input" || tag === "textarea") {
+  //     return;
+  //   }
+  //   if (selectedEventId === arg.event.id) {
+  //     eventRef.current?.scrollIntoView({
+  //       behavior: "smooth",
+  //     });
+  //   }
+  // }, [selectedEventId]);
 
   const isActiveTimer =
     arg.event.extendedProps?.type === CalendarEventType.TIMER;
@@ -352,6 +378,7 @@ const RenderContent = ({
     >
       <HoverCardTrigger asChild>
         <div
+          ref={eventRef}
           className="fc-event-main-frame"
           onMouseEnter={() => {
             setSelectedEventId(arg.event.id);

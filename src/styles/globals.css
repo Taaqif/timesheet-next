@@ -58,6 +58,17 @@
 .fc-timegrid-more-link {
   border-radius: 6px;
 }
+.fc .fc-timeline-now-indicator-arrow {
+  margin: 5px -6px;
+  color: var(--fc-now-indicator-color);
+  position: absolute;
+  right: 0;
+  text-align: right;
+  left: 0;
+  font-size: 15px;
+  text-wrap: nowrap;
+  border: none;
+}
 .fc .fc-timegrid-now-indicator-arrow {
   margin-top: -12px;
   margin-right: 1px;
@@ -73,6 +84,17 @@
 }
 .fc .fc-timegrid-now-indicator-line {
   border-width: 2px 0px 0px;
+}
+.fc .fc-timeline-now-indicator-line::before {
+  content: "";
+  width: 13px;
+  height: 13px;
+  border-radius: 13px;
+  border: 1px solid var(--fc-now-indicator-color);
+  background-color: var(--fc-now-indicator-color);
+  position: absolute;
+  display: block;
+  right: -6px;
 }
 .fc .fc-timegrid-now-indicator-line::before {
   position: absolute;

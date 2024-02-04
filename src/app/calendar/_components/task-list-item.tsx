@@ -49,6 +49,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   const [endDate, setEndDate] = useState<Date>(event.end as Date);
 
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
+  const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const { data: teamworkProjects } = api.teamwork.getAllProjects.useQuery();
   const { data: selectedTeamworkTask } = api.teamwork.getTask.useQuery(
     {
@@ -197,6 +198,9 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
     <div
       className="flex scroll-m-5 flex-col gap-2 @container/event"
       ref={eventRef}
+      onMouseEnter={() => {
+        setSelectedEventId(event.id);
+      }}
     >
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
