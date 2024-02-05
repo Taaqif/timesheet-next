@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 type CalendarState = {
-  weekOf: Date;
+  weekOf: string;
   selectedDate: Date;
   selectedEventId?: string;
 };
@@ -16,7 +16,7 @@ type CalendarActions = {
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call*/
 export const useCalendarStore = create<CalendarState & CalendarActions>()(
   immer((set) => ({
-    weekOf: dayjs(new Date()).startOf("week").toDate(),
+    weekOf: dayjs(new Date()).startOf("week").format("YYYY-MM-DD"),
     selectedDate: new Date(),
     setSelectedEventId: (eventId?: string) =>
       set((state) => {
@@ -27,12 +27,13 @@ export const useCalendarStore = create<CalendarState & CalendarActions>()(
         state.selectedDate = date;
         const selectedWeekOf = dayjs(date).startOf("week");
         if (!selectedWeekOf.isSame(state.weekOf, "week")) {
-          state.weekOf = selectedWeekOf.toDate();
+          state.weekOf = selectedWeekOf.format("YYYY-MM-DD");
         }
       }),
     setWeekOf: (date: Date) =>
       set((state) => {
-        state.weekOf = date;
+        const selectedWeekOf = dayjs(date);
+        state.weekOf = selectedWeekOf.format("YYYY-MM-DD");
       }),
   })),
 );

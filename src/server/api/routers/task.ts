@@ -22,7 +22,7 @@ export const taskRouter = createTRPCRouter({
       return myTasks ?? [];
     }),
   getPersonalTasks: protectedProcedure
-    .input(z.object({ weekOf: z.date() }))
+    .input(z.object({ weekOf: z.string() }))
     .query(async ({ ctx, input }) => {
       const start = dayjs(input.weekOf).startOf("week").toDate();
       const end = dayjs(input.weekOf).endOf("week").toDate();
