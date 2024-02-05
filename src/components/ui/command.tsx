@@ -63,10 +63,11 @@ CommandInput.displayName = CommandPrimitive.Input.displayName;
 
 const Item = React.forwardRef<HTMLDivElement, CustomItemComponentProps>(
   ({ children, style }, ref) => {
-    children = children as ReactElement;
+    children = children as React.ReactElement;
 
     return React.cloneElement(children, {
       ref,
+      //eslint-disable-next-line
       style: { ...children.props.style, ...style },
     });
   },

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Progress } from "~/components/ui/progress";
 
-type TimesheetProgressProps = {};
+type TimesheetProgressProps = {
+  //
+};
 
 export const TimesheetProgress = ({}: TimesheetProgressProps) => {
   const [progress, setProgress] = useState(0);

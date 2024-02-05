@@ -7,7 +7,9 @@ import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useGetTasks } from "~/lib/hooks/use-task-api";
 
-export type TaskListDisplayProps = {};
+export type TaskListDisplayProps = {
+  //
+};
 export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [firstScroll, setFirstScroll] = useState(false);
