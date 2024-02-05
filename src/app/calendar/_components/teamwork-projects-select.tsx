@@ -14,6 +14,7 @@ import { api } from "~/trpc/react";
 import { groupBy } from "lodash";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
@@ -88,10 +89,15 @@ export const TeamworkProjectsSelect = ({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverAnchor asChild>
         <Button
           variant="outline"
           role="combobox"
+          onMouseDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(!open);
+          }}
           onKeyDown={(e) => {
             if (open === false && e.key !== "Tab" && !e.shiftKey) {
               setOpen(true);
@@ -99,7 +105,7 @@ export const TeamworkProjectsSelect = ({
           }}
           onFocus={() => {
             setHasFocus(true);
-            if (hasFocus === false) {
+            if (hasFocus === false && open === false) {
               setOpen(true);
             }
           }}
@@ -125,7 +131,7 @@ export const TeamworkProjectsSelect = ({
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </PopoverTrigger>
+      </PopoverAnchor>
       <PopoverContent
         className="w-full min-w-[400px] max-w-lg p-0"
         align="start"
