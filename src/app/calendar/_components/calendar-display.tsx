@@ -26,7 +26,7 @@ import {
 } from "~/components/ui/hover-card";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
-import { useDebounceCallback } from "~/lib/hooks/use-debounce-callback";
+import { useDebounceCallback } from "usehooks-ts";
 import {
   useCreateTask,
   useGetTasks,
@@ -166,7 +166,7 @@ export const CalendarDisplay = ({
   const [isDragging, setIsDragging] = useState(false);
 
   return (
-    <div className="h-full p-4">
+    <div className="h-full">
       <FullCalendar
         ref={calendarRef}
         schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
@@ -174,9 +174,11 @@ export const CalendarDisplay = ({
         views={{
           timelineDayWorkHours: {
             type: "timeline",
-            nowIndicator: true,
+            slotDuration: "00:05",
           },
         }}
+        eventOrder={["index"]}
+        eventOrderStrict
         businessHours={businessHours}
         slotDuration="00:15"
         snapDuration="00:01"
@@ -393,6 +395,20 @@ const RenderContent = ({
           {!!arg.timeText && (
             <div className="fc-event-time">
               <span className="mr-1">{arg.timeText}</span>
+              <span>
+                (
+                {getHoursMinutesTextFromDates(
+                  arg.event.start!,
+                  arg.event.end!,
+                  true,
+                  isActiveTimer,
+                )}
+                )
+              </span>
+            </div>
+          )}
+          {!arg.timeText && (
+            <div className="fc-event-time">
               <span>
                 (
                 {getHoursMinutesTextFromDates(

@@ -9,6 +9,7 @@ import { ThemeProvider } from "~/components/theme-provider";
 import { getServerAuthSession } from "~/server/auth";
 import { AuthSessionProvider } from "~/components/auth-session-provider";
 import { Toaster } from "~/components/ui/sonner";
+import { TooltipProvider } from "~/components/ui/tooltip";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,7 +39,9 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <Theme>
-              <TRPCReactProvider>{children}</TRPCReactProvider>
+              <TooltipProvider delayDuration={0}>
+                <TRPCReactProvider>{children}</TRPCReactProvider>
+              </TooltipProvider>
             </Theme>
             <Toaster />
           </ThemeProvider>

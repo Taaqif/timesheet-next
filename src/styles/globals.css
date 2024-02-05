@@ -54,6 +54,14 @@
 
   --fc-non-business-color: hsl(0 0% 84% / 11%);
 }
+
+.fc-timeline-event {
+  border-radius: 4px;
+}
+.fc-timeline-event .fc-event-time {
+  font-weight: 400;
+}
+
 .fc-timegrid-event,
 .fc-timegrid-more-link {
   border-radius: 6px;
@@ -67,6 +75,7 @@
   left: 0;
   font-size: 15px;
   text-wrap: nowrap;
+  margin-left: -25px;
   border: none;
 }
 .fc .fc-timegrid-now-indicator-arrow {

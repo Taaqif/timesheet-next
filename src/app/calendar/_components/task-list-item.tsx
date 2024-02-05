@@ -86,7 +86,6 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
   const submitForm = () => {
     form
       .handleSubmit(async (values: z.infer<typeof formSchema>) => {
-        console.log(values);
         if (task) {
           let title = task.title;
           if (values.projectId && !values.taskId) {
