@@ -38,6 +38,7 @@ export const TeamworkProjectsSelect = ({
   const [open, setOpen] = useState(false);
   const [firstOpen, setFirstOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
   const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
@@ -91,6 +92,7 @@ export const TeamworkProjectsSelect = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <Button
+          ref={buttonRef}
           variant="outline"
           role="combobox"
           onMouseDown={(event) => {
@@ -166,6 +168,7 @@ export const TeamworkProjectsSelect = ({
                         key={project.id}
                         value={`${project.name} - ${project.company?.name}`}
                         onSelect={() => {
+                          buttonRef.current?.focus();
                           if ((projectId ?? "") === (project.id ?? "")) {
                             setOpen(false);
                             return;

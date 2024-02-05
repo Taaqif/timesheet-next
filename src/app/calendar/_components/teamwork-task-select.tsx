@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, Link } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -145,6 +145,7 @@ export const TeamworkTaskSelect = ({
   const [open, setOpen] = useState(false);
   const [firstOpen, setFirstOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const utils = api.useUtils();
 
   const [taskGroups, setTaskGroups] = useState<TeamworkTaskGroup[]>([]);
@@ -220,6 +221,7 @@ export const TeamworkTaskSelect = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <Button
+          ref={buttonRef}
           variant="outline"
           role="combobox"
           onMouseDown={(event) => {
@@ -324,6 +326,7 @@ export const TeamworkTaskSelect = ({
                           parent={taskGroup.tasklist}
                           selectedTaskId={teamworkTaskId}
                           onSelect={(task) => {
+                            buttonRef.current?.focus();
                             if ((task.id ?? "") === (teamworkTaskId ?? "")) {
                               setOpen(false);
                               return;
