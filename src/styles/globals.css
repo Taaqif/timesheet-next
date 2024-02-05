@@ -61,7 +61,11 @@
 .fc-timeline-event .fc-event-time {
   font-weight: 400;
 }
-
+.fc-event-mirror .fc-event-time {
+  background: hsl(var(--background) / 70%);
+  align-self: flex-start;
+  padding: 0 2px;
+}
 .fc-timegrid-event,
 .fc-timegrid-more-link {
   border-radius: 6px;

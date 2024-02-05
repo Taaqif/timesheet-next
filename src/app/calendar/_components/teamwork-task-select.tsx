@@ -230,6 +230,9 @@ export const TeamworkTaskSelect = ({
           onMouseDown={(event) => {
             event.preventDefault();
             event.stopPropagation();
+            if (open === false) {
+              setHasFocus(true);
+            }
             setOpen(!open);
           }}
           onKeyDown={(e) => {
