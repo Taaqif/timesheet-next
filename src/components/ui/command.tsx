@@ -81,13 +81,13 @@ const CommandList = React.forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <ScrollArea className="h-full" viewportClassName="max-h-[300px]">
-      <Virtualizer scrollRef={ref} item={Item}>
-        <CommandPrimitive.List
-          ref={ref}
-          className={cn("", className)}
-          {...props}
-        />
-      </Virtualizer>
+      {/* <Virtualizer scrollRef={ref} item={Item}> */}
+      <CommandPrimitive.List
+        ref={ref}
+        className={cn("", className)}
+        {...props}
+      />
+      {/* </Virtualizer> */}
     </ScrollArea>
   );
 });

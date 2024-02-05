@@ -36,6 +36,7 @@ export const TeamworkProjectsSelect = ({
 }: TeamworkProjectsSelectProps) => {
   const [open, setOpen] = useState(false);
   const [firstOpen, setFirstOpen] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
   const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
@@ -92,8 +93,19 @@ export const TeamworkProjectsSelect = ({
           variant="outline"
           role="combobox"
           onKeyDown={(e) => {
-            if (open === false && e.key !== "Tab") {
+            if (open === false && e.key !== "Tab" && !e.shiftKey) {
               setOpen(true);
+            }
+          }}
+          onFocus={() => {
+            setHasFocus(true);
+            if (hasFocus === false) {
+              setOpen(true);
+            }
+          }}
+          onBlur={() => {
+            if (open === false) {
+              setHasFocus(false);
             }
           }}
           aria-expanded={open}

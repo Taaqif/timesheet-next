@@ -87,7 +87,7 @@ const RenderTeamworkTaskWithChildren = ({
               <a
                 href={`${teamworkConfig?.teamworkBaseUrl}/#/tasks/${task.id}`}
                 target="_blank"
-                className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                className="absolute top-2 flex w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
               >
                 <Link className={"h-4 w-4"} />
               </a>
@@ -178,7 +178,6 @@ export const TeamworkTaskSelect = ({
   );
   useEffect(() => {
     if (firstOpen === false && open === true) {
-      setHasFocus(true);
       setFirstOpen(true);
     }
   }, [open]);
@@ -223,8 +222,19 @@ export const TeamworkTaskSelect = ({
           variant="outline"
           role="combobox"
           onKeyDown={(e) => {
-            if (open === false && e.key !== "Tab") {
+            if (open === false && e.key !== "Tab" && !e.shiftKey) {
               setOpen(true);
+            }
+          }}
+          onFocus={() => {
+            setHasFocus(true);
+            if (hasFocus === false) {
+              setOpen(true);
+            }
+          }}
+          onBlur={() => {
+            if (open === false) {
+              setHasFocus(false);
             }
           }}
           disabled={!projectId}
