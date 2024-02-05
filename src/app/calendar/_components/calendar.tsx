@@ -41,21 +41,23 @@ import { useWindowSize } from "usehooks-ts";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
+  defaultCalendarCollapsed?: boolean;
   defaultLayout?: number[];
 };
 export function Calendar({
   defaultCollapsed = false,
+  defaultCalendarCollapsed = false,
   defaultLayout = [265, 440, 655],
 }: CalendarProps) {
   const navCollapsedSize = 4;
-  const calendarCollapsedSize = 8;
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const calendarPanelRef = useRef<ImperativePanelHandle>(null);
 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
-  const [isCalendarCollapsed, setIsCalendarCollapsed] =
-    useState(defaultCollapsed);
+  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(
+    defaultCalendarCollapsed,
+  );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const { data: activeTask } = api.task.getActiveTask.useQuery();
   const createTask = useCreateTask();
