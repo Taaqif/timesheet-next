@@ -277,6 +277,7 @@ export function Calendar({
               )}
               {/* <TimesheetProgress /> */}
             </div>
+            <Separator />
             <div className="mr-2 flex min-h-0 flex-grow">
               <TaskListDisplay />
             </div>
@@ -334,7 +335,7 @@ export function Calendar({
               )}
 
               {!isCalendarCollapsed && (
-                <div className="h-full p-4">
+                <div className="h-full">
                   <CalendarDisplay />
                 </div>
               )}
