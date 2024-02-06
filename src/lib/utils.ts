@@ -199,32 +199,6 @@ export const getCalendarEvents = ({
   };
 };
 
-export const toColor = (input: any) => {
-  return stringToColor(input);
-};
-
-export const getScheduleItemColor = (
-  scheduleItem: ScheduleItem,
-  allTeamworkProjects: TeamworkProject[],
-) => {
-  let color =
-    scheduleItem.type === ScheduleItemType.General ? "#121F35" : "#51beaa";
-
-  if (!!scheduleItem.teamworkProjectId) {
-    color = teamworkProjectIdToColor(
-      scheduleItem.teamworkProjectId,
-      allTeamworkProjects,
-    );
-  }
-
-  const textColor = fontColorContrast(color, 0.6);
-
-  return {
-    color,
-    textColor,
-  };
-};
-
 export type ProgressBarInfo = {
   offset: number;
   progress: number;
