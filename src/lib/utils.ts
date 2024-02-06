@@ -1,11 +1,12 @@
 import { type ClassValue, clsx } from "clsx";
 import dayjs from "dayjs";
-import { type InferSelectModel } from "drizzle-orm";
 import { twMerge } from "tailwind-merge";
 import { type CalendarScheduleItemType } from "./pnp/getSchedule";
 import { type DateInput, type EventInput } from "@fullcalendar/core/index.js";
 import { type InferResultType } from "~/server/db";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
+import stringToColor from "string-to-color";
+import fontColorContrast from "font-color-contrast";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -152,12 +153,19 @@ export const getCalendarEvents = ({
   if (tasks) {
     newEvents = newEvents.concat(
       tasks.map((task) => {
+        let backgroundColor = "#006d77";
+
+        if (task.teamworkTask?.teamworkProjectId) {
+          backgroundColor = stringToColor(task.teamworkTask?.teamworkProjectId);
+        }
+        const textColor = fontColorContrast(backgroundColor, 0.6);
         const mappedEvent: EventInput = {
           id: `TASK_${task.id}`,
           start: task.start,
           end: task.end ?? undefined,
           editable: true,
-          backgroundColor: "#006d77",
+          backgroundColor,
+          textColor,
           title: task.title ?? "",
           extendedProps: {
             type: CalendarEventType.TASK,
@@ -188,6 +196,32 @@ export const getCalendarEvents = ({
   return {
     newEvents,
     businessHours,
+  };
+};
+
+export const toColor = (input: any) => {
+  return stringToColor(input);
+};
+
+export const getScheduleItemColor = (
+  scheduleItem: ScheduleItem,
+  allTeamworkProjects: TeamworkProject[],
+) => {
+  let color =
+    scheduleItem.type === ScheduleItemType.General ? "#121F35" : "#51beaa";
+
+  if (!!scheduleItem.teamworkProjectId) {
+    color = teamworkProjectIdToColor(
+      scheduleItem.teamworkProjectId,
+      allTeamworkProjects,
+    );
+  }
+
+  const textColor = fontColorContrast(color, 0.6);
+
+  return {
+    color,
+    textColor,
   };
 };
 

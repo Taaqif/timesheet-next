@@ -30,14 +30,14 @@ export type TeamworkProjectsSelectProps = {
   projectId?: string | null;
   onChange: (selectedProject?: TeamworkProject) => void;
 };
-export const TeamworkProjectsSelect = ({
-  projectId,
-  onChange,
-}: TeamworkProjectsSelectProps) => {
+export const TeamworkProjectsSelect = React.forwardRef<
+  HTMLButtonElement,
+  TeamworkProjectsSelectProps
+>(({ projectId, onChange, ...rest }, ref) => {
   const [open, setOpen] = useState(false);
   const [firstOpen, setFirstOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
   const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
   const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
@@ -91,8 +91,16 @@ export const TeamworkProjectsSelect = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          ref={buttonRef}
+          ref={(e) => {
+            buttonRef.current = e;
+            if (typeof ref === "function") {
+              ref(e);
+            } else if (ref) {
+              ref.current = e;
+            }
+          }}
           variant="outline"
+          {...rest}
           role="combobox"
           onClick={(e) => {
             // handle the event using mouse down instead
@@ -212,4 +220,6 @@ export const TeamworkProjectsSelect = ({
       </PopoverContent>
     </Popover>
   );
-};
+});
+
+TeamworkProjectsSelect.displayName = "TeamworkProjectsSelect";

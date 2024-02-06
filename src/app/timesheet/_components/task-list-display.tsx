@@ -6,6 +6,7 @@ import { cn, getCalendarEvents } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useGetTasks } from "~/lib/hooks/use-task-api";
+import { NotepadText } from "lucide-react";
 
 export type TaskListDisplayProps = {
   //
@@ -14,7 +15,8 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [firstScroll, setFirstScroll] = useState(false);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
-  const { data: personalTasks } = useGetTasks();
+  const { data: personalTasks, isFetched: personalTasksFetched } =
+    useGetTasks();
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
 
@@ -67,6 +69,19 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
             <TaskListItem event={event} />
           </div>
         ))}
+
+        {selectedCalendarEvents?.length === 0 && personalTasksFetched && (
+          <div className="flex flex-col items-center justify-center gap-5 p-10">
+            <h1 className="text-3xl">No Events</h1>
+            <NotepadText className="h-20 w-20 text-muted-foreground opacity-60" />
+          </div>
+        )}
+        {selectedCalendarEvents?.length === 0 && personalTasksFetched && (
+          <div className="flex flex-col items-center justify-center gap-5 p-10">
+            <h1 className="text-3xl">No Events</h1>
+            <NotepadText className="h-20 w-20 text-muted-foreground opacity-60" />
+          </div>
+        )}
       </div>
     </ScrollArea>
   );
