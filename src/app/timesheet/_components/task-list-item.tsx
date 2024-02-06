@@ -231,7 +231,6 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
                     onChange={(selectedProject) => {
                       field.onChange(selectedProject?.id);
                       form.setValue("taskId", "");
-                      form.setFocus("taskId");
                       form.setValue(
                         "projectTitle",
                         `${selectedProject?.company?.name}: ${selectedProject?.name}`,
@@ -257,7 +256,6 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
                     teamworkTaskId={field.value}
                     onChange={(selectedTeamworkTask) => {
                       field.onChange(selectedTeamworkTask?.id);
-                      form.setFocus("description");
                       form.setValue(
                         "taskTitle",
                         `${selectedTeamworkTask?.content} (${selectedTeamworkTask?.["todo-list-name"]})`,

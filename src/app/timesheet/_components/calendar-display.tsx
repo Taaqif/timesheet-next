@@ -11,6 +11,7 @@ import {
   EventContentArg,
   type EventApi,
   type EventInput,
+  formatRange,
 } from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
@@ -131,15 +132,6 @@ export const CalendarDisplay = ({
     }
   }, [selectedDate]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      updateTimerEvent();
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [activeTask]);
-
   const setEventData = () => {
     const { newEvents, businessHours } = getCalendarEvents({
       tasks: personalTasks,
@@ -152,17 +144,6 @@ export const CalendarDisplay = ({
     setEvents(newEvents);
   };
 
-  const updateTimerEvent = () => {
-    const calendarApi = calendarRef.current!.getApi();
-    if (activeTask) {
-      const timerEvent = calendarApi.getEventById(`TASK_${activeTask?.id}`);
-      if (timerEvent) {
-        timerEvent.setProp("editable", true);
-        timerEvent.moveEnd("00:00:01");
-        timerEvent.setProp("editable", false);
-      }
-    }
-  };
   const [isDragging, setIsDragging] = useState(false);
 
   return (
@@ -343,9 +324,39 @@ const RenderContent = ({
       onEventResize(start, end);
     }
   }
+  const isActiveTimer =
+    arg.event.extendedProps?.type === CalendarEventType.TIMER;
+  const calendarEvent =
+    (arg.event.extendedProps.event as ICalendarViewInfo) ?? null;
+  const [time, setTime] = useState<string>("");
+  const [endDate, setEndDate] = useState<Date>(arg.event.end ?? new Date());
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const [open, setOpen] = useState(false);
   const eventRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isActiveTimer) {
+      const interval = setInterval(() => {
+        const plusOneSecond = dayjs().add(1, "second").toDate();
+        updateEventTimeDisplay(plusOneSecond);
+      }, 1000);
+      updateEventTimeDisplay(new Date());
+      return () => {
+        clearInterval(interval);
+      };
+    } else if (arg.event.end) {
+      updateEventTimeDisplay(arg.event.end);
+    }
+  }, [arg.event]);
+
+  const updateEventTimeDisplay = (endDate: Date) => {
+    setEndDate(endDate);
+    setTime(
+      formatRange(arg.event.start!, endDate, {
+        hour: "numeric",
+        minute: "numeric",
+      }),
+    );
+  };
   // useEffect(() => {
   //   const activeElement = document.activeElement;
   //   const tag = activeElement?.tagName.toLowerCase();
@@ -359,10 +370,6 @@ const RenderContent = ({
   //   }
   // }, [selectedEventId]);
 
-  const isActiveTimer =
-    arg.event.extendedProps?.type === CalendarEventType.TIMER;
-  const calendarEvent =
-    (arg.event.extendedProps.event as ICalendarViewInfo) ?? null;
   return (
     <HoverCard
       openDelay={500}
@@ -392,35 +399,19 @@ const RenderContent = ({
             onClick();
           }}
         >
-          {!!arg.timeText && (
-            <div className="fc-event-time">
-              <span className="mr-1">{arg.timeText}</span>
-              <span>
-                (
-                {getHoursMinutesTextFromDates(
-                  arg.event.start!,
-                  arg.event.end!,
-                  true,
-                  isActiveTimer,
-                )}
-                )
-              </span>
-            </div>
-          )}
-          {!arg.timeText && (
-            <div className="fc-event-time">
-              <span>
-                (
-                {getHoursMinutesTextFromDates(
-                  arg.event.start!,
-                  arg.event.end!,
-                  true,
-                  isActiveTimer,
-                )}
-                )
-              </span>
-            </div>
-          )}
+          <div className="fc-event-time">
+            {!!arg.timeText && <span className="mr-1">{time}</span>}
+            <span>
+              (
+              {getHoursMinutesTextFromDates(
+                arg.event.start!,
+                endDate,
+                true,
+                isActiveTimer,
+              )}
+              )
+            </span>
+          </div>
           <div className="fc-event-title-container">
             <div className="fc-event-title fc-sticky">
               {arg.event.title || <>&nbsp;</>}
@@ -442,13 +433,14 @@ const RenderContent = ({
               <>
                 {!!arg.timeText && (
                   <div className="">
-                    <span className="mr-1">{arg.timeText}</span>
+                    <span className="mr-1">{time}</span>
                     <span>
                       (
                       {getHoursMinutesTextFromDates(
                         arg.event.start!,
-                        arg.event.end!,
+                        endDate,
                         true,
+                        isActiveTimer,
                       )}
                       )
                     </span>
