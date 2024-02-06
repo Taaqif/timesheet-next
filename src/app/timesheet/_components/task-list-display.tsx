@@ -76,12 +76,6 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
             <NotepadText className="h-20 w-20 text-muted-foreground opacity-60" />
           </div>
         )}
-        {selectedCalendarEvents?.length === 0 && personalTasksFetched && (
-          <div className="flex flex-col items-center justify-center gap-5 p-10">
-            <h1 className="text-3xl">No Events</h1>
-            <NotepadText className="h-20 w-20 text-muted-foreground opacity-60" />
-          </div>
-        )}
       </div>
     </ScrollArea>
   );
