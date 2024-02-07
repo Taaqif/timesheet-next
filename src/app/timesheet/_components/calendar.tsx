@@ -40,6 +40,12 @@ import {
 } from "~/components/ui/popover";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { useWindowSize } from "usehooks-ts";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 
 export type CalendarProps = {
   defaultCollapsed?: boolean;
@@ -224,7 +230,28 @@ export function Calendar({
             </div>
             <Separator />
 
-            <div className="flex flex-col gap-4 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex flex-col gap-2 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              {isCalendarCollapsed && (
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
+                    >
+                      <div className="text-base md:text-lg">View Calendar</div>
+                      <div>
+                        <CaretSortIcon className="h-5 w-5" />
+                        <span className="sr-only">Toggle</span>
+                      </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="h-[150px]">
+                      <CalendarDisplay view="timelineDayWorkHours" />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
               <div className="flex flex-col justify-end gap-4 @md/calendar-task-list:flex-row">
                 {activeTask && (
                   <Button
@@ -250,11 +277,6 @@ export function Calendar({
                   {activeTask ? "Start new task" : "Start task"}
                 </Button>
               </div>
-              {isCalendarCollapsed && (
-                <div className="h-[170px] py-4">
-                  <CalendarDisplay view="timelineDayWorkHours" />
-                </div>
-              )}
               {/* <TimesheetProgress /> */}
             </div>
             <Separator />

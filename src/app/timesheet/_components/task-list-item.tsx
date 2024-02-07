@@ -237,7 +237,7 @@ export const TaskListItem = ({ event, defaultExpanded }: TaskListItemProps) => {
             variant="ghost"
             className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
           >
-            <div className="text-lg">{event.title}</div>
+            <div className="text-base md:text-lg">{event.title}</div>
             <div>
               <CaretSortIcon className="h-5 w-5" />
               <span className="sr-only">Toggle</span>
