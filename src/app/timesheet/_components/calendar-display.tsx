@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import {
-  EventContentArg,
+  type EventContentArg,
   type EventApi,
   type EventInput,
   formatRange,
@@ -19,12 +19,6 @@ import {
   getHoursMinutesTextFromDates,
   CalendarEventType,
 } from "~/lib/utils";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-  HoverCardPortal,
-} from "~/components/ui/hover-card";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useDebounceCallback } from "usehooks-ts";
@@ -36,6 +30,12 @@ import {
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
 import { createDuration } from "@fullcalendar/core/internal";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipPortal,
+} from "~/components/ui/tooltip";
 
 export type CalendarDisplayProps = {
   view?: "timelineDayWorkHours" | "timeGridDay";
@@ -71,11 +71,6 @@ export const CalendarDisplay = ({
     },
   );
   const { data: personalTasks } = useGetTasks();
-
-  const activeTask = useMemo(
-    () => personalTasks?.find((f) => f.activeTimerRunning),
-    [personalTasks],
-  );
 
   const debouncedEventResizeCallback = useDebounceCallback(
     (start: Date, end: Date) => {
@@ -307,7 +302,7 @@ type RenderContentProps = {
   arg: EventContentArg;
   isDragging: boolean;
   onEventResize: (start: Date, end: Date) => void;
-  setSelectedEventId: (id: string) => void;
+  setSelectedEventId: (id: number) => void;
   onClick: () => void;
 };
 const RenderContent = ({
@@ -326,8 +321,12 @@ const RenderContent = ({
   }
   const isActiveTimer =
     arg.event.extendedProps?.type === CalendarEventType.TIMER;
-  const calendarEvent =
-    (arg.event.extendedProps.event as ICalendarViewInfo) ?? null;
+  const calendarEvent = arg.event.extendedProps.event as
+    | ICalendarViewInfo
+    | undefined;
+  const task = arg.event.extendedProps?.task as
+    | TasksWithTeamworkTaskSelectSchema
+    | undefined;
   const [time, setTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(arg.event.end ?? new Date());
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
@@ -371,8 +370,8 @@ const RenderContent = ({
   // }, [selectedEventId]);
 
   return (
-    <HoverCard
-      openDelay={500}
+    <Tooltip
+      delayDuration={500}
       open={open}
       onOpenChange={(isOpen) => {
         if (isOpen === false) {
@@ -385,12 +384,14 @@ const RenderContent = ({
         setOpen(isOpen);
       }}
     >
-      <HoverCardTrigger asChild>
+      <TooltipTrigger asChild>
         <div
           ref={eventRef}
           className="fc-event-main-frame"
           onMouseEnter={() => {
-            setSelectedEventId(arg.event.id);
+            if (task?.id) {
+              setSelectedEventId(task?.id);
+            }
           }}
           onMouseLeave={() => {
             // setSelectedEventId(undefined);
@@ -418,17 +419,17 @@ const RenderContent = ({
             </div>
           </div>
         </div>
-      </HoverCardTrigger>
-      <HoverCardPortal>
-        <HoverCardContent
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent
           align="start"
           side="left"
           sideOffset={10}
-          className="min-w-[400px]"
+          className="min-w-[400px] max-w-[500px] p-4"
         >
           <div className="">
             {!!arg.event.extendedProps?.task ? (
-              <TaskListItem event={arg.event.toPlainObject()} />
+              <TaskListItem event={arg.event as EventInput} defaultExpanded />
             ) : (
               <>
                 {!!arg.timeText && (
@@ -454,8 +455,8 @@ const RenderContent = ({
               </div>
             )}
           </div>
-        </HoverCardContent>
-      </HoverCardPortal>
-    </HoverCard>
+        </TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
   );
 };

@@ -223,6 +223,47 @@ export const useCreateTask = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
+export const useStartTask = () => {
+  const utils = api.useUtils();
+  const {
+    mutate: mutateOrig,
+    mutateAsync: mutateAsyncOrig,
+    ...rest
+  } = api.task.createPersonalTask.useMutation({});
+  const mutateAsync = async (
+    _payload?: undefined,
+  ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
+    const result = await mutateAsyncOrig({
+      task: {
+        start: new Date(),
+      },
+      activeTaskTimer: true,
+    });
+    await utils.task.getPersonalTasks.invalidate();
+    await utils.task.getActiveTask.invalidate();
+    return result;
+  };
+  const mutate = (payload: undefined) => {
+    mutateAsync(payload).catch(() => {
+      //noop
+    });
+  };
+  return { mutate, mutateAsync, ...rest };
+};
+
+export const useStopTask = () => {
+  const createTask = useCreateTask();
+  const utils = api.useUtils();
+  const stopActiveTask = api.task.stopActiveTask.useMutation({
+    async onSuccess() {
+      await utils.task.getPersonalTasks.invalidate();
+      await utils.task.getActiveTask.invalidate();
+    },
+  });
+
+  return stopActiveTask;
+};
+
 export const useGetTasks = () => {
   const weekOf = useCalendarStore((s) => s.weekOf);
   const tasks = api.task.getPersonalTasks.useQuery(

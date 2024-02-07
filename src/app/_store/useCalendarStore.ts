@@ -5,12 +5,12 @@ import { immer } from "zustand/middleware/immer";
 type CalendarState = {
   weekOf: string;
   selectedDate: Date;
-  selectedEventId?: string;
+  selectedEventId?: number;
 };
 type CalendarActions = {
   setWeekOf: (date: Date) => void;
   setSelectedDate: (date: Date) => void;
-  setSelectedEventId: (eventId?: string) => void;
+  setSelectedEventId: (eventId?: number) => void;
 };
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call*/
@@ -18,7 +18,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>()(
   immer((set) => ({
     weekOf: dayjs(new Date()).startOf("week").format("YYYY-MM-DD"),
     selectedDate: new Date(),
-    setSelectedEventId: (eventId?: string) =>
+    setSelectedEventId: (eventId?: number) =>
       set((state) => {
         state.selectedEventId = eventId;
       }),

@@ -28,6 +28,12 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 
 const formSchema = z.object({
   description: z.string().optional(),
@@ -39,14 +45,23 @@ const formSchema = z.object({
   billable: z.boolean().optional(),
 });
 
-export type TaskListItemProps = { event: EventInput };
-export const TaskListItem = ({ event }: TaskListItemProps) => {
+export type TaskListItemProps = {
+  event: EventInput;
+  defaultExpanded?: boolean;
+};
+export const TaskListItem = ({ event, defaultExpanded }: TaskListItemProps) => {
   const task = event.extendedProps?.task as
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
   const isActiveTimer = event.extendedProps?.type === "TIMER";
   const [time, setTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(event.end as Date);
+  const [isOpen, setIsOpen] = useState(
+    isActiveTimer ||
+      !task?.teamworkTask?.teamworkTaskId ||
+      !event.title ||
+      defaultExpanded,
+  );
 
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
@@ -186,7 +201,7 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
     if (tag === "input" || tag === "textarea") {
       return;
     }
-    if (selectedEventId === event.id) {
+    if (selectedEventId === task?.id) {
       eventRef.current?.scrollIntoView({
         behavior: "smooth",
       });
@@ -215,168 +230,187 @@ export const TaskListItem = ({ event }: TaskListItemProps) => {
           </Badge>
         </span>
       </div>
-      <div className="mb-2 text-lg">{event.title}</div>
-      <Form {...form}>
-        <div className="grid w-full grid-cols-1 gap-4 @md/event:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="projectId"
-            render={({ field }) => (
-              <FormItem className=" grid gap-2">
-                <FormLabel className="">Project</FormLabel>
-                <FormControl>
-                  <TeamworkProjectsSelect
-                    ref={field.ref}
-                    projectId={field.value}
-                    onChange={(selectedProject) => {
-                      field.onChange(selectedProject?.id);
-                      form.setValue("taskId", "");
-                      form.setValue(
-                        "projectTitle",
-                        `${selectedProject?.company?.name}: ${selectedProject?.name}`,
-                      );
-                      submitForm();
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="taskId"
-            render={({ field }) => (
-              <FormItem className="grid gap-2">
-                <FormLabel className="">Task</FormLabel>
-                <FormControl>
-                  <TeamworkTaskSelect
-                    ref={field.ref}
-                    projectId={watchTeamworkProjectId}
-                    teamworkTaskId={field.value}
-                    onChange={(selectedTeamworkTask) => {
-                      field.onChange(selectedTeamworkTask?.id);
-                      form.setValue(
-                        "taskTitle",
-                        `${selectedTeamworkTask?.content} (${selectedTeamworkTask?.["todo-list-name"]})`,
-                      );
-                      if (!task?.teamworkTask?.teamworkTimeEntryId) {
-                        form.setValue("billable", true);
-                        form.setValue("logTime", true);
-                      }
-                      submitForm();
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="col-span-full grid gap-2">
-                <FormLabel className="">Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Add some notes..."
-                    {...field}
-                    ref={(e) => {
-                      field.ref(e);
-                      descriptionRef.current = e;
-                    }}
-                    onBlur={() => {
-                      field.onBlur();
-                      if (form.formState.dirtyFields.description) {
-                        submitForm();
-                      }
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {watchTeamworkTaskId && (
-            <div className="flex gap-2">
+
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="ghost"
+            className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
+          >
+            <div className="text-lg">{event.title}</div>
+            <div>
+              <CaretSortIcon className="h-5 w-5" />
+              <span className="sr-only">Toggle</span>
+            </div>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <Form {...form}>
+            <div className="grid w-full grid-cols-1 gap-4 @md/event:grid-cols-2">
               <FormField
                 control={form.control}
-                name="logTime"
+                name="projectId"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2 space-y-0">
+                  <FormItem className=" grid gap-2">
+                    <FormLabel className="">Project</FormLabel>
                     <FormControl>
-                      <Checkbox
-                        {...field}
-                        value=""
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (
-                            !task?.teamworkTask?.teamworkTimeEntryId &&
-                            checked
-                          ) {
+                      <TeamworkProjectsSelect
+                        ref={field.ref}
+                        tabIndex={0}
+                        projectId={field.value}
+                        onChange={(selectedProject) => {
+                          field.onChange(selectedProject?.id);
+                          form.setValue("taskId", "");
+                          form.setValue(
+                            "projectTitle",
+                            `${selectedProject?.company?.name}: ${selectedProject?.name}`,
+                          );
+                          submitForm();
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="taskId"
+                render={({ field }) => (
+                  <FormItem className="grid gap-2">
+                    <FormLabel className="">Task</FormLabel>
+                    <FormControl>
+                      <TeamworkTaskSelect
+                        ref={field.ref}
+                        projectId={watchTeamworkProjectId}
+                        teamworkTaskId={field.value}
+                        onChange={(selectedTeamworkTask) => {
+                          field.onChange(selectedTeamworkTask?.id);
+                          form.setValue(
+                            "taskTitle",
+                            `${selectedTeamworkTask?.content} (${selectedTeamworkTask?.["todo-list-name"]})`,
+                          );
+                          if (!task?.teamworkTask?.teamworkTimeEntryId) {
                             form.setValue("billable", true);
+                            form.setValue("logTime", true);
                           }
                           submitForm();
                         }}
                       />
                     </FormControl>
-                    <FormLabel className=" cursor-pointer ">Log time</FormLabel>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {watchLogTime && (
-                <FormField
-                  control={form.control}
-                  name="billable"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <Switch
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="col-span-full grid gap-2">
+                    <FormLabel className="">Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add some notes..."
                         {...field}
-                        value=""
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          submitForm();
+                        ref={(e) => {
+                          field.ref(e);
+                          descriptionRef.current = e;
+                        }}
+                        onBlur={() => {
+                          field.onBlur();
+                          if (form.formState.dirtyFields.description) {
+                            submitForm();
+                          }
                         }}
                       />
-                      <FormLabel className="">Billable</FormLabel>
-                      <FormControl></FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {watchTeamworkTaskId && (
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name="logTime"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            {...field}
+                            value=""
+                            checked={field.value}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              if (
+                                !task?.teamworkTask?.teamworkTimeEntryId &&
+                                checked
+                              ) {
+                                form.setValue("billable", true);
+                              }
+                              submitForm();
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className=" cursor-pointer ">
+                          Log time
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {watchLogTime && (
+                    <FormField
+                      control={form.control}
+                      name="billable"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <Switch
+                            {...field}
+                            value=""
+                            checked={field.value}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              submitForm();
+                            }}
+                          />
+                          <FormLabel className="">Billable</FormLabel>
+                          <FormControl></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
+                </div>
               )}
+              <div className="col-span-full flex justify-end gap-4">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    if (task) {
+                      deleteTask.mutate({
+                        id: task.id,
+                      });
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
+                {/* <Button */}
+                {/*   size="sm" */}
+                {/*   variant="outline" */}
+                {/*   onClick={() => { */}
+                {/*     submitForm(); */}
+                {/*   }} */}
+                {/* > */}
+                {/*   Save */}
+                {/* </Button> */}
+              </div>
             </div>
-          )}
-          <div className="col-span-full flex justify-end gap-4">
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => {
-                if (task) {
-                  deleteTask.mutate({
-                    id: task.id,
-                  });
-                }
-              }}
-            >
-              Delete
-            </Button>
-            {/* <Button */}
-            {/*   size="sm" */}
-            {/*   variant="outline" */}
-            {/*   onClick={() => { */}
-            {/*     submitForm(); */}
-            {/*   }} */}
-            {/* > */}
-            {/*   Save */}
-            {/* </Button> */}
-          </div>
-        </div>
-      </Form>
+          </Form>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };

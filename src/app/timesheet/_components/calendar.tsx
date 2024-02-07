@@ -27,6 +27,8 @@ import { TaskListDisplay } from "./task-list-display";
 import {
   useCreateTask,
   useDeleteTask,
+  useStartTask,
+  useStopTask,
   useUpdateTask,
 } from "~/lib/hooks/use-task-api";
 import { useCalendarStore } from "~/app/_store";
@@ -52,6 +54,7 @@ export function Calendar({
   const navCollapsedSize = 4;
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
+  const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const calendarPanelRef = useRef<ImperativePanelHandle>(null);
 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
@@ -63,20 +66,18 @@ export function Calendar({
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const stopActiveTask = useStopTask();
+  const startActiveTask = useStartTask();
   const windowSize = useWindowSize();
   const isSmallScreen = windowSize?.width <= 800;
   useEffect(() => {
     if (activeTask) {
       const now = dayjs();
       const timerStart = dayjs(activeTask.start);
+
       if (now.isAfter(timerStart, "day")) {
-        updateTask.mutate({
-          id: activeTask.id,
-          task: {
-            ...activeTask,
-            activeTimerRunning: false,
-            end: timerStart.endOf("day").toDate(),
-          },
+        stopActiveTask.mutate({
+          endDate: timerStart.endOf("day").toDate(),
         });
       }
     }
@@ -230,16 +231,7 @@ export function Calendar({
                     variant="outline"
                     type="button"
                     onClick={() => {
-                      if (activeTask) {
-                        updateTask.mutate({
-                          id: activeTask.id,
-                          task: {
-                            ...activeTask,
-                            activeTimerRunning: false,
-                            end: new Date(),
-                          },
-                        });
-                      }
+                      stopActiveTask.mutate();
                     }}
                   >
                     <TimerReset className="mr-1 h-4 w-4" />
@@ -250,22 +242,8 @@ export function Calendar({
                   type="button"
                   variant="secondary"
                   onClick={async () => {
-                    if (activeTask) {
-                      updateTask.mutate({
-                        id: activeTask.id,
-                        task: {
-                          ...activeTask,
-                          activeTimerRunning: false,
-                          end: new Date(),
-                        },
-                      });
-                    }
-                    createTask.mutate({
-                      task: {
-                        activeTimerRunning: true,
-                        start: new Date(),
-                      },
-                    });
+                    const newTask = await startActiveTask.mutateAsync();
+                    setSelectedEventId(newTask.createdTask?.id);
                   }}
                 >
                   <Timer className="mr-1 h-4 w-4" />

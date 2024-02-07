@@ -5,6 +5,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, teamworkTasks } from "~/server/db/schema";
 import dayjs from "dayjs";
+import { api } from "~/trpc/server";
 
 export const taskRouter = createTRPCRouter({
   getPersonalTask: protectedProcedure
@@ -43,6 +44,7 @@ export const taskRouter = createTRPCRouter({
         task: createInsertSchema(tasks).omit({
           userId: true,
           id: true,
+          activeTimerRunning: true,
         }),
         teamworkTask: createInsertSchema(teamworkTasks)
           .omit({
@@ -51,12 +53,21 @@ export const taskRouter = createTRPCRouter({
             teamworkTimeEntryId: true,
           })
           .optional(),
+        activeTaskTimer: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.activeTaskTimer) {
+        //stop all timers
+        await api.task.stopActiveTask.mutate();
+      }
       const createdTasks = await ctx.db
         .insert(tasks)
-        .values({ ...input.task, userId: ctx.session.user.id })
+        .values({
+          ...input.task,
+          activeTimerRunning: input.activeTaskTimer,
+          userId: ctx.session.user.id,
+        })
         .returning({ id: tasks.id });
       const createdTaskId = createdTasks[0]?.id;
       if (createdTaskId) {
@@ -84,6 +95,7 @@ export const taskRouter = createTRPCRouter({
         task: createInsertSchema(tasks).omit({
           userId: true,
           id: true,
+          activeTimerRunning: true,
         }),
         teamworkTask: createInsertSchema(teamworkTasks)
           .omit({
@@ -167,7 +179,28 @@ export const taskRouter = createTRPCRouter({
         );
       return { existingTask };
     }),
-
+  stopActiveTask: protectedProcedure
+    .input(
+      z
+        .object({
+          endDate: z.date().optional(),
+        })
+        .optional(),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(tasks)
+        .set({
+          activeTimerRunning: false,
+          end: input?.endDate ?? new Date(),
+        })
+        .where(
+          and(
+            eq(tasks.userId, ctx.session.user.id),
+            eq(tasks.activeTimerRunning, true),
+          ),
+        );
+    }),
   getActiveTask: protectedProcedure.query(async ({ ctx }) => {
     const timer = await ctx.db.query.tasks.findFirst({
       with: {

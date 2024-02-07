@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { type EventInput } from "@fullcalendar/core";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { cn, getCalendarEvents } from "~/lib/utils";
+import {
+  type TasksWithTeamworkTaskSelectSchema,
+  cn,
+  getCalendarEvents,
+} from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useGetTasks } from "~/lib/hooks/use-task-api";
@@ -63,7 +67,13 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
           <div
             key={`event_${selectedDate.toISOString()}_${event.id}_${index}`}
             className={cn("rounded-lg border p-3", {
-              "shadow-lg": selectedEventId === event.id,
+              "shadow-lg":
+                selectedEventId ===
+                (
+                  event?.extendedProps?.task as
+                    | TasksWithTeamworkTaskSelectSchema
+                    | undefined
+                )?.id,
             })}
           >
             <TaskListItem event={event} />

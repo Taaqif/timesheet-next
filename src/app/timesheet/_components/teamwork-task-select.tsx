@@ -135,7 +135,7 @@ export type TeamworkTaskSelectProps = {
   projectId?: string | null;
   teamworkTaskId?: string | null;
   onChange: (selectedTask?: TeamworkTask) => void;
-};
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange">;
 export const TeamworkTaskSelect = React.forwardRef<
   HTMLButtonElement,
   TeamworkTaskSelectProps

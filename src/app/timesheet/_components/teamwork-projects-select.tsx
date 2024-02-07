@@ -29,7 +29,7 @@ type TeamworkProjectGroup = {
 export type TeamworkProjectsSelectProps = {
   projectId?: string | null;
   onChange: (selectedProject?: TeamworkProject) => void;
-};
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange">;
 export const TeamworkProjectsSelect = React.forwardRef<
   HTMLButtonElement,
   TeamworkProjectsSelectProps
