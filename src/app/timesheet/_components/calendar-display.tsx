@@ -36,6 +36,7 @@ import {
   TooltipContent,
   TooltipPortal,
 } from "~/components/ui/tooltip";
+import { Clock } from "lucide-react";
 
 export type CalendarDisplayProps = {
   view?: "timelineDayWorkHours" | "timeGridDay";
@@ -400,8 +401,11 @@ const RenderContent = ({
             onClick();
           }}
         >
-          <div className="fc-event-time">
-            {!!arg.timeText && <span className="mr-1">{time}</span>}
+          <div className="fc-event-time flex items-center gap-1">
+            {task?.teamworkTask.teamworkTimeEntryId && (
+              <Clock className="inline h-auto w-3" />
+            )}
+            {!!arg.timeText && time}
             <span>
               (
               {getHoursMinutesTextFromDates(

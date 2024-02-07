@@ -12,7 +12,7 @@ import { TeamworkProjectsSelect } from "./teamwork-projects-select";
 import { TeamworkTaskSelect } from "./teamwork-task-select";
 import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
 import dayjs from "dayjs";
-import { History } from "lucide-react";
+import { Clock, History } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { useCalendarStore } from "~/app/_store";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -219,6 +219,7 @@ export const TaskListItem = ({ event, defaultExpanded }: TaskListItemProps) => {
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
           {isActiveTimer && <History className="w-4" />}
+          {task?.teamworkTask.teamworkTimeEntryId && <Clock className="w-4" />}
           <span>{time}</span>
           <Badge variant="outline" className="text-muted-foreground">
             {getHoursMinutesTextFromDates(
