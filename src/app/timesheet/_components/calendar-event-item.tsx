@@ -26,20 +26,20 @@ export const CalendarEventItem = ({
           </div>
         )}
         {calendarEvent.organizer?.emailAddress && (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <a
-                href={`mailto:${calendarEvent.organizer?.emailAddress?.address}`}
-                className="flex items-center gap-2 truncate text-nowrap"
-              >
-                <Mail className="w-4" />
+          <>
+            <a
+              href={`mailto:${calendarEvent.organizer?.emailAddress?.address}`}
+              className="flex items-center gap-2 truncate text-nowrap"
+            >
+              <Mail className="w-4" />
+              <span>
                 {calendarEvent.organizer?.emailAddress?.name}
-              </a>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="flex items-center gap-4">
-              {calendarEvent.organizer?.emailAddress?.address}
-            </TooltipContent>
-          </Tooltip>
+                <span className="ml-1">
+                  ({calendarEvent.organizer?.emailAddress?.address})
+                </span>
+              </span>
+            </a>
+          </>
         )}
       </div>
       {calendarEvent.onlineMeeting?.joinUrl && (
