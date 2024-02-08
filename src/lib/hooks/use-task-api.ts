@@ -227,6 +227,8 @@ export const useCreateTask = () => {
 
 export const useStartTask = () => {
   const utils = api.useUtils();
+  const { data: activeTask } = api.task.getActiveTask.useQuery();
+  const updateTask = useUpdateTask();
   const {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
@@ -241,6 +243,13 @@ export const useStartTask = () => {
       },
       activeTaskTimer: true,
     });
+    if (activeTask) {
+      await updateTask.mutateAsync({
+        id: activeTask.id,
+        task: { ...activeTask, end: new Date() },
+        teamworkTask: activeTask.teamworkTask,
+      });
+    }
     await utils.task.getPersonalTasks.invalidate();
     await utils.task.getActiveTask.invalidate();
     return result;
@@ -255,10 +264,17 @@ export const useStartTask = () => {
 
 export const useStopTask = () => {
   const utils = api.useUtils();
+  const { data: activeTask } = api.task.getActiveTask.useQuery();
+  const updateTask = useUpdateTask();
   const stopActiveTask = api.task.stopActiveTask.useMutation({
     async onSuccess() {
-      await utils.task.getPersonalTasks.invalidate();
-      await utils.task.getActiveTask.invalidate();
+      if (activeTask) {
+        await updateTask.mutateAsync({
+          id: activeTask.id,
+          task: { ...activeTask, end: new Date() },
+          teamworkTask: activeTask.teamworkTask,
+        });
+      }
     },
   });
 
