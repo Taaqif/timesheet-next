@@ -4,6 +4,7 @@ import { formatRange, type EventInput } from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
   getHoursMinutesTextFromDates,
+  calculateEventProgressBarInfo,
 } from "~/lib/utils";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
@@ -34,6 +35,7 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
+import { Progress } from "~/components/ui/progress";
 
 const formSchema = z.object({
   description: z.string().optional(),
@@ -47,9 +49,16 @@ const formSchema = z.object({
 
 export type TaskListItemProps = {
   event: EventInput;
+  businessHoursStartTime?: string;
+  businessHoursEndTime?: string;
   defaultExpanded?: boolean;
 };
-export const TaskListItem = ({ event, defaultExpanded }: TaskListItemProps) => {
+export const TaskListItem = ({
+  event,
+  defaultExpanded,
+  businessHoursStartTime,
+  businessHoursEndTime,
+}: TaskListItemProps) => {
   const task = event.extendedProps?.task as
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
@@ -62,6 +71,27 @@ export const TaskListItem = ({ event, defaultExpanded }: TaskListItemProps) => {
       !event.title ||
       defaultExpanded,
   );
+
+  const progressBarInfo = useMemo(() => {
+    if (businessHoursEndTime && businessHoursStartTime) {
+      const startSplit = businessHoursStartTime.split(":");
+      const endSplit = businessHoursEndTime.split(":");
+      const businessHoursStart = dayjs(event.start as Date)
+        .set("hours", +startSplit[0]!)
+        .set("minutes", +startSplit[1]!)
+        .toDate();
+      const businessHoursEnd = dayjs(event.start as Date)
+        .set("hours", +endSplit[0]!)
+        .set("minutes", +endSplit[1]!)
+        .toDate();
+      return calculateEventProgressBarInfo(
+        businessHoursStart,
+        businessHoursEnd,
+        event.start as Date,
+        endDate,
+      );
+    }
+  }, [event.start, endDate, businessHoursStartTime, businessHoursEndTime]);
 
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
@@ -216,6 +246,15 @@ export const TaskListItem = ({ event, defaultExpanded }: TaskListItemProps) => {
         // setSelectedEventId(event.id);
       }}
     >
+      {progressBarInfo && (
+        <div>
+          <Progress
+            value={progressBarInfo.value}
+            offset={progressBarInfo.offset}
+            indicatorColor={event.backgroundColor}
+          />
+        </div>
+      )}
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
           {isActiveTimer && <History className="w-4" />}

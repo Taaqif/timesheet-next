@@ -23,6 +23,7 @@ import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useDebounceCallback } from "usehooks-ts";
 import {
+  useCalendarEvents,
   useCreateTask,
   useGetTasks,
   useUpdateTask,
@@ -44,8 +45,6 @@ export type CalendarDisplayProps = {
 export const CalendarDisplay = ({
   view = "timeGridDay",
 }: CalendarDisplayProps) => {
-  const [events, setEvents] = useState<EventInput[]>([]);
-  const [businessHours, setBusinessHours] = useState<EventInput>();
   const calendarRef = useRef<FullCalendar>(null);
   const closestEventsAtStart = useRef<EventApi[]>([]);
   const closestEventsAtEnd = useRef<EventApi[]>([]);
@@ -55,23 +54,10 @@ export const CalendarDisplay = ({
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const updateTask = useUpdateTask();
   const createTask = useCreateTask();
-  const { data: calendarEvents } = api.outlook.getMyCalendarEvents.useQuery(
-    {
-      weekOf: weekOf,
-    },
-    {
-      enabled: !!weekOf,
-    },
-  );
-  const { data: schedule } = api.outlook.getMySchedule.useQuery(
-    {
-      weekOf: weekOf,
-    },
-    {
-      enabled: !!weekOf,
-    },
-  );
-  const { data: personalTasks } = useGetTasks();
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const { events, businessHours } = useCalendarEvents();
 
   const debouncedEventResizeCallback = useDebounceCallback(
     (start: Date, end: Date) => {
@@ -115,10 +101,6 @@ export const CalendarDisplay = ({
   }, [weekOf]);
 
   useEffect(() => {
-    setEventData();
-  }, [schedule, personalTasks, calendarEvents]);
-
-  useEffect(() => {
     if (selectedDate) {
       const calendarApi = calendarRef?.current?.getApi();
       const calendarDate = calendarApi?.getDate();
@@ -127,20 +109,6 @@ export const CalendarDisplay = ({
       }
     }
   }, [selectedDate]);
-
-  const setEventData = () => {
-    const { newEvents, businessHours } = getCalendarEvents({
-      tasks: personalTasks,
-      schedule,
-      calendarEvents,
-    });
-    if (businessHours) {
-      setBusinessHours(businessHours);
-    }
-    setEvents(newEvents);
-  };
-
-  const [isDragging, setIsDragging] = useState(false);
 
   return (
     <div className="h-full">

@@ -201,7 +201,7 @@ export const getCalendarEvents = ({
 
 export type ProgressBarInfo = {
   offset: number;
-  progress: number;
+  value: number;
 };
 
 export function calculateEventProgressBarInfo(
@@ -210,13 +210,13 @@ export function calculateEventProgressBarInfo(
   timeEntryStart: Date,
   timeEntryEnd: Date,
 ): ProgressBarInfo {
-  const totalBusinessHours = endOfDay.getHours() - startOfDay.getHours();
+  const totalBusinessHours = endOfDay.valueOf() - startOfDay.valueOf();
   const elapsedBusinessHours =
-    timeEntryEnd.getHours() - timeEntryStart.getHours();
+    timeEntryEnd.valueOf() - timeEntryStart.valueOf();
   const offset =
-    ((timeEntryStart.getHours() - startOfDay.getHours()) / totalBusinessHours) *
+    ((timeEntryStart.valueOf() - startOfDay.valueOf()) / totalBusinessHours) *
     100;
-  const progress = (elapsedBusinessHours / totalBusinessHours) * 100;
+  const value = (elapsedBusinessHours / totalBusinessHours) * 100;
 
-  return { offset, progress };
+  return { offset, value };
 }

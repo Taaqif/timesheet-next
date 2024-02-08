@@ -6,8 +6,10 @@ import { type TimeEntry } from "~/server/api/routers/teamwork";
 import { type RouterInputs, type RouterOutputs } from "~/trpc/shared";
 import { type InferSelectModel } from "drizzle-orm";
 import { type tasks } from "~/server/db/schema";
-import { ex } from "node_modules/@fullcalendar/core/internal-common";
 import { toast } from "sonner";
+import { type EventInput } from "@fullcalendar/core";
+import { useEffect, useState } from "react";
+import { getCalendarEvents } from "../utils";
 
 export const useDeleteTask = () => {
   const utils = api.useUtils();
@@ -252,7 +254,6 @@ export const useStartTask = () => {
 };
 
 export const useStopTask = () => {
-  const createTask = useCreateTask();
   const utils = api.useUtils();
   const stopActiveTask = api.task.stopActiveTask.useMutation({
     async onSuccess() {
@@ -275,4 +276,51 @@ export const useGetTasks = () => {
     },
   );
   return tasks;
+};
+
+export const useCalendarEvents = () => {
+  const weekOf = useCalendarStore((s) => s.weekOf);
+  const [events, setEvents] = useState<EventInput[]>([]);
+  const [businessHours, setBusinessHours] = useState<EventInput>();
+  const { data: personalTasks, isFetched: personalTasksFetched } =
+    useGetTasks();
+  const { data: calendarEvents, isFetched: calendarFetched } =
+    api.outlook.getMyCalendarEvents.useQuery(
+      {
+        weekOf: weekOf,
+      },
+      {
+        enabled: !!weekOf,
+      },
+    );
+  const { data: schedule, isFetched: scheduleFetched } =
+    api.outlook.getMySchedule.useQuery(
+      {
+        weekOf: weekOf,
+      },
+      {
+        enabled: !!weekOf,
+      },
+    );
+  useEffect(() => {
+    setEventData();
+  }, [schedule, personalTasks, calendarEvents]);
+
+  const setEventData = () => {
+    const { newEvents, businessHours } = getCalendarEvents({
+      tasks: personalTasks,
+      schedule,
+      calendarEvents,
+    });
+    if (businessHours) {
+      setBusinessHours(businessHours);
+    }
+    setEvents(newEvents);
+  };
+
+  return {
+    events,
+    businessHours,
+    isFetched: personalTasksFetched && calendarFetched && scheduleFetched,
+  };
 };

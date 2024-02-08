@@ -2,33 +2,34 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { type EventInput } from "@fullcalendar/core";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import {
-  type TasksWithTeamworkTaskSelectSchema,
-  cn,
-  getCalendarEvents,
-} from "~/lib/utils";
+import { type TasksWithTeamworkTaskSelectSchema, cn } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
-import { useGetTasks } from "~/lib/hooks/use-task-api";
+import { useCalendarEvents } from "~/lib/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
 
 export type TaskListDisplayProps = {
   //
 };
 export const TaskListDisplay = ({}: TaskListDisplayProps) => {
-  const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [firstScroll, setFirstScroll] = useState(false);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
-  const { data: personalTasks, isFetched: personalTasksFetched } =
-    useGetTasks();
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
+  const {
+    events,
+    businessHours,
+    isFetched: calendarEventsFetched,
+  } = useCalendarEvents();
 
   const selectedCalendarEvents = useMemo(() => {
-    return calendarEvents.filter((event) =>
-      dayjs(event.start as Date).isSame(dayjs(selectedDate), "day"),
-    );
-  }, [selectedDate, calendarEvents]);
+    return events.filter((event) => {
+      const hasTask = !!event?.extendedProps?.task;
+      return (
+        dayjs(event.start as Date).isSame(dayjs(selectedDate), "day") && hasTask
+      );
+    });
+  }, [selectedDate, events]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -46,19 +47,11 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   }, [selectedDate]);
 
   useEffect(() => {
-    setEvents();
-  }, [personalTasks]);
-
-  const setEvents = () => {
-    const { newEvents } = getCalendarEvents({
-      tasks: personalTasks,
-    });
-    setCalendarEvents(newEvents);
-    if (firstScroll === false && newEvents.length > 0) {
+    if (firstScroll === false && events.length > 0) {
       scrollToBottom();
       setFirstScroll(true);
     }
-  };
+  }, [events]);
 
   return (
     <ScrollArea className="w-full" viewportRef={scrollAreaViewportRef}>
@@ -76,11 +69,15 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
                 )?.id,
             })}
           >
-            <TaskListItem event={event} />
+            <TaskListItem
+              event={event}
+              businessHoursStartTime={businessHours?.startTime as string}
+              businessHoursEndTime={businessHours?.endTime as string}
+            />
           </div>
         ))}
 
-        {selectedCalendarEvents?.length === 0 && personalTasksFetched && (
+        {selectedCalendarEvents?.length === 0 && calendarEventsFetched && (
           <div className="flex flex-col items-center justify-center gap-5 p-10">
             <h1 className="text-3xl">No Events</h1>
             <NotepadText className="h-20 w-20 text-muted-foreground opacity-60" />
