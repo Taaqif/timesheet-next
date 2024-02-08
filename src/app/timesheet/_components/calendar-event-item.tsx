@@ -1,12 +1,9 @@
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
+import { type Attendee } from "@microsoft/microsoft-graph-types";
 import { Mail, MapPin } from "lucide-react";
 import React from "react";
 import { Button } from "~/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { getInitials, getTextColor } from "~/lib/utils";
 
 export type CalendarEventItemProps = {
   calendarEvent: ICalendarViewInfo;
@@ -14,6 +11,7 @@ export type CalendarEventItemProps = {
 export const CalendarEventItem = ({
   calendarEvent,
 }: CalendarEventItemProps) => {
+  console.log(calendarEvent);
   return (
     <div className="flex flex-col gap-2">
       <div className="bold text-lg">{calendarEvent.subject}</div>
@@ -41,6 +39,7 @@ export const CalendarEventItem = ({
             </a>
           </>
         )}
+        <Attendees attendees={calendarEvent.attendees} />
       </div>
       {calendarEvent.onlineMeeting?.joinUrl && (
         <div className="mt-2">
@@ -54,6 +53,37 @@ export const CalendarEventItem = ({
           </Button>
         </div>
       )}
+    </div>
+  );
+};
+
+type AttendeesProps = {
+  attendees?: Attendee[] | null;
+};
+const Attendees = ({ attendees }: AttendeesProps) => {
+  if (attendees?.length === 0) {
+    return null;
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {attendees?.map((attendee, index) => (
+        <>
+          {attendee.emailAddress?.name && (
+            <div
+              key={index}
+              className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full "
+              style={{
+                ...getTextColor(attendee.emailAddress.name),
+              }}
+              title={attendee.emailAddress.address ?? ""}
+            >
+              <span className="font-medium ">
+                {getInitials(attendee.emailAddress.name)}
+              </span>
+            </div>
+          )}
+        </>
+      ))}
     </div>
   );
 };

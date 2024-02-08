@@ -153,19 +153,19 @@ export const getCalendarEvents = ({
   if (tasks) {
     newEvents = newEvents.concat(
       tasks.map((task) => {
-        let backgroundColor = "#006d77";
-
-        if (task.teamworkTask?.teamworkProjectId) {
-          backgroundColor = stringToColor(task.teamworkTask?.teamworkProjectId);
-        }
-        const textColor = fontColorContrast(backgroundColor, 0.6);
+        const bgColor = "#006d77";
+        const { backgroundColor, color } = getTextColor(
+          task.teamworkTask?.teamworkProjectId ?? "",
+        );
         const mappedEvent: EventInput = {
           id: `TASK_${task.id}`,
           start: task.start,
           end: task.end ?? undefined,
           editable: true,
-          backgroundColor,
-          textColor,
+          backgroundColor: task.teamworkTask?.teamworkProjectId
+            ? backgroundColor
+            : bgColor,
+          textColor: task.teamworkTask?.teamworkProjectId ? color : "white",
           title: task.title ?? "",
           extendedProps: {
             type: CalendarEventType.TASK,
@@ -199,6 +199,15 @@ export const getCalendarEvents = ({
   };
 };
 
+export const getTextColor = (text: string) => {
+  const backgroundColor = stringToColor(text);
+  const color = fontColorContrast(backgroundColor, 0.6);
+  return {
+    backgroundColor,
+    color,
+  };
+};
+
 export type ProgressBarInfo = {
   offset: number;
   value: number;
@@ -220,3 +229,15 @@ export function calculateEventProgressBarInfo(
 
   return { offset, value };
 }
+
+export const getInitials = (fullName: string): string => {
+  const words = fullName.split(" ");
+
+  const initials = words
+    .map((word) => word.charAt(0))
+    .slice(0, 3)
+    .join("")
+    .toUpperCase();
+
+  return initials;
+};
