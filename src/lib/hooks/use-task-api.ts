@@ -11,7 +11,7 @@ import { type EventInput } from "@fullcalendar/core";
 import { useEffect, useState } from "react";
 import { getCalendarEvents } from "../utils";
 
-export const useDeleteTask = () => {
+export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
   const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
   const {
@@ -80,7 +80,7 @@ const getTimeEntry = (
   return timeEntry;
 };
 
-export const useUpdateTask = () => {
+export const useUpdateTaskMutation = () => {
   const utils = api.useUtils();
   const { data: teamworkPerson } = useSessionTeamworkPerson();
   const updateTimeEntry = api.teamwork.updateTimeEntry.useMutation({});
@@ -176,7 +176,7 @@ export const useUpdateTask = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
-export const useCreateTask = () => {
+export const useCreateTaskMutation = () => {
   const utils = api.useUtils();
   const { data: teamworkPerson } = useSessionTeamworkPerson();
   const createTimeEntry = api.teamwork.createTimeEntryForTask.useMutation({});
@@ -225,10 +225,10 @@ export const useCreateTask = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
-export const useStartTask = () => {
+export const useStartTaskMutation = () => {
   const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const updateTask = useUpdateTask();
+  const updateTask = useUpdateTaskMutation();
   const {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
@@ -262,10 +262,10 @@ export const useStartTask = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
-export const useStopTask = () => {
+export const useStopTaskMutation = () => {
   const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const updateTask = useUpdateTask();
+  const updateTask = useUpdateTaskMutation();
   const stopActiveTask = api.task.stopActiveTask.useMutation({
     async onSuccess() {
       if (activeTask) {
@@ -281,7 +281,7 @@ export const useStopTask = () => {
   return stopActiveTask;
 };
 
-export const useGetTasks = () => {
+export const useGetTasksQuery = () => {
   const weekOf = useCalendarStore((s) => s.weekOf);
   const tasks = api.task.getPersonalTasks.useQuery(
     {
@@ -294,12 +294,12 @@ export const useGetTasks = () => {
   return tasks;
 };
 
-export const useCalendarEvents = () => {
+export const useCalendarEventsQuery = () => {
   const weekOf = useCalendarStore((s) => s.weekOf);
   const [events, setEvents] = useState<EventInput[]>([]);
   const [businessHours, setBusinessHours] = useState<EventInput>();
   const { data: personalTasks, isFetched: personalTasksFetched } =
-    useGetTasks();
+    useGetTasksQuery();
   const { data: calendarEvents, isFetched: calendarFetched } =
     api.outlook.getMyCalendarEvents.useQuery(
       {

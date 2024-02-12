@@ -5,7 +5,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { type TasksWithTeamworkTaskSelectSchema, cn } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
-import { useCalendarEvents } from "~/lib/hooks/use-task-api";
+import { useCalendarEventsQuery } from "~/lib/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
 
 export type TaskListDisplayProps = {
@@ -20,7 +20,7 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
     events,
     businessHours,
     isFetched: calendarEventsFetched,
-  } = useCalendarEvents();
+  } = useCalendarEventsQuery();
 
   const selectedCalendarEvents = useMemo(() => {
     return events.filter((event) => {

@@ -23,10 +23,10 @@ import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useDebounceCallback } from "usehooks-ts";
 import {
-  useCalendarEvents,
-  useCreateTask,
-  useGetTasks,
-  useUpdateTask,
+  useCalendarEventsQuery,
+  useCreateTaskMutation,
+  useGetTasksQuery,
+  useUpdateTaskMutation,
 } from "~/lib/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
@@ -52,12 +52,12 @@ export const CalendarDisplay = ({
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
-  const updateTask = useUpdateTask();
-  const createTask = useCreateTask();
+  const updateTask = useUpdateTaskMutation();
+  const createTask = useCreateTaskMutation();
 
   const [isDragging, setIsDragging] = useState(false);
 
-  const { events, businessHours } = useCalendarEvents();
+  const { events, businessHours } = useCalendarEventsQuery();
 
   const debouncedEventResizeCallback = useDebounceCallback(
     (start: Date, end: Date) => {

@@ -15,6 +15,7 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  MoreVertical,
   Timer,
   TimerReset,
 } from "lucide-react";
@@ -25,11 +26,11 @@ import { Calendar as CalendarPicker } from "~/components/ui/calendar";
 import { api } from "~/trpc/react";
 import { TaskListDisplay } from "./task-list-display";
 import {
-  useCreateTask,
-  useDeleteTask,
-  useStartTask,
-  useStopTask,
-  useUpdateTask,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
+  useStartTaskMutation,
+  useStopTaskMutation,
+  useUpdateTaskMutation,
 } from "~/lib/hooks/use-task-api";
 import { useCalendarStore } from "~/app/_store";
 import dayjs from "dayjs";
@@ -46,6 +47,14 @@ import {
 } from "~/components/ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { useBreakpoint } from "~/lib/hooks/use-breakpoint";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
 export type CalendarProps = {
   defaultNavCollapsed?: boolean;
@@ -69,9 +78,11 @@ export function Calendar({
     defaultCalendarCollapsed,
   );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isHorizontalCalendarOpen, setIsHorizontalCalendarOpen] =
+    useState(false);
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const stopActiveTask = useStopTask();
-  const startActiveTask = useStartTask();
+  const stopActiveTask = useStopTaskMutation();
+  const startActiveTask = useStartTaskMutation();
   const { breakpoint } = useBreakpoint();
 
   useEffect(() => {
@@ -98,6 +109,18 @@ export function Calendar({
       }
     }
   }, [breakpoint]);
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const goNext = () => {
+    setSelectedDate(dayjs(selectedDate).add(1, "day").toDate());
+  };
+
+  const goPrevious = () => {
+    setSelectedDate(dayjs(selectedDate).add(-1, "day").toDate());
+  };
 
   return (
     <div className="h-svh">
@@ -166,14 +189,14 @@ export function Calendar({
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
           <div className="flex h-full flex-col @container/calendar-task-list">
-            <div className="flex flex-col justify-between gap-2 px-4 py-4 @md/calendar-task-list:flex-row @md/calendar-task-list:items-center">
+            <div className="flex flex-row justify-between gap-2 px-4 py-4 @lg/calendar-task-list:items-center">
               <Popover
                 open={isDatePickerOpen}
                 onOpenChange={setIsDatePickerOpen}
               >
                 <PopoverTrigger asChild>
                   <Button variant={"ghost"} className="px-1">
-                    <h1 className="flex flex-1 items-center gap-2 text-xl md:text-2xl">
+                    <h1 className="flex flex-1 items-center gap-2 text-xl @lg/calendar-task-list:text-2xl">
                       <CalendarIcon className="h-5 w-5" />
                       {dayjs(selectedDate).format("dddd, DD MMMM YYYY")}
                     </h1>
@@ -195,65 +218,94 @@ export function Calendar({
                   />
                 </PopoverContent>
               </Popover>
-              <div className="flex gap-2">
-                <Button
-                  className="mr-2"
-                  variant={
-                    dayjs(selectedDate).isSame(dayjs(), "day")
-                      ? "outline"
-                      : "secondary"
-                  }
-                  onClick={() => {
-                    setSelectedDate(new Date());
-                  }}
-                >
-                  Today
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => {
-                    setSelectedDate(
-                      dayjs(selectedDate).add(-1, "day").toDate(),
-                    );
-                  }}
-                >
-                  <ChevronLeft />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => {
-                    setSelectedDate(dayjs(selectedDate).add(1, "day").toDate());
-                  }}
-                >
-                  <ChevronRight />
-                </Button>
-              </div>
+              {breakpoint !== "mobile" && (
+                <div className="flex gap-2">
+                  <Button
+                    className="mr-2"
+                    variant={
+                      dayjs(selectedDate).isSame(dayjs(), "day")
+                        ? "outline"
+                        : "secondary"
+                    }
+                    onClick={() => {
+                      goToToday();
+                    }}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => {
+                      goPrevious();
+                    }}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => {
+                      goNext();
+                    }}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </div>
+              )}
+              {breakpoint === "mobile" && (
+                <div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <MoreVertical />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          goToToday();
+                        }}
+                      >
+                        Today
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          goNext();
+                        }}
+                      >
+                        Next Day
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          goPrevious();
+                        }}
+                      >
+                        Previous Day
+                      </DropdownMenuItem>
+                      {isCalendarCollapsed && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setIsHorizontalCalendarOpen(
+                              !isHorizontalCalendarOpen,
+                            );
+                          }}
+                        >
+                          {isHorizontalCalendarOpen ? "Hide" : "Show"} Calendar
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
             <Separator />
 
             <div className="flex flex-col gap-2 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              {isCalendarCollapsed && (
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
-                    >
-                      <div className="text-base md:text-lg">View Calendar</div>
-                      <div>
-                        <CaretSortIcon className="h-5 w-5" />
-                        <span className="sr-only">Toggle</span>
-                      </div>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="h-[150px]">
-                      <CalendarDisplay view="timelineDayWorkHours" />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+              {isCalendarCollapsed && isHorizontalCalendarOpen && (
+                <div className="h-[150px]">
+                  <CalendarDisplay view="timelineDayWorkHours" />
+                </div>
               )}
               <div className="flex flex-row justify-end gap-4 ">
                 {activeTask && (
@@ -312,7 +364,7 @@ export function Calendar({
               }}
               className={cn(
                 isCalendarCollapsed &&
-                  "min-w-[10px] transition-all duration-300 ease-in-out",
+                  "min-w-[50px] transition-all duration-300 ease-in-out",
               )}
             >
               {isCalendarCollapsed && (

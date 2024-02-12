@@ -11,7 +11,10 @@ import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
 import { TeamworkProjectsSelect } from "./teamwork-projects-select";
 import { TeamworkTaskSelect } from "./teamwork-task-select";
-import { useDeleteTask, useUpdateTask } from "~/lib/hooks/use-task-api";
+import {
+  useDeleteTaskMutation,
+  useUpdateTaskMutation,
+} from "~/lib/hooks/use-task-api";
 import dayjs from "dayjs";
 import { Clock, History } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
@@ -164,8 +167,8 @@ export const TaskListItem = ({
   const watchTeamworkProjectId = form.watch("projectId");
   const watchLogTime = form.watch("logTime");
 
-  const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
+  const updateTask = useUpdateTaskMutation();
+  const deleteTask = useDeleteTaskMutation();
 
   useEffect(() => {
     if (isActiveTimer) {
