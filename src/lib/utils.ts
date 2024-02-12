@@ -46,7 +46,7 @@ export const getHoursMinutesSecondsTextFromSeconds = (
   if (minutes > 0) {
     display.push(`${minutes}${condensed ? "m" : " minutes"}`);
   }
-  if (includeSeconds) {
+  if (includeSeconds || totalSeconds < 60) {
     if (totalSeconds === 0 || seconds > 0) {
       display.push(`${seconds}${condensed ? "s" : " seconds"}`);
     }
