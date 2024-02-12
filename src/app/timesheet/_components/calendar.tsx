@@ -221,7 +221,7 @@ export function Calendar({
               {breakpoint !== "mobile" && (
                 <div className="flex gap-2">
                   <Button
-                    className="mr-2"
+                    className="mr-2 hidden @lg/calendar-task-list:block"
                     variant={
                       dayjs(selectedDate).isSame(dayjs(), "day")
                         ? "outline"
