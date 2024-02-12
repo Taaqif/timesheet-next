@@ -38,22 +38,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { ImperativePanelHandle } from "react-resizable-panels";
-import { useWindowSize } from "usehooks-ts";
+import { type ImperativePanelHandle } from "react-resizable-panels";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
+import { useBreakpoint } from "~/lib/hooks/use-breakpoint";
 
 export type CalendarProps = {
-  defaultCollapsed?: boolean;
+  defaultNavCollapsed?: boolean;
   defaultCalendarCollapsed?: boolean;
   defaultLayout?: number[];
 };
 export function Calendar({
-  defaultCollapsed = false,
+  defaultNavCollapsed = false,
   defaultCalendarCollapsed = false,
   defaultLayout = [265, 440, 655],
 }: CalendarProps) {
@@ -62,20 +62,18 @@ export function Calendar({
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const calendarPanelRef = useRef<ImperativePanelHandle>(null);
+  const navPanelRef = useRef<ImperativePanelHandle>(null);
 
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(defaultNavCollapsed);
   const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(
     defaultCalendarCollapsed,
   );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const createTask = useCreateTask();
-  const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
   const stopActiveTask = useStopTask();
   const startActiveTask = useStartTask();
-  const windowSize = useWindowSize();
-  const isSmallScreen = windowSize?.width <= 800;
+  const { breakpoint } = useBreakpoint();
+
   useEffect(() => {
     if (activeTask) {
       const now = dayjs();
@@ -90,12 +88,16 @@ export function Calendar({
   }, [activeTask]);
 
   useEffect(() => {
-    if (isSmallScreen === true) {
+    if (breakpoint === "mobile") {
       if (!isCalendarCollapsed) {
         setIsCalendarCollapsed(true);
       }
+      if (!isNavCollapsed) {
+        setIsNavCollapsed(true);
+        navPanelRef.current?.collapse();
+      }
     }
-  }, [windowSize]);
+  }, [breakpoint]);
 
   return (
     <div className="h-svh">
@@ -110,39 +112,40 @@ export function Calendar({
         className="h-full items-stretch"
       >
         <ResizablePanel
+          ref={navPanelRef}
           defaultSize={defaultLayout[0]}
           collapsedSize={navCollapsedSize}
           collapsible={true}
           minSize={15}
           maxSize={20}
           onExpand={() => {
-            setIsCollapsed(false);
-            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+            setIsNavCollapsed(false);
+            document.cookie = `react-resizable-panels:nav-collapsed=${JSON.stringify(
               false,
             )}`;
           }}
           onCollapse={() => {
-            setIsCollapsed(true);
-            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+            setIsNavCollapsed(true);
+            document.cookie = `react-resizable-panels:nav-collapsed=${JSON.stringify(
               true,
             )}`;
           }}
           className={cn(
-            isCollapsed &&
+            isNavCollapsed &&
               "min-w-[50px] transition-all duration-300 ease-in-out",
           )}
         >
           <div
             className={cn(
               "flex h-[68px] items-center justify-center",
-              isCollapsed ? "h-[68px]" : "px-2",
+              isNavCollapsed ? "h-[68px]" : "px-2",
             )}
           >
             {/* <AccountSwitcher isCollapsed={isCollapsed} accounts={accounts} /> */}
           </div>
           <Separator />
           <Nav
-            isCollapsed={isCollapsed}
+            isCollapsed={isNavCollapsed}
             links={[
               {
                 title: "Timesheet",
@@ -285,7 +288,7 @@ export function Calendar({
             </div>
           </div>
         </ResizablePanel>
-        {!isSmallScreen && (
+        {breakpoint !== "mobile" && (
           <>
             <ResizableHandle withHandle />
             <ResizablePanel

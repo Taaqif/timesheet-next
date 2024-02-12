@@ -8,7 +8,7 @@ export const metadata = {
 
 export default async function page() {
   const layout = cookies().get("react-resizable-panels:layout");
-  const collapsed = cookies().get("react-resizable-panels:collapsed");
+  const navCollapsed = cookies().get("react-resizable-panels:nav-collapsed");
   const calendarCollapsed = cookies().get(
     "react-resizable-panels:calendar-collapsed",
   );
@@ -16,8 +16,8 @@ export default async function page() {
   const defaultLayout = layout
     ? (JSON.parse(layout.value) as number[])
     : undefined;
-  const defaultCollapsed = collapsed
-    ? (JSON.parse(collapsed.value) as boolean)
+  const defaultNavCollapsed = navCollapsed
+    ? (JSON.parse(navCollapsed.value) as boolean)
     : undefined;
   const defaultCalendarCollapsed = calendarCollapsed
     ? (JSON.parse(calendarCollapsed.value) as boolean)
@@ -26,8 +26,8 @@ export default async function page() {
     <div className="h-svh">
       <Calendar
         defaultLayout={defaultLayout}
-        defaultCollapsed={defaultCollapsed}
-        defaultCalendarCollapsed={defaultCalendarCollapsed}
+        defaultNavCollapsed={defaultNavCollapsed}
+        defaultNavCollapsed={defaultCalendarCollapsed}
       />
     </div>
   );

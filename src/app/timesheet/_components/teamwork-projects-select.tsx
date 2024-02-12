@@ -20,6 +20,8 @@ import {
 import { cn } from "~/lib/utils";
 import { type TeamworkProject } from "~/server/api/routers/teamwork";
 import { useSessionTeamworkPerson } from "~/lib/hooks/use-task-api";
+import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import { useBreakpoint } from "~/lib/hooks/use-breakpoint";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -86,10 +88,18 @@ export const TeamworkProjectsSelect = React.forwardRef<
       });
     setProjects(options);
   };
+  const { breakpoint } = useBreakpoint();
+
+  const SelectContainer: typeof Popover | typeof Dialog =
+    breakpoint === "mobile" ? Dialog : Popover;
+  const SelectTrigger: typeof PopoverTrigger | typeof DialogTrigger =
+    breakpoint === "mobile" ? DialogTrigger : PopoverTrigger;
+  const SelectContent: typeof PopoverContent | typeof DialogContent =
+    breakpoint === "mobile" ? DialogContent : PopoverContent;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <SelectContainer open={open} onOpenChange={setOpen}>
+      <SelectTrigger asChild>
         <Button
           ref={(e) => {
             buttonRef.current = e;
@@ -147,9 +157,11 @@ export const TeamworkProjectsSelect = React.forwardRef<
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-full min-w-[400px] max-w-lg p-0"
+      </SelectTrigger>
+      <SelectContent
+        className={cn("w-full min-w-[400px] max-w-lg p-0", {
+          "top-[10%] translate-y-0": breakpoint === "mobile",
+        })}
         align="start"
       >
         <Command loop>
@@ -217,8 +229,8 @@ export const TeamworkProjectsSelect = React.forwardRef<
             </CommandList>
           )}
         </Command>
-      </PopoverContent>
-    </Popover>
+      </SelectContent>
+    </SelectContainer>
   );
 });
 
