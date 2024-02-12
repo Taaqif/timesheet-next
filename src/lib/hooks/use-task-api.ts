@@ -108,7 +108,6 @@ export const useUpdateTaskMutation = () => {
   const createTimeEntry = api.teamwork.createTimeEntryForTask.useMutation({});
   const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
   const updateTask = api.task.updatePersonalTask.useMutation({});
-  const { data: session } = useSession();
   const weekOf = useCalendarStore((s) => s.weekOf);
 
   const {
@@ -117,7 +116,9 @@ export const useUpdateTaskMutation = () => {
     ...rest
   } = api.task.updatePersonalTask.useMutation({});
   const mutateAsync = async (
-    payload: RouterInputs["task"]["updatePersonalTask"],
+    payload: RouterInputs["task"]["updatePersonalTask"] & {
+      ignoreActiveTimer?: boolean;
+    },
   ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
     await utils.task.getPersonalTasks.cancel();
     await utils.task.getActiveTask.cancel();
@@ -131,6 +132,9 @@ export const useUpdateTaskMutation = () => {
           f = {
             ...f,
             ...payload.task,
+            activeTimerRunning: payload.ignoreActiveTimer
+              ? false
+              : f.activeTimerRunning,
             teamworkTask: {
               ...f.teamworkTask,
               ...payload.teamworkTask,
@@ -379,6 +383,7 @@ export const useStartTaskMutation = () => {
         id: activeTask.id,
         task: { ...activeTask, end: now },
         teamworkTask: activeTask.teamworkTask,
+        ignoreActiveTimer: true,
       });
     }
     void utils.task.getPersonalTasks.invalidate();
@@ -411,6 +416,7 @@ export const useStopTaskMutation = () => {
           oldQueryData?.map((q) => {
             if (q.activeTimerRunning) {
               q.end = input?.endDate ?? new Date();
+              q.activeTimerRunning = false;
             }
             return q;
           }) ?? [],
