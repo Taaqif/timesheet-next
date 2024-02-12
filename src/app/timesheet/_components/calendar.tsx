@@ -254,49 +254,47 @@ export function Calendar({
                 </div>
               )}
               {breakpoint === "mobile" && (
-                <div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <MoreVertical />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <MoreVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        goToToday();
+                      }}
+                    >
+                      Today
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        goNext();
+                      }}
+                    >
+                      Next Day
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        goPrevious();
+                      }}
+                    >
+                      Previous Day
+                    </DropdownMenuItem>
+                    {isCalendarCollapsed && (
                       <DropdownMenuItem
                         onClick={() => {
-                          goToToday();
+                          setIsHorizontalCalendarOpen(
+                            !isHorizontalCalendarOpen,
+                          );
                         }}
                       >
-                        Today
+                        {isHorizontalCalendarOpen ? "Hide" : "Show"} Calendar
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          goNext();
-                        }}
-                      >
-                        Next Day
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          goPrevious();
-                        }}
-                      >
-                        Previous Day
-                      </DropdownMenuItem>
-                      {isCalendarCollapsed && (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setIsHorizontalCalendarOpen(
-                              !isHorizontalCalendarOpen,
-                            );
-                          }}
-                        >
-                          {isHorizontalCalendarOpen ? "Hide" : "Show"} Calendar
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
             <Separator />
