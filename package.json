@@ -68,7 +68,7 @@
     "react-day-picker": "^8.10.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.50.0",
-    "react-resizable-panels": "^1.0.9",
+    "react-resizable-panels": "^2.0.5",
     "server-only": "^0.0.1",
     "sonner": "^1.4.0",
     "string-to-color": "^2.2.2",
