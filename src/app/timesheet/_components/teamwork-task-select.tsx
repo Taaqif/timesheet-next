@@ -295,7 +295,7 @@ export const TeamworkTaskSelect = React.forwardRef<
       {!!projectId && (
         <SelectContent
           className={cn("w-full min-w-[400px] max-w-lg p-0", {
-            "top-[10%] translate-y-0": breakpoint === "mobile",
+            "top-[10%] mx-2 translate-y-0": breakpoint === "mobile",
           })}
           align="start"
         >

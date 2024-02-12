@@ -255,7 +255,7 @@ export function Calendar({
                   </CollapsibleContent>
                 </Collapsible>
               )}
-              <div className="flex flex-col justify-end gap-4 @md/calendar-task-list:flex-row">
+              <div className="flex flex-row justify-end gap-4 ">
                 {activeTask && (
                   <Button
                     variant="outline"
