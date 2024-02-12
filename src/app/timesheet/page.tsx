@@ -27,7 +27,7 @@ export default async function page() {
       <Calendar
         defaultLayout={defaultLayout}
         defaultNavCollapsed={defaultNavCollapsed}
-        defaultNavCollapsed={defaultCalendarCollapsed}
+        defaultCalendarCollapsed={defaultCalendarCollapsed}
       />
     </div>
   );
