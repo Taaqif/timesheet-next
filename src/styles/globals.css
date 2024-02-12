@@ -63,7 +63,9 @@
 }
 .fc-event-mirror .fc-event-time {
   background: hsl(var(--background) / 70%);
+  color: hsl(var(--foreground));
   align-self: flex-start;
+  border-radius: 4px;
   padding: 0 2px;
 }
 .fc-timegrid-event,

@@ -186,7 +186,10 @@ export function Calendar({
           />
           <Separator />
         </ResizablePanel>
-        <ResizableHandle withHandle />
+        <ResizableHandle
+          withHandle={breakpoint !== "mobile"}
+          disabled={breakpoint === "mobile"}
+        />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
           <div className="flex h-full flex-col @container/calendar-task-list">
             <div className="flex flex-row justify-between gap-2 px-4 py-4 @lg/calendar-task-list:items-center">
