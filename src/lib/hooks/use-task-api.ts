@@ -14,6 +14,7 @@ import { getCalendarEvents } from "../utils";
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
   const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
+  const weekOf = useCalendarStore((s) => s.weekOf);
   const {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
@@ -22,6 +23,26 @@ export const useDeleteTaskMutation = () => {
   const mutateAsync = async (
     payload: RouterInputs["task"]["deletePersonalTask"],
   ): Promise<RouterOutputs["task"]["deletePersonalTask"]> => {
+    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getActiveTask.cancel();
+
+    const previousTasks = utils.task.getPersonalTasks.getData();
+    let isActiveTimer = false;
+
+    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+      ...(oldQueryData?.filter((f) => {
+        if (f.id === payload.id) {
+          isActiveTimer = f.activeTimerRunning ?? false;
+          return false;
+        }
+        return true;
+      }) ?? []),
+    ]);
+
+    if (isActiveTimer) {
+      utils.task.getActiveTask.setData(undefined, () => undefined);
+    }
+
     const result = await mutateAsyncOrig(payload);
     const { existingTask } = result;
     if (existingTask.teamworkTask?.teamworkTimeEntryId) {
@@ -29,8 +50,8 @@ export const useDeleteTaskMutation = () => {
         timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
       });
     }
-    await utils.task.getPersonalTasks.invalidate();
-    await utils.task.getActiveTask.invalidate();
+    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getActiveTask.invalidate();
     toast("Task deleted");
     return result;
   };
@@ -87,6 +108,8 @@ export const useUpdateTaskMutation = () => {
   const createTimeEntry = api.teamwork.createTimeEntryForTask.useMutation({});
   const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
   const updateTask = api.task.updatePersonalTask.useMutation({});
+  const { data: session } = useSession();
+  const weekOf = useCalendarStore((s) => s.weekOf);
 
   const {
     mutate: mutateOrig,
@@ -96,6 +119,34 @@ export const useUpdateTaskMutation = () => {
   const mutateAsync = async (
     payload: RouterInputs["task"]["updatePersonalTask"],
   ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
+    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getActiveTask.cancel();
+
+    const previousTasks = utils.task.getPersonalTasks.getData();
+    let isActiveTimer: RouterOutputs["task"]["getActiveTask"] = null;
+
+    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+      ...(oldQueryData?.map((f) => {
+        if (f.id === payload.id) {
+          f = {
+            ...f,
+            ...payload.task,
+            teamworkTask: {
+              ...f.teamworkTask,
+              ...payload.teamworkTask,
+            },
+          };
+          if (f.activeTimerRunning) {
+            isActiveTimer = f;
+          }
+        }
+        return f;
+      }) ?? []),
+    ]);
+
+    if (isActiveTimer) {
+      utils.task.getActiveTask.setData(undefined, () => isActiveTimer);
+    }
     const result = await mutateAsyncOrig(payload);
     const { existingTask, updatedTask } = result;
     let timeEntryDeleted = false;
@@ -112,7 +163,7 @@ export const useUpdateTaskMutation = () => {
           id: payload.id,
           task: { ...updatedTask! },
           teamworkTask: {
-            teamworkTimeEntryId: "",
+            teamworkTimeEntryId: null,
           },
         });
       } else if (updatedTask?.logTime && teamworkPerson?.id) {
@@ -127,6 +178,13 @@ export const useUpdateTaskMutation = () => {
             timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
           });
           timeEntryDeleted = true;
+          await updateTask.mutateAsync({
+            id: payload.id,
+            task: { ...updatedTask },
+            teamworkTask: {
+              teamworkTimeEntryId: null,
+            },
+          });
         }
 
         if (
@@ -164,8 +222,8 @@ export const useUpdateTaskMutation = () => {
         });
       }
     }
-    await utils.task.getPersonalTasks.invalidate();
-    await utils.task.getActiveTask.invalidate();
+    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getActiveTask.invalidate();
     return result;
   };
   const mutate = (payload: RouterInputs["task"]["updatePersonalTask"]) => {
@@ -181,6 +239,8 @@ export const useCreateTaskMutation = () => {
   const { data: teamworkPerson } = useSessionTeamworkPerson();
   const createTimeEntry = api.teamwork.createTimeEntryForTask.useMutation({});
   const updateTask = api.task.updatePersonalTask.useMutation({});
+  const { data: session } = useSession();
+  const weekOf = useCalendarStore((s) => s.weekOf);
 
   const {
     mutate: mutateOrig,
@@ -190,6 +250,38 @@ export const useCreateTaskMutation = () => {
   const mutateAsync = async (
     payload: RouterInputs["task"]["createPersonalTask"],
   ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
+    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getActiveTask.cancel();
+
+    const previousTasks = utils.task.getPersonalTasks.getData();
+
+    const tempTask = {
+      id: Math.ceil(Math.random() * 100),
+      userId: session?.user.id ?? "",
+      end: null,
+      title: null,
+      logTime: null,
+      billable: null,
+      description: null,
+      activeTimerRunning: payload.activeTaskTimer ?? false,
+      ...payload.task,
+      teamworkTask: {
+        taskId: Math.ceil(Math.random() * 100),
+        teamworkTaskId: null,
+        teamworkProjectId: null,
+        teamworkTimeEntryId: null,
+        ...payload.teamworkTask,
+      },
+    };
+
+    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+      ...(oldQueryData ?? []),
+      tempTask,
+    ]);
+    if (payload.activeTaskTimer) {
+      utils.task.getActiveTask.setData(undefined, () => tempTask);
+    }
+
     const result = await mutateAsyncOrig(payload);
     const { createdTask } = result;
     if (
@@ -213,8 +305,8 @@ export const useCreateTaskMutation = () => {
       }
     }
     toast("Task created");
-    await utils.task.getPersonalTasks.invalidate();
-    await utils.task.getActiveTask.invalidate();
+    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getActiveTask.invalidate();
     return result;
   };
   const mutate = (payload: RouterInputs["task"]["createPersonalTask"]) => {
@@ -228,7 +320,9 @@ export const useCreateTaskMutation = () => {
 export const useStartTaskMutation = () => {
   const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
+  const weekOf = useCalendarStore((s) => s.weekOf);
   const updateTask = useUpdateTaskMutation();
+  const { data: session } = useSession();
   const {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
@@ -237,21 +331,58 @@ export const useStartTaskMutation = () => {
   const mutateAsync = async (
     _payload?: undefined,
   ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
+    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getActiveTask.cancel();
+
+    const previousTasks = utils.task.getPersonalTasks.getData();
+    const now = new Date();
+
+    const tempActiveTask = {
+      id: Math.ceil(Math.random() * 100),
+      activeTimerRunning: true,
+      start: now,
+      userId: session?.user.id ?? "",
+      end: null,
+      title: null,
+      logTime: null,
+      billable: null,
+      description: null,
+      teamworkTask: {
+        taskId: Math.ceil(Math.random() * 100),
+        teamworkTaskId: null,
+        teamworkProjectId: null,
+        teamworkTimeEntryId: null,
+      },
+    };
+
+    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+      ...(oldQueryData?.map((q) => {
+        if (q.activeTimerRunning) {
+          q.end = now;
+          q.activeTimerRunning = false;
+        }
+        return q;
+      }) ?? []),
+      tempActiveTask,
+    ]);
+
+    utils.task.getActiveTask.setData(undefined, () => tempActiveTask);
+
     const result = await mutateAsyncOrig({
       task: {
-        start: new Date(),
+        start: now,
       },
       activeTaskTimer: true,
     });
     if (activeTask) {
       await updateTask.mutateAsync({
         id: activeTask.id,
-        task: { ...activeTask, end: new Date() },
+        task: { ...activeTask, end: now },
         teamworkTask: activeTask.teamworkTask,
       });
     }
-    await utils.task.getPersonalTasks.invalidate();
-    await utils.task.getActiveTask.invalidate();
+    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getActiveTask.invalidate();
     return result;
   };
   const mutate = (payload: undefined) => {
@@ -266,7 +397,35 @@ export const useStopTaskMutation = () => {
   const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
   const updateTask = useUpdateTaskMutation();
+  const weekOf = useCalendarStore((s) => s.weekOf);
   const stopActiveTask = api.task.stopActiveTask.useMutation({
+    onMutate: async (input) => {
+      await utils.task.getActiveTask.cancel();
+      await utils.task.getPersonalTasks.cancel();
+
+      const previousTasks = utils.task.getPersonalTasks.getData();
+
+      utils.task.getPersonalTasks.setData(
+        { weekOf: weekOf },
+        (oldQueryData) =>
+          oldQueryData?.map((q) => {
+            if (q.activeTimerRunning) {
+              q.end = input?.endDate ?? new Date();
+            }
+            return q;
+          }) ?? [],
+      );
+
+      utils.task.getActiveTask.setData(undefined, () => undefined);
+
+      return { previousTasks };
+    },
+    onError: (_err, _newTodo, context) => {
+      utils.task.getPersonalTasks.setData(
+        { weekOf: weekOf },
+        context?.previousTasks,
+      );
+    },
     async onSuccess() {
       if (activeTask) {
         await updateTask.mutateAsync({
@@ -275,6 +434,10 @@ export const useStopTaskMutation = () => {
           teamworkTask: activeTask.teamworkTask,
         });
       }
+    },
+    onSettled: () => {
+      void utils.task.getPersonalTasks.invalidate();
+      void utils.task.getActiveTask.invalidate();
     },
   });
 
