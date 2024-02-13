@@ -214,20 +214,24 @@ export type ProgressBarInfo = {
 };
 
 export function calculateEventProgressBarInfo(
-  startOfDay: Date,
-  endOfDay: Date,
-  timeEntryStart: Date,
-  timeEntryEnd: Date,
-): ProgressBarInfo {
-  const totalBusinessHours = endOfDay.valueOf() - startOfDay.valueOf();
-  const elapsedBusinessHours =
-    timeEntryEnd.valueOf() - timeEntryStart.valueOf();
-  const offset =
-    ((timeEntryStart.valueOf() - startOfDay.valueOf()) / totalBusinessHours) *
-    100;
-  const value = (elapsedBusinessHours / totalBusinessHours) * 100;
+  startOfDay: Date | undefined,
+  endOfDay: Date | undefined,
+  timeEntryStart: Date | undefined,
+  timeEntryEnd: Date | undefined,
+): ProgressBarInfo | undefined {
+  const totalBusinessHours =
+    (endOfDay?.valueOf() ?? 0) - (startOfDay?.valueOf() ?? 0);
+  if (totalBusinessHours > 0) {
+    const elapsedBusinessHours =
+      (timeEntryEnd?.valueOf() ?? 0) - (timeEntryStart?.valueOf() ?? 0);
+    const offset =
+      (((timeEntryStart?.valueOf() ?? 0) - (startOfDay?.valueOf() ?? 0)) /
+        totalBusinessHours) *
+      100;
+    const value = (elapsedBusinessHours / totalBusinessHours) * 100;
 
-  return { offset, value };
+    return { offset, value };
+  }
 }
 
 export const getInitials = (fullName: string): string => {
