@@ -381,7 +381,7 @@ export const useStartTaskMutation = () => {
     if (activeTask) {
       await updateTask.mutateAsync({
         id: activeTask.id,
-        task: { ...activeTask, end: now },
+        task: { end: now },
         teamworkTask: activeTask.teamworkTask,
         ignoreActiveTimer: true,
       });

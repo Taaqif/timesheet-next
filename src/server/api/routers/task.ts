@@ -92,12 +92,13 @@ export const taskRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        task: createInsertSchema(tasks).omit({
+        task: createInsertSchema(tasks).partial().omit({
           userId: true,
           id: true,
           activeTimerRunning: true,
         }),
         teamworkTask: createInsertSchema(teamworkTasks)
+          .partial()
           .omit({
             id: true,
             taskId: true,
