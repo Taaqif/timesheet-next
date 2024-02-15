@@ -308,6 +308,9 @@ export const TaskListItem = ({
                             "projectTitle",
                             `${selectedProject?.company?.name}: ${selectedProject?.name}`,
                           );
+                          setTimeout(() => {
+                            form.setFocus("taskId");
+                          }, 50);
                           submitForm();
                         }}
                       />
@@ -333,6 +336,9 @@ export const TaskListItem = ({
                             "taskTitle",
                             `${selectedTeamworkTask?.content} (${selectedTeamworkTask?.["todo-list-name"]})`,
                           );
+                          setTimeout(() => {
+                            form.setFocus("description");
+                          }, 50);
                           if (!task?.teamworkTask?.teamworkTimeEntryId) {
                             form.setValue("billable", true);
                             form.setValue("logTime", true);

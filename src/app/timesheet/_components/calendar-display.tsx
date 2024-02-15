@@ -63,6 +63,9 @@ export const CalendarDisplay = ({
     (start: Date, end: Date) => {
       if (closestEventsAtEnd.current && closestEventsAtEnd.current.length > 0) {
         closestEventsAtEnd.current.forEach((event) => {
+          if (!event) {
+            return;
+          }
           if (end >= event.end!) {
             return;
           }
@@ -241,6 +244,9 @@ export const CalendarDisplay = ({
             ...closestEventsAtEnd.current,
           ];
           changedEvents.forEach((event) => {
+            if (!event) {
+              return;
+            }
             const task = event.extendedProps?.task as
               | TasksWithTeamworkTaskSelectSchema
               | undefined;
