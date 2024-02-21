@@ -77,19 +77,9 @@ export const TaskListItem = ({
 
   const progressBarInfo = useMemo(() => {
     if (businessHoursEndTime && businessHoursStartTime) {
-      const startSplit = businessHoursStartTime.split(":");
-      const endSplit = businessHoursEndTime.split(":");
-      const businessHoursStart = dayjs(event.start as Date)
-        .set("hours", +startSplit[0]!)
-        .set("minutes", +startSplit[1]!)
-        .toDate();
-      const businessHoursEnd = dayjs(event.start as Date)
-        .set("hours", +endSplit[0]!)
-        .set("minutes", +endSplit[1]!)
-        .toDate();
       return calculateEventProgressBarInfo(
-        businessHoursStart,
-        businessHoursEnd,
+        businessHoursStartTime,
+        businessHoursEndTime,
         event.start as Date,
         endDate,
       );

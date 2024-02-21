@@ -217,11 +217,25 @@ export type ProgressBarInfo = {
 };
 
 export function calculateEventProgressBarInfo(
-  startOfDay: Date | undefined,
-  endOfDay: Date | undefined,
+  businessHoursStartTime: string,
+  businessHoursEndTime: string,
   timeEntryStart: Date | undefined,
   timeEntryEnd: Date | undefined,
 ): ProgressBarInfo | undefined {
+  const startSplit = businessHoursStartTime?.split(":");
+  const endSplit = businessHoursEndTime?.split(":");
+  if (!startSplit && !endSplit) {
+    return undefined;
+  }
+  const startOfDay = dayjs(timeEntryStart)
+    .set("hours", +startSplit[0]!)
+    .set("minutes", +startSplit[1]!)
+    .toDate();
+  const endOfDay = dayjs(timeEntryStart)
+    .set("hours", +endSplit[0]!)
+    .set("minutes", +endSplit[1]!)
+    .toDate();
+
   const totalBusinessHours =
     (endOfDay?.valueOf() ?? 0) - (startOfDay?.valueOf() ?? 0);
   if (totalBusinessHours > 0) {

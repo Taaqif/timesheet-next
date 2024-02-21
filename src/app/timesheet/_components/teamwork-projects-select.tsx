@@ -22,6 +22,7 @@ import { type TeamworkProject } from "~/server/api/routers/teamwork";
 import { useSessionTeamworkPerson } from "~/hooks/use-task-api";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import { useBreakpoint } from "~/hooks/use-breakpoint";
+import { SymbolIcon } from "@radix-ui/react-icons";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -42,8 +43,12 @@ export const TeamworkProjectsSelect = React.forwardRef<
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [projectGroups, setProjects] = useState<TeamworkProjectGroup[]>([]);
   const { data: teamworkConfig } = api.teamwork.getTeamworkConfig.useQuery();
-  const { data: teamworkProjects, isLoading: teamworkProjectsLoading } =
-    api.teamwork.getAllProjects.useQuery();
+  const {
+    data: teamworkProjects,
+    isLoading: teamworkProjectsLoading,
+    isFetching: teamworkProjectsFetching,
+  } = api.teamwork.getAllProjects.useQuery();
+  const utils = api.useUtils();
 
   const { data: teamworkPerson } = useSessionTeamworkPerson();
   const selectedProject = useMemo(
@@ -166,7 +171,26 @@ export const TeamworkProjectsSelect = React.forwardRef<
         hideClose
       >
         <Command loop>
-          <CommandInput placeholder="Search project..." />
+          <CommandInput
+            placeholder="Search project..."
+            rightActions={
+              <Button
+                variant="link"
+                size="icon"
+                className={cn(
+                  "ml-1 flex shrink-0 items-center justify-center opacity-50",
+                  {
+                    "animate-spin": teamworkProjectsFetching,
+                  },
+                )}
+                onClick={async () => {
+                  await utils.teamwork.getAllProjects.refetch();
+                }}
+              >
+                <SymbolIcon className="" />
+              </Button>
+            }
+          />
           <CommandEmpty>No projects found.</CommandEmpty>
           {teamworkProjectsLoading && (
             <CommandLoading>Fetching projects...</CommandLoading>

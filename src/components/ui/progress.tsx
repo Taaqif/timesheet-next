@@ -5,6 +5,44 @@ import * as ProgressPrimitive from "@radix-ui/react-progress";
 
 import { cn } from "~/lib/utils";
 
+const ProgressContainer = React.forwardRef<
+  React.ElementRef<typeof ProgressPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <ProgressPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
+      className,
+    )}
+    {...props}
+  />
+));
+ProgressContainer.displayName = ProgressPrimitive.Root.displayName;
+
+const ProgressIndicator = React.forwardRef<
+  React.ElementRef<typeof ProgressPrimitive.Indicator>,
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Indicator> & {
+    offset?: ProgressProps["offset"];
+    value: ProgressProps["value"];
+    color?: string;
+  }
+>(({ className, offset, value, color, ...props }, ref) => (
+  <ProgressPrimitive.Root
+    ref={ref}
+    className={cn(
+      "absolute top-0 h-full w-full flex-1 origin-left bg-primary transition-all ",
+      className,
+    )}
+    style={{
+      transform: `${offset ? `translateX(${offset ?? 0}%)` : ""} scaleX(${value ?? 0}%)`,
+      backgroundColor: color,
+    }}
+    {...props}
+  />
+));
+ProgressIndicator.displayName = ProgressPrimitive.Indicator.displayName;
+
 type ProgressProps = {
   notchValue?: number;
   offset?: number;
@@ -17,34 +55,15 @@ const Progress = React.forwardRef<
   ProgressProps
 >(
   (
-    {
-      className,
-      value,
-      notchValue,
-      offset,
-      indicatorClassName,
-      indicatorColor,
-      ...props
-    },
+    { value, notchValue, offset, indicatorClassName, indicatorColor, ...props },
     ref,
   ) => (
-    <ProgressPrimitive.Root
-      ref={ref}
-      className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
-        className,
-      )}
-      {...props}
-    >
-      <ProgressPrimitive.Indicator
-        className={cn(
-          "h-full w-full flex-1 origin-left bg-primary transition-all",
-          indicatorClassName,
-        )}
-        style={{
-          transform: `${offset ? `translateX(${offset ?? 0}%)` : ""} scaleX(${value ?? 0}%)`,
-          backgroundColor: indicatorColor ? indicatorColor : undefined,
-        }}
+    <ProgressContainer ref={ref} {...props}>
+      <ProgressIndicator
+        className={indicatorClassName}
+        value={value}
+        color={indicatorColor}
+        offset={offset}
       />
       {notchValue && notchValue > 0 && (
         <div
@@ -52,9 +71,9 @@ const Progress = React.forwardRef<
           style={{ right: `${100 - (notchValue || 0)}%` }}
         ></div>
       )}
-    </ProgressPrimitive.Root>
+    </ProgressContainer>
   ),
 );
 Progress.displayName = ProgressPrimitive.Root.displayName;
 
-export { Progress };
+export { Progress, ProgressContainer, ProgressIndicator };
