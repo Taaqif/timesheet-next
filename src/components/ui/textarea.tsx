@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useAutoResizeTextarea } from "~/lib/hooks/use-auto-resize-text-area";
+import { useAutoResizeTextarea } from "~/hooks/use-auto-resize-text-area";
 
 import { cn } from "~/lib/utils";
 

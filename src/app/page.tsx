@@ -14,7 +14,7 @@ export default async function Home() {
       <div className="container flex h-full flex-col items-center justify-center gap-12 px-4 py-16 ">
         {session && (
           <>
-            <p className="text-center text-2xl text-white">
+            <p className="text-center text-2xl ">
               <span>Logged in as {session.user?.name}</span>
             </p>
             <Button asChild>

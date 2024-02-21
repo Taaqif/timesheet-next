@@ -19,9 +19,9 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { type TeamworkProject } from "~/server/api/routers/teamwork";
-import { useSessionTeamworkPerson } from "~/lib/hooks/use-task-api";
+import { useSessionTeamworkPerson } from "~/hooks/use-task-api";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
-import { useBreakpoint } from "~/lib/hooks/use-breakpoint";
+import { useBreakpoint } from "~/hooks/use-breakpoint";
 
 type TeamworkProjectGroup = {
   company: string;

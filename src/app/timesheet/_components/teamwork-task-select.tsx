@@ -25,7 +25,7 @@ import {
 import { SymbolIcon } from "@radix-ui/react-icons";
 import { TeamworkTags } from "~/components/ui/teamwork-tags";
 import { Badge } from "~/components/ui/badge";
-import { useBreakpoint } from "~/lib/hooks/use-breakpoint";
+import { useBreakpoint } from "~/hooks/use-breakpoint";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 
 type TeamworkTaskWithChildren = TeamworkTask & {

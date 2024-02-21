@@ -1,4 +1,5 @@
 import { useCalendarStore } from "~/app/_store";
+import { type DeepPartial } from "utility-types";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 import dayjs from "dayjs";
@@ -9,7 +10,8 @@ import { type tasks } from "~/server/db/schema";
 import { toast } from "sonner";
 import { type EventInput } from "@fullcalendar/core";
 import { useEffect, useState } from "react";
-import { getCalendarEvents } from "../utils";
+import { getCalendarEvents } from "~/lib/utils";
+import { Overwrite } from "@trpc/server";
 
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
@@ -321,6 +323,17 @@ export const useCreateTaskMutation = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
+type StartTaskPayload = Partial<
+  Overwrite<
+    RouterInputs["task"]["createPersonalTask"],
+    {
+      task: Omit<
+        RouterInputs["task"]["createPersonalTask"]["task"],
+        "start" | "end"
+      >;
+    }
+  >
+>;
 export const useStartTaskMutation = () => {
   const utils = api.useUtils();
   const { data: activeTask } = api.task.getActiveTask.useQuery();
@@ -333,7 +346,7 @@ export const useStartTaskMutation = () => {
     ...rest
   } = api.task.createPersonalTask.useMutation({});
   const mutateAsync = async (
-    _payload?: undefined,
+    payload?: StartTaskPayload,
   ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
     await utils.task.getPersonalTasks.cancel();
     await utils.task.getActiveTask.cancel();
@@ -344,13 +357,14 @@ export const useStartTaskMutation = () => {
     const tempActiveTask = {
       id: Math.ceil(Math.random() * 100),
       activeTimerRunning: true,
-      start: now,
       userId: session?.user.id ?? "",
-      end: null,
       title: null,
       logTime: null,
       billable: null,
       description: null,
+      ...payload?.task,
+      start: now,
+      end: null,
       teamworkTask: {
         taskId: Math.ceil(Math.random() * 100),
         teamworkTaskId: null,
@@ -374,7 +388,9 @@ export const useStartTaskMutation = () => {
 
     const result = await mutateAsyncOrig({
       task: {
+        ...payload?.task,
         start: now,
+        end: null,
       },
       activeTaskTimer: true,
     });
@@ -390,7 +406,7 @@ export const useStartTaskMutation = () => {
     void utils.task.getActiveTask.invalidate();
     return result;
   };
-  const mutate = (payload: undefined) => {
+  const mutate = (payload?: StartTaskPayload) => {
     mutateAsync(payload).catch(() => {
       //noop
     });

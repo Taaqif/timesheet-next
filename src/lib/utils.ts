@@ -1,10 +1,10 @@
 import { type ClassValue, clsx } from "clsx";
 import dayjs from "dayjs";
 import { twMerge } from "tailwind-merge";
-import { type CalendarScheduleItemType } from "./pnp/getSchedule";
 import { type DateInput, type EventInput } from "@fullcalendar/core/index.js";
 import { type InferResultType } from "~/server/db";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
+import { type ScheduleInformation } from "@microsoft/microsoft-graph-types";
 import stringToColor from "string-to-color";
 import fontColorContrast from "font-color-contrast";
 
@@ -95,40 +95,43 @@ export const getCalendarEvents = ({
   calendarEvents,
 }: {
   tasks?: TasksWithTeamworkTaskSelectSchema[] | null;
-  schedule?: CalendarScheduleItemType[] | null;
+  schedule?: ScheduleInformation[] | null;
   calendarEvents?: ICalendarViewInfo[] | null;
 }) => {
   let newEvents: EventInput[] = [];
   let businessHours: EventInput | null = null;
   if (schedule) {
     schedule.forEach((schedule) => {
-      const daysOfWeek = schedule.workingHours.daysOfWeek.map(
+      const daysOfWeek = schedule.workingHours?.daysOfWeek?.map(
         (day) => weekMap[day],
       );
       businessHours = {
         daysOfWeek,
-        startTime: schedule.workingHours.startTime,
-        endTime: schedule.workingHours.endTime,
+        startTime: schedule.workingHours?.startTime,
+        endTime: schedule.workingHours?.endTime,
       };
 
       if (!calendarEvents) {
-        newEvents = newEvents.concat(
-          schedule.scheduleItems.map((scheduleItem) => {
-            const mappedEvent: EventInput = {
-              extendedProps: {
-                type: CalendarEventType.SCHEDULE,
-              },
-              backgroundColor: "#e07a5f",
-              start: `${scheduleItem.start.dateTime}Z`,
-              editable: false,
-              end: `${scheduleItem.end.dateTime}Z`,
-              title: scheduleItem.subject
-                ? scheduleItem.subject
-                : scheduleItem.status,
-            };
-            return mappedEvent;
-          }),
-        );
+        if (schedule.scheduleItems) {
+          newEvents = newEvents.concat(
+            schedule.scheduleItems.map((scheduleItem) => {
+              const mappedEvent: EventInput = {
+                extendedProps: {
+                  type: CalendarEventType.SCHEDULE,
+                },
+                backgroundColor: "#e07a5f",
+                start: `${scheduleItem.start?.dateTime}Z`,
+                editable: false,
+                end: `${scheduleItem.end?.dateTime}Z`,
+                title:
+                  (scheduleItem.subject
+                    ? scheduleItem.subject
+                    : scheduleItem.status) ?? "",
+              };
+              return mappedEvent;
+            }),
+          );
+        }
       }
     });
   }
@@ -244,4 +247,23 @@ export const getInitials = (fullName: string): string => {
     .toUpperCase();
 
   return initials;
+};
+
+type FindClosestEventParams = {
+  events: EventInput[];
+  type?: CalendarEventType;
+  start: Date;
+};
+export const findClosestEvent = ({
+  events,
+  type,
+  start,
+}: FindClosestEventParams) => {
+  const closestScheduleEvent = events.find((event) => {
+    if (!type || event.extendedProps?.type === type) {
+      const diff = Math.abs(dayjs(event.start as Date).diff(start, "minute"));
+      return diff >= 0 && diff <= 5;
+    }
+  });
+  return closestScheduleEvent;
 };

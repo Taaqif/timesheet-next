@@ -5,7 +5,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { type TasksWithTeamworkTaskSelectSchema, cn } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
-import { useCalendarEventsQuery } from "~/lib/hooks/use-task-api";
+import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
 
 export type TaskListDisplayProps = {

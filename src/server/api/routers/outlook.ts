@@ -9,7 +9,6 @@ import {
 import { type TimelinePipe } from "@pnp/core";
 import "@pnp/graph/users";
 import "@pnp/graph/calendars";
-import "~/lib/pnp/getSchedule";
 import dayjs from "dayjs";
 export function AccessToken(accessToken: string): TimelinePipe<Queryable> {
   return (instance: Queryable) => {

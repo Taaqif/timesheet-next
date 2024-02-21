@@ -6,7 +6,7 @@ import {
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { Separator } from "~/components/ui/separator";
-import { cn } from "~/lib/utils";
+import { CalendarEventType, cn, findClosestEvent } from "~/lib/utils";
 import { Nav } from "./nav";
 import {
   CalendarClock,
@@ -20,18 +20,15 @@ import {
   TimerReset,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { TimesheetProgress } from "./timesheet-progress";
 import { CalendarDisplay } from "./calendar-display";
 import { Calendar as CalendarPicker } from "~/components/ui/calendar";
 import { api } from "~/trpc/react";
 import { TaskListDisplay } from "./task-list-display";
 import {
-  useCreateTaskMutation,
-  useDeleteTaskMutation,
+  useCalendarEventsQuery,
   useStartTaskMutation,
   useStopTaskMutation,
-  useUpdateTaskMutation,
-} from "~/lib/hooks/use-task-api";
+} from "~/hooks/use-task-api";
 import { useCalendarStore } from "~/app/_store";
 import dayjs from "dayjs";
 import {
@@ -40,19 +37,11 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { type ImperativePanelHandle } from "react-resizable-panels";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
-import { CaretSortIcon } from "@radix-ui/react-icons";
-import { useBreakpoint } from "~/lib/hooks/use-breakpoint";
+import { useBreakpoint } from "~/hooks/use-breakpoint";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
@@ -81,6 +70,7 @@ export function Calendar({
   const [isHorizontalCalendarOpen, setIsHorizontalCalendarOpen] =
     useState(false);
   const { data: activeTask } = api.task.getActiveTask.useQuery();
+  const { events } = useCalendarEventsQuery();
   const stopActiveTask = useStopTaskMutation();
   const startActiveTask = useStartTaskMutation();
   const { breakpoint } = useBreakpoint();
@@ -325,7 +315,16 @@ export function Calendar({
                   type="button"
                   variant="secondary"
                   onClick={async () => {
-                    const newTask = await startActiveTask.mutateAsync();
+                    const closestScheduleEvent = findClosestEvent({
+                      events,
+                      start: new Date(),
+                      type: CalendarEventType.CALENDAR_EVENT,
+                    });
+                    const newTask = await startActiveTask.mutateAsync({
+                      task: {
+                        description: closestScheduleEvent?.title,
+                      },
+                    });
                     setSelectedEventId(newTask.createdTask?.id);
                   }}
                 >

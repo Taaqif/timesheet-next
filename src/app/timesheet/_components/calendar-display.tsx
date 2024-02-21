@@ -18,6 +18,7 @@ import {
   getCalendarEvents,
   getHoursMinutesTextFromDates,
   CalendarEventType,
+  findClosestEvent,
 } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
@@ -27,7 +28,7 @@ import {
   useCreateTaskMutation,
   useGetTasksQuery,
   useUpdateTaskMutation,
-} from "~/lib/hooks/use-task-api";
+} from "~/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
 import { createDuration } from "@fullcalendar/core/internal";
@@ -202,10 +203,16 @@ export const CalendarDisplay = ({
           const start = arg.start;
           const end = arg.end;
           if (start && end) {
+            const closestScheduleEvent = findClosestEvent({
+              events,
+              start,
+              type: CalendarEventType.CALENDAR_EVENT,
+            });
             await createTask.mutateAsync({
               task: {
                 start,
                 end,
+                description: closestScheduleEvent?.title,
               },
             });
 

@@ -14,7 +14,7 @@ import { TeamworkTaskSelect } from "./teamwork-task-select";
 import {
   useDeleteTaskMutation,
   useUpdateTaskMutation,
-} from "~/lib/hooks/use-task-api";
+} from "~/hooks/use-task-api";
 import dayjs from "dayjs";
 import { Clock, History } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
