@@ -44,7 +44,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { TimesheetProgress } from "./timesheet-progress";
+import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
 
 export type CalendarProps = {
   defaultNavCollapsed?: boolean;
@@ -333,7 +333,7 @@ export function Calendar({
                   {activeTask ? "Start new task" : "Start task"}
                 </Button>
               </div>
-              <TimesheetProgress />
+              <AllTaskEventsTimesheetProgress />
             </div>
             <Separator />
             <div className="mr-2 flex min-h-0 flex-grow">

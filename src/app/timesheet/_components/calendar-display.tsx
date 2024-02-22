@@ -70,11 +70,11 @@ export const CalendarDisplay = ({
           if (end >= event.end!) {
             return;
           }
-          if (event.extendedProps?.type === "TIMER") {
+          if (event.extendedProps?.type === CalendarEventType.TIMER) {
             event.setProp("editable", true);
           }
           event.setStart(end);
-          if (event.extendedProps?.type === "TIMER") {
+          if (event.extendedProps?.type === CalendarEventType.TIMER) {
             event.setProp("editable", false);
           }
         });
@@ -141,6 +141,8 @@ export const CalendarDisplay = ({
           return (
             <RenderContent
               arg={arg}
+              businessHoursStartTime={businessHours?.startTime as string}
+              businessHoursEndTime={businessHours?.endTime as string}
               isDragging={isDragging}
               setSelectedEventId={setSelectedEventId}
               onEventResize={debouncedEventResizeCallback}
@@ -229,8 +231,11 @@ export const CalendarDisplay = ({
 
           closestEventsAtEnd.current = [];
           allEvents?.forEach((event) => {
-            const type = event.extendedProps?.type as string;
-            if (type === "TASK" || type === "TIMER") {
+            const type = event.extendedProps?.type as CalendarEventType;
+            if (
+              type === CalendarEventType.TASK ||
+              type === CalendarEventType.TIMER
+            ) {
               const diffEnd = Math.abs(dayjs(event.start).diff(end, "minute"));
               const diffStart = Math.abs(
                 dayjs(event.end).diff(start, "minute"),
@@ -282,6 +287,8 @@ export const CalendarDisplay = ({
 
 type RenderContentProps = {
   arg: EventContentArg;
+  businessHoursStartTime: string;
+  businessHoursEndTime: string;
   isDragging: boolean;
   onEventResize: (start: Date, end: Date) => void;
   setSelectedEventId: (id: number) => void;
@@ -289,6 +296,8 @@ type RenderContentProps = {
 };
 const RenderContent = ({
   arg,
+  businessHoursStartTime,
+  businessHoursEndTime,
   isDragging,
   onEventResize,
   setSelectedEventId,
@@ -414,7 +423,12 @@ const RenderContent = ({
         >
           <div className="">
             {!!arg.event.extendedProps?.task ? (
-              <TaskListItem event={arg.event as EventInput} defaultExpanded />
+              <TaskListItem
+                event={arg.event as EventInput}
+                defaultExpanded
+                businessHoursStartTime={businessHoursStartTime}
+                businessHoursEndTime={businessHoursEndTime}
+              />
             ) : (
               <>
                 {!!arg.timeText && (

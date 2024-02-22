@@ -1,19 +1,12 @@
+import { type EventInput } from "@fullcalendar/core";
 import dayjs from "dayjs";
 import React, { useEffect, useMemo, useState } from "react";
 import { useCalendarStore } from "~/app/_store";
-import {
-  Progress,
-  ProgressContainer,
-  ProgressIndicator,
-} from "~/components/ui/progress";
+import { ProgressContainer, ProgressIndicator } from "~/components/ui/progress";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
-import { calculateEventProgressBarInfo } from "~/lib/utils";
+import { CalendarEventType, calculateEventProgressBarInfo } from "~/lib/utils";
 
-type TimesheetProgressProps = {
-  //
-};
-
-export const TimesheetProgress = ({}: TimesheetProgressProps) => {
+export const AllTaskEventsTimesheetProgress = () => {
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const {
     events,
@@ -34,22 +27,86 @@ export const TimesheetProgress = ({}: TimesheetProgressProps) => {
     <div>
       <ProgressContainer>
         {selectedCalendarEvents?.map((event, index) => {
-          const progress = calculateEventProgressBarInfo(
-            businessHours?.startTime as string,
-            businessHours?.endTime as string,
-            event.start as Date,
-            event.end as Date,
-          );
           return (
-            <ProgressIndicator
+            <TimeSheetProgressIndicator
               key={index}
-              value={progress?.value}
-              offset={progress?.offset}
-              color={event.backgroundColor}
+              event={event}
+              businessHoursEndTime={businessHours?.endTime as string}
+              businessHoursStartTime={businessHours?.startTime as string}
             />
           );
         })}
       </ProgressContainer>
     </div>
+  );
+};
+
+export type EventTimeSheetProgressProps = {
+  event: EventInput;
+  businessHoursEndTime?: string;
+  businessHoursStartTime?: string;
+};
+export const EventTimeSheetProgress = ({
+  event,
+  businessHoursStartTime,
+  businessHoursEndTime,
+}: EventTimeSheetProgressProps) => {
+  return (
+    <ProgressContainer>
+      <TimeSheetProgressIndicator
+        event={event}
+        businessHoursEndTime={businessHoursEndTime}
+        businessHoursStartTime={businessHoursStartTime}
+      />
+    </ProgressContainer>
+  );
+};
+
+type TimeSheetProgressIndicatorProps = {
+  event: EventInput;
+  businessHoursEndTime?: string;
+  businessHoursStartTime?: string;
+};
+const TimeSheetProgressIndicator = ({
+  event,
+  businessHoursStartTime,
+  businessHoursEndTime,
+}: TimeSheetProgressIndicatorProps) => {
+  const isActiveTimer = event.extendedProps?.type === CalendarEventType.TIMER;
+  const [endDate, setEndDate] = useState<Date>(event.end as Date);
+  const progressBarInfo = useMemo(() => {
+    if (businessHoursEndTime && businessHoursStartTime) {
+      return calculateEventProgressBarInfo(
+        businessHoursStartTime,
+        businessHoursEndTime,
+        event.start as Date,
+        endDate,
+      );
+    }
+  }, [event.start, endDate, businessHoursStartTime, businessHoursEndTime]);
+  useEffect(() => {
+    if (isActiveTimer) {
+      const interval = setInterval(() => {
+        const plusOneSecond = dayjs().add(1, "second").toDate();
+        updateEventTimeDisplay(plusOneSecond);
+      }, 1000);
+      updateEventTimeDisplay(new Date());
+      return () => {
+        clearInterval(interval);
+      };
+    } else {
+      updateEventTimeDisplay(event.end as Date);
+    }
+  }, [event]);
+
+  const updateEventTimeDisplay = (endDate: Date) => {
+    setEndDate(endDate);
+  };
+  return (
+    <ProgressIndicator
+      value={progressBarInfo?.value}
+      offset={progressBarInfo?.offset}
+      color={event.backgroundColor}
+    />
   );
 };

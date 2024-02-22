@@ -5,6 +5,7 @@ import {
   type TasksWithTeamworkTaskSelectSchema,
   getHoursMinutesTextFromDates,
   calculateEventProgressBarInfo,
+  CalendarEventType,
 } from "~/lib/utils";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
@@ -39,6 +40,7 @@ import {
 } from "~/components/ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { Progress } from "~/components/ui/progress";
+import { EventTimeSheetProgress } from "./timesheet-progress";
 
 const formSchema = z.object({
   description: z.string().optional(),
@@ -65,7 +67,7 @@ export const TaskListItem = ({
   const task = event.extendedProps?.task as
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
-  const isActiveTimer = event.extendedProps?.type === "TIMER";
+  const isActiveTimer = event.extendedProps?.type === CalendarEventType.TIMER;
   const [time, setTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(event.end as Date);
   const [isOpen, setIsOpen] = useState(
@@ -74,17 +76,6 @@ export const TaskListItem = ({
       !event.title ||
       defaultExpanded,
   );
-
-  const progressBarInfo = useMemo(() => {
-    if (businessHoursEndTime && businessHoursStartTime) {
-      return calculateEventProgressBarInfo(
-        businessHoursStartTime,
-        businessHoursEndTime,
-        event.start as Date,
-        endDate,
-      );
-    }
-  }, [event.start, endDate, businessHoursStartTime, businessHoursEndTime]);
 
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
@@ -239,15 +230,13 @@ export const TaskListItem = ({
         // setSelectedEventId(event.id);
       }}
     >
-      {progressBarInfo && (
-        <div>
-          <Progress
-            value={progressBarInfo.value}
-            offset={progressBarInfo.offset}
-            indicatorColor={event.backgroundColor}
-          />
-        </div>
-      )}
+      <div>
+        <EventTimeSheetProgress
+          event={event}
+          businessHoursStartTime={businessHoursStartTime}
+          businessHoursEndTime={businessHoursEndTime}
+        />
+      </div>
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
           {isActiveTimer && <History className="w-4" />}
