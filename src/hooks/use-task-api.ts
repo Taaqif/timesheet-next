@@ -167,11 +167,13 @@ export const useUpdateTaskMutation = () => {
         ],
       );
     };
-    const taskToSet = payload.task as TasksSelectSchema;
+    const taskToSet = { ...payload.task } as TasksSelectSchema;
     if (payload.ignoreActiveTimer) {
       taskToSet.activeTimerRunning = false;
     }
-    const teamworkTaskToSet = payload.teamworkTask as TeamworkTasksSelectSchema;
+    const teamworkTaskToSet = {
+      ...payload.teamworkTask,
+    } as TeamworkTasksSelectSchema;
     if (
       !taskToSet.activeTimerRunning &&
       taskToSet.logTime &&

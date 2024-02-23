@@ -240,9 +240,10 @@ export const TaskListItem = ({
       </div>
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
-          {task?.teamworkTask.teamworkTimeEntryId}
           {isActiveTimer && <History className="w-4" />}
-          {task?.teamworkTask.teamworkTimeEntryId && <Clock className="w-4" />}
+          {+(task?.teamworkTask.teamworkTimeEntryId ?? 0) > 0 && (
+            <Clock className="w-4" />
+          )}
           <span>{time}</span>
           <Badge variant="outline" className="text-muted-foreground">
             {getHoursMinutesTextFromDates(

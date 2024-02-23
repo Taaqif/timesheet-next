@@ -70,11 +70,11 @@ export const CalendarDisplay = ({
           if (end >= event.end!) {
             return;
           }
-          if (event.extendedProps?.type === CalendarEventType.TIMER) {
+          if (event?.extendedProps?.type === CalendarEventType.TIMER) {
             event.setProp("editable", true);
           }
           event.setStart(end);
-          if (event.extendedProps?.type === CalendarEventType.TIMER) {
+          if (event?.extendedProps?.type === CalendarEventType.TIMER) {
             event.setProp("editable", false);
           }
         });
@@ -392,7 +392,7 @@ const RenderContent = ({
           }}
         >
           <div className="fc-event-time flex items-center gap-1">
-            {task?.teamworkTask.teamworkTimeEntryId && (
+            {+(task?.teamworkTask.teamworkTimeEntryId ?? 0) > 0 && (
               <Clock className="inline h-auto w-3" />
             )}
             {!!arg.timeText && time}
