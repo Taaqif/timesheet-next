@@ -10,8 +10,14 @@ import { type tasks } from "~/server/db/schema";
 import { toast } from "sonner";
 import { type EventInput } from "@fullcalendar/core";
 import { useEffect, useState } from "react";
-import { getCalendarEvents } from "~/lib/utils";
+import {
+  TasksSelectSchema,
+  TasksWithTeamworkTaskSelectSchema,
+  TeamworkTasksSelectSchema,
+  getCalendarEvents,
+} from "~/lib/utils";
 import { Overwrite } from "@trpc/server";
+import { ignorePatterns } from ".eslintrc.cjs";
 
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
@@ -120,6 +126,7 @@ export const useUpdateTaskMutation = () => {
   const mutateAsync = async (
     payload: RouterInputs["task"]["updatePersonalTask"] & {
       ignoreActiveTimer?: boolean;
+      preventInvalidateCache?: boolean;
     },
   ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
     await utils.task.getPersonalTasks.cancel();
@@ -128,35 +135,67 @@ export const useUpdateTaskMutation = () => {
     const previousTasks = utils.task.getPersonalTasks.getData();
     let isActiveTimer: RouterOutputs["task"]["getActiveTask"] = null;
 
-    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
-      ...(oldQueryData?.map((f) => {
-        if (f.id === payload.id) {
-          f = {
-            ...f,
-            ...payload.task,
-            activeTimerRunning: payload.ignoreActiveTimer
-              ? false
-              : f.activeTimerRunning,
-            teamworkTask: {
-              ...f.teamworkTask,
-              ...payload.teamworkTask,
-            },
-          };
-          if (f.activeTimerRunning) {
-            isActiveTimer = f;
-          }
-        }
-        return f;
-      }) ?? []),
-    ]);
+    const updateTaskCache = async ({
+      id,
+      task: taskCache,
+      teamworkTask: teamworkTaskCache,
+    }: {
+      id?: number;
+      task: Partial<TasksSelectSchema>;
+      teamworkTask?: Partial<TeamworkTasksSelectSchema>;
+    }) => {
+      utils.task.getPersonalTasks.setData(
+        { weekOf: weekOf },
+        (oldQueryData) => [
+          ...(oldQueryData?.map((f) => {
+            const idToCheck = id ? id : payload.id;
+            if (f.id === idToCheck) {
+              f = {
+                ...f,
+                ...taskCache,
+                teamworkTask: {
+                  ...f.teamworkTask,
+                  ...teamworkTaskCache,
+                },
+              };
+              if (f.activeTimerRunning) {
+                isActiveTimer = f;
+              }
+            }
+            return f;
+          }) ?? []),
+        ],
+      );
+    };
+    const taskToSet = payload.task as TasksSelectSchema;
+    if (payload.ignoreActiveTimer) {
+      taskToSet.activeTimerRunning = false;
+    }
+    const teamworkTaskToSet = payload.teamworkTask as TeamworkTasksSelectSchema;
+    if (
+      !taskToSet.activeTimerRunning &&
+      taskToSet.logTime &&
+      !teamworkTaskToSet.teamworkTimeEntryId &&
+      teamworkTaskToSet.teamworkTaskId
+    ) {
+      teamworkTaskToSet.teamworkTimeEntryId = `${Math.ceil(Math.random() * -100)}`;
+    }
+    void updateTaskCache({
+      task: taskToSet,
+      teamworkTask: teamworkTaskToSet,
+    });
 
     if (isActiveTimer) {
       utils.task.getActiveTask.setData(undefined, () => isActiveTimer);
     }
+
+    const shouldIgnoreProcessTimeEntry =
+      +(payload.teamworkTask?.teamworkTimeEntryId ?? 0) < 0;
+
     const result = await mutateAsyncOrig(payload);
     const { existingTask, updatedTask } = result;
     let timeEntryDeleted = false;
-    if (!updatedTask?.activeTimerRunning) {
+    if (!updatedTask?.activeTimerRunning && !shouldIgnoreProcessTimeEntry) {
       if (
         !updatedTask?.logTime &&
         existingTask?.teamworkTask?.teamworkTimeEntryId
@@ -167,7 +206,7 @@ export const useUpdateTaskMutation = () => {
         timeEntryDeleted = true;
         await updateTask.mutateAsync({
           id: payload.id,
-          task: { ...updatedTask! },
+          task: updatedTask!,
           teamworkTask: {
             teamworkTimeEntryId: null,
           },
@@ -186,7 +225,7 @@ export const useUpdateTaskMutation = () => {
           timeEntryDeleted = true;
           await updateTask.mutateAsync({
             id: payload.id,
-            task: { ...updatedTask },
+            task: updatedTask,
             teamworkTask: {
               teamworkTimeEntryId: null,
             },
@@ -211,7 +250,7 @@ export const useUpdateTaskMutation = () => {
           if (id) {
             await updateTask.mutateAsync({
               id: updatedTask.id,
-              task: { ...updatedTask },
+              task: updatedTask,
               teamworkTask: {
                 teamworkTimeEntryId: id,
               },
@@ -228,8 +267,10 @@ export const useUpdateTaskMutation = () => {
         });
       }
     }
-    void utils.task.getPersonalTasks.invalidate();
-    void utils.task.getActiveTask.invalidate();
+    if (!payload.preventInvalidateCache) {
+      void utils.task.getPersonalTasks.invalidate();
+      void utils.task.getActiveTask.invalidate();
+    }
     return result;
   };
   const mutate = (payload: RouterInputs["task"]["updatePersonalTask"]) => {
@@ -262,7 +303,7 @@ export const useCreateTaskMutation = () => {
     const previousTasks = utils.task.getPersonalTasks.getData();
 
     const tempTask = {
-      id: Math.ceil(Math.random() * 100),
+      id: Math.ceil(Math.random() * -100),
       userId: session?.user.id ?? "",
       end: null,
       title: null,
@@ -272,7 +313,7 @@ export const useCreateTaskMutation = () => {
       activeTimerRunning: payload.activeTaskTimer ?? false,
       ...payload.task,
       teamworkTask: {
-        taskId: Math.ceil(Math.random() * 100),
+        taskId: Math.ceil(Math.random() * -100),
         teamworkTaskId: null,
         teamworkProjectId: null,
         teamworkTimeEntryId: null,
@@ -355,7 +396,7 @@ export const useStartTaskMutation = () => {
     const now = new Date();
 
     const tempActiveTask = {
-      id: Math.ceil(Math.random() * 100),
+      id: Math.ceil(Math.random() * -100),
       activeTimerRunning: true,
       userId: session?.user.id ?? "",
       title: null,
@@ -366,7 +407,7 @@ export const useStartTaskMutation = () => {
       start: now,
       end: null,
       teamworkTask: {
-        taskId: Math.ceil(Math.random() * 100),
+        taskId: Math.ceil(Math.random() * -100),
         teamworkTaskId: null,
         teamworkProjectId: null,
         teamworkTimeEntryId: null,
@@ -400,6 +441,7 @@ export const useStartTaskMutation = () => {
         task: { end: now },
         teamworkTask: activeTask.teamworkTask,
         ignoreActiveTimer: true,
+        preventInvalidateCache: true,
       });
     }
     void utils.task.getPersonalTasks.invalidate();

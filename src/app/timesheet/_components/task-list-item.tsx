@@ -113,6 +113,7 @@ export const TaskListItem = ({
   });
 
   const submitForm = () => {
+    console.log("form being submitted");
     form
       .handleSubmit(async (values: z.infer<typeof formSchema>) => {
         if (task) {
@@ -239,6 +240,7 @@ export const TaskListItem = ({
       </div>
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
+          {task?.teamworkTask.teamworkTimeEntryId}
           {isActiveTimer && <History className="w-4" />}
           {task?.teamworkTask.teamworkTimeEntryId && <Clock className="w-4" />}
           <span>{time}</span>

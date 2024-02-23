@@ -11,7 +11,6 @@ export type CalendarEventItemProps = {
 export const CalendarEventItem = ({
   calendarEvent,
 }: CalendarEventItemProps) => {
-  console.log(calendarEvent);
   return (
     <div className="flex flex-col gap-2">
       <div className="bold text-lg">{calendarEvent.subject}</div>
@@ -67,7 +66,7 @@ const Attendees = ({ attendees }: AttendeesProps) => {
   return (
     <div className="flex flex-wrap gap-2">
       {attendees?.map((attendee, index) => (
-        <>
+        <React.Fragment key={index}>
           {attendee.emailAddress?.name && (
             <div
               key={index}
@@ -82,7 +81,7 @@ const Attendees = ({ attendees }: AttendeesProps) => {
               </span>
             </div>
           )}
-        </>
+        </React.Fragment>
       ))}
     </div>
   );

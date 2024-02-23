@@ -79,6 +79,8 @@ const weekMap: Record<string, number> = {
   friday: 5,
   saturday: 6,
 };
+export type TasksSelectSchema = InferResultType<"tasks">;
+export type TeamworkTasksSelectSchema = InferResultType<"teamworkTasks">;
 export type TasksWithTeamworkTaskSelectSchema = InferResultType<
   "tasks",
   { teamworkTask: true }
