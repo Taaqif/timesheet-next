@@ -461,4 +461,33 @@ export const teamworkRouter = createTRPCRouter({
       };
       return timeEntry;
     }),
+  getAllStaffMemberTimeEntries: protectedProcedure
+    .input(
+      z.object({
+        staffMember: z.string(),
+        from: z.string(),
+        to: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const params = new URLSearchParams({
+        userId: input.staffMember,
+        fromdate: input.from,
+        todate: input.to,
+      });
+      const response = await fetch(
+        `${teamworkBaseUrl}/time_entries.json?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: teamworkBasicAuth,
+          },
+        },
+      );
+      const { "time-entries": timeEntries } = (await response.json()) as {
+        ["time-entries"]: TimeEntry[];
+        status: string;
+      };
+      return timeEntries;
+    }),
 });

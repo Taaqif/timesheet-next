@@ -31,13 +31,13 @@ export const useDeleteTaskMutation = () => {
   const mutateAsync = async (
     payload: RouterInputs["task"]["deletePersonalTask"],
   ): Promise<RouterOutputs["task"]["deletePersonalTask"]> => {
-    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
-    const previousTasks = utils.task.getPersonalTasks.getData();
+    const previousTasks = utils.task.getUserTasks.getData();
     let isActiveTimer = false;
 
-    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+    utils.task.getUserTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
       ...(oldQueryData?.filter((f) => {
         if (f.id === payload.id) {
           isActiveTimer = f.activeTimerRunning ?? false;
@@ -58,7 +58,7 @@ export const useDeleteTaskMutation = () => {
         timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
       });
     }
-    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     toast("Task deleted");
     return result;
@@ -129,10 +129,10 @@ export const useUpdateTaskMutation = () => {
       preventInvalidateCache?: boolean;
     },
   ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
-    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
-    const previousTasks = utils.task.getPersonalTasks.getData();
+    const previousTasks = utils.task.getUserTasks.getData();
     let isActiveTimer: RouterOutputs["task"]["getActiveTask"] = null;
 
     const updateTaskCache = async ({
@@ -144,28 +144,25 @@ export const useUpdateTaskMutation = () => {
       task: Partial<TasksSelectSchema>;
       teamworkTask?: Partial<TeamworkTasksSelectSchema>;
     }) => {
-      utils.task.getPersonalTasks.setData(
-        { weekOf: weekOf },
-        (oldQueryData) => [
-          ...(oldQueryData?.map((f) => {
-            const idToCheck = id ? id : payload.id;
-            if (f.id === idToCheck) {
-              f = {
-                ...f,
-                ...taskCache,
-                teamworkTask: {
-                  ...f.teamworkTask,
-                  ...teamworkTaskCache,
-                },
-              };
-              if (f.activeTimerRunning) {
-                isActiveTimer = f;
-              }
+      utils.task.getUserTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+        ...(oldQueryData?.map((f) => {
+          const idToCheck = id ? id : payload.id;
+          if (f.id === idToCheck) {
+            f = {
+              ...f,
+              ...taskCache,
+              teamworkTask: {
+                ...f.teamworkTask,
+                ...teamworkTaskCache,
+              },
+            };
+            if (f.activeTimerRunning) {
+              isActiveTimer = f;
             }
-            return f;
-          }) ?? []),
-        ],
-      );
+          }
+          return f;
+        }) ?? []),
+      ]);
     };
     const taskToSet = { ...payload.task } as TasksSelectSchema;
     if (payload.ignoreActiveTimer) {
@@ -270,7 +267,7 @@ export const useUpdateTaskMutation = () => {
       }
     }
     if (!payload.preventInvalidateCache) {
-      void utils.task.getPersonalTasks.invalidate();
+      void utils.task.getUserTasks.invalidate();
       void utils.task.getActiveTask.invalidate();
     }
     return result;
@@ -299,10 +296,10 @@ export const useCreateTaskMutation = () => {
   const mutateAsync = async (
     payload: RouterInputs["task"]["createPersonalTask"],
   ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
-    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
-    const previousTasks = utils.task.getPersonalTasks.getData();
+    const previousTasks = utils.task.getUserTasks.getData();
 
     const tempTask = {
       id: Math.ceil(Math.random() * -100),
@@ -323,7 +320,7 @@ export const useCreateTaskMutation = () => {
       },
     };
 
-    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+    utils.task.getUserTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
       ...(oldQueryData ?? []),
       tempTask,
     ]);
@@ -354,7 +351,7 @@ export const useCreateTaskMutation = () => {
       }
     }
     toast("Task created");
-    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     return result;
   };
@@ -391,10 +388,10 @@ export const useStartTaskMutation = () => {
   const mutateAsync = async (
     payload?: StartTaskPayload,
   ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
-    await utils.task.getPersonalTasks.cancel();
+    await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
-    const previousTasks = utils.task.getPersonalTasks.getData();
+    const previousTasks = utils.task.getUserTasks.getData();
     const now = new Date();
 
     const tempActiveTask = {
@@ -416,7 +413,7 @@ export const useStartTaskMutation = () => {
       },
     };
 
-    utils.task.getPersonalTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
+    utils.task.getUserTasks.setData({ weekOf: weekOf }, (oldQueryData) => [
       ...(oldQueryData?.map((q) => {
         if (q.activeTimerRunning) {
           q.end = now;
@@ -446,7 +443,7 @@ export const useStartTaskMutation = () => {
         preventInvalidateCache: true,
       });
     }
-    void utils.task.getPersonalTasks.invalidate();
+    void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     return result;
   };
@@ -466,11 +463,11 @@ export const useStopTaskMutation = () => {
   const stopActiveTask = api.task.stopActiveTask.useMutation({
     onMutate: async (input) => {
       await utils.task.getActiveTask.cancel();
-      await utils.task.getPersonalTasks.cancel();
+      await utils.task.getUserTasks.cancel();
 
-      const previousTasks = utils.task.getPersonalTasks.getData();
+      const previousTasks = utils.task.getUserTasks.getData();
 
-      utils.task.getPersonalTasks.setData(
+      utils.task.getUserTasks.setData(
         { weekOf: weekOf },
         (oldQueryData) =>
           oldQueryData?.map((q) => {
@@ -487,7 +484,7 @@ export const useStopTaskMutation = () => {
       return { previousTasks };
     },
     onError: (_err, _newTodo, context) => {
-      utils.task.getPersonalTasks.setData(
+      utils.task.getUserTasks.setData(
         { weekOf: weekOf },
         context?.previousTasks,
       );
@@ -502,7 +499,7 @@ export const useStopTaskMutation = () => {
       }
     },
     onSettled: () => {
-      void utils.task.getPersonalTasks.invalidate();
+      void utils.task.getUserTasks.invalidate();
       void utils.task.getActiveTask.invalidate();
     },
   });
@@ -512,7 +509,7 @@ export const useStopTaskMutation = () => {
 
 export const useGetTasksQuery = () => {
   const weekOf = useCalendarStore((s) => s.weekOf);
-  const tasks = api.task.getPersonalTasks.useQuery(
+  const tasks = api.task.getUserTasks.useQuery(
     {
       weekOf: weekOf,
     },

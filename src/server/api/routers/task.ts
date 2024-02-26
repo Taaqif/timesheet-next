@@ -22,21 +22,21 @@ export const taskRouter = createTRPCRouter({
       });
       return myTasks ?? [];
     }),
-  getPersonalTasks: protectedProcedure
-    .input(z.object({ weekOf: z.string() }))
+  getUserTasks: protectedProcedure
+    .input(z.object({ weekOf: z.string(), userId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const start = dayjs(input.weekOf).startOf("week").toDate();
       const end = dayjs(input.weekOf).endOf("week").toDate();
-      const myTasks = await ctx.db.query.tasks.findMany({
+      const userTasks = await ctx.db.query.tasks.findMany({
         with: {
           teamworkTask: true,
         },
         where: and(
-          eq(tasks.userId, ctx.session?.user.id),
+          eq(tasks.userId, input.userId ?? ctx.session.user.id),
           or(between(tasks.start, start, end), between(tasks.end, start, end)),
         ),
       });
-      return myTasks ?? [];
+      return userTasks ?? [];
     }),
   createPersonalTask: protectedProcedure
     .input(
