@@ -155,10 +155,12 @@ export const CalendarDisplay = ({
                   (type === CalendarEventType.CALENDAR_EVENT ||
                     type === CalendarEventType.SCHEDULE)
                 ) {
+                  const event = arg.event.extendedProps as { subject?: string };
                   createTask.mutate({
                     task: {
                       start: arg.event.start,
                       end: arg.event.end,
+                      title: event.subject,
                     },
                   });
                 }

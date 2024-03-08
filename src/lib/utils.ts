@@ -120,6 +120,7 @@ export const getCalendarEvents = ({
               const mappedEvent: EventInput = {
                 extendedProps: {
                   type: CalendarEventType.SCHEDULE,
+                  scheduleEvent: scheduleItem,
                 },
                 backgroundColor: "#e07a5f",
                 start: `${scheduleItem.start?.dateTime}Z`,
@@ -145,6 +146,7 @@ export const getCalendarEvents = ({
             type: CalendarEventType.CALENDAR_EVENT,
             event: event,
           },
+          allDay: event.isAllDay ?? false,
           backgroundColor: "#e07a5f",
           start: `${event.start?.dateTime}Z`,
           editable: false,
