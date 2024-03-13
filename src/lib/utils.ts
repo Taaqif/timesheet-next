@@ -131,6 +131,10 @@ export const getCalendarEvents = ({
                     ? scheduleItem.subject
                     : scheduleItem.status) ?? "",
               };
+              mappedEvent.allDay =
+                dayjs(mappedEvent.start as Date).diff(mappedEvent.end as Date) %
+                  24 ===
+                  0 ?? false;
               return mappedEvent;
             }),
           );
