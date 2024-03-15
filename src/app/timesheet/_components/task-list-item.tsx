@@ -4,7 +4,6 @@ import { formatRange, type EventInput } from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
   getHoursMinutesTextFromDates,
-  calculateEventProgressBarInfo,
   CalendarEventType,
 } from "~/lib/utils";
 import { Label } from "~/components/ui/label";
@@ -41,8 +40,101 @@ import {
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { EventTimeSheetProgress } from "./timesheet-progress";
 import { useIntersectionObserver } from "usehooks-ts";
+import { TimePickerInput } from "~/components/ui/time-picker-input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+
+interface TimePickerDemoProps {
+  date: Date | undefined;
+  timeText: string;
+  disabled?: boolean;
+  timeHeading: string;
+  setDate: (date: Date | undefined) => void;
+  onApplyDateChange: () => void;
+}
+
+export function TimePickerPopup({
+  date,
+  disabled,
+  setDate,
+  onApplyDateChange,
+  timeText,
+  timeHeading,
+}: TimePickerDemoProps) {
+  const minuteRef = React.useRef<HTMLInputElement>(null);
+  const hourRef = React.useRef<HTMLInputElement>(null);
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          onApplyDateChange();
+        }
+      }}
+    >
+      <PopoverTrigger asChild disabled={disabled}>
+        <Button variant={"ghost"} className="h-auto px-1 py-1">
+          {timeText}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto">
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <h4 className="font-medium leading-none">{timeHeading}</h4>
+          </div>
+          <div className="flex items-end gap-2">
+            <div className="grid gap-1 text-center">
+              <Label htmlFor="hours" className="text-xs">
+                Hours
+              </Label>
+              <TimePickerInput
+                picker="hours"
+                date={date}
+                setDate={setDate}
+                ref={hourRef}
+                onRightFocus={() => minuteRef.current?.focus()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    onApplyDateChange();
+                    setOpen(false);
+                  }
+                }}
+              />
+            </div>
+            <div className="grid gap-1 text-center">
+              <Label htmlFor="minutes" className="text-xs">
+                Minutes
+              </Label>
+              <TimePickerInput
+                picker="minutes"
+                date={date}
+                setDate={setDate}
+                ref={minuteRef}
+                onLeftFocus={() => hourRef.current?.focus()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    onApplyDateChange();
+                    setOpen(false);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 const formSchema = z.object({
+  start: z.date().optional(),
+  end: z.date().optional(),
   description: z.string().optional(),
   projectId: z.string().optional(),
   projectTitle: z.string().optional(),
@@ -71,8 +163,10 @@ export const TaskListItem = ({
   const { isIntersecting, ref: intersectionRef } = useIntersectionObserver({
     threshold: 0.5,
   });
-  const [time, setTime] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(event.end as Date);
+  const [startDate, setStartDate] = useState<Date>(event.start as Date);
   const [isOpen, setIsOpen] = useState(
     isActiveTimer ||
       !task?.teamworkTask?.teamworkTaskId ||
@@ -107,6 +201,8 @@ export const TaskListItem = ({
     mode: "onBlur",
 
     defaultValues: {
+      start: task?.start,
+      end: task?.end as undefined | Date,
       description: task?.description ?? "",
       projectId: task?.teamworkTask?.teamworkProjectId ?? "",
       taskId: task?.teamworkTask?.teamworkTaskId ?? "",
@@ -130,6 +226,8 @@ export const TaskListItem = ({
             task: {
               ...task,
               title: title,
+              start: values.start ?? task.start,
+              end: isActiveTimer ? task.end : values.end ?? task.end,
               description: values.description,
               logTime: values.logTime,
               billable: values.billable,
@@ -158,25 +256,31 @@ export const TaskListItem = ({
     if (isActiveTimer) {
       const interval = setInterval(() => {
         const plusOneSecond = dayjs().add(1, "second").toDate();
-        updateEventTimeDisplay(plusOneSecond);
+        updateEventTimeDisplay(event.start as Date, plusOneSecond);
       }, 1000);
-      updateEventTimeDisplay(new Date());
+      updateEventTimeDisplay(event.start as Date, new Date());
       return () => {
         clearInterval(interval);
       };
     } else {
-      updateEventTimeDisplay(event.end as Date);
+      updateEventTimeDisplay(event.start as Date, event.end as Date);
     }
+    setStartDate(event.start as Date);
   }, [event]);
 
-  const updateEventTimeDisplay = (endDate: Date) => {
+  const updateEventTimeDisplay = (startDate: Date, endDate: Date) => {
     setEndDate(endDate);
-    setTime(
-      formatRange(event.start!, endDate, {
-        hour: "numeric",
-        minute: "numeric",
-      }),
-    );
+    const seperator = " - ";
+    const time = formatRange(startDate, endDate, {
+      hour: "numeric",
+      minute: "numeric",
+      separator: seperator,
+    });
+    const [start, end] = time.split(seperator);
+    if (start && end) {
+      setStartTime(start);
+      setEndTime(end);
+    }
   };
 
   useEffect(() => {
@@ -187,6 +291,8 @@ export const TaskListItem = ({
       taskId: task?.teamworkTask?.teamworkTaskId ?? "",
       logTime: task?.logTime ?? false,
       billable: task?.billable ?? false,
+      start: task?.start,
+      end: task?.end as undefined | Date,
       description:
         document.activeElement !== descriptionRef.current
           ? task?.description ?? ""
@@ -254,7 +360,52 @@ export const TaskListItem = ({
           {+(task?.teamworkTask.teamworkTimeEntryId ?? 0) > 0 && (
             <Clock className="w-4" />
           )}
-          <span>{time}</span>
+          <FormField
+            control={form.control}
+            name="start"
+            render={({ field }) => (
+              <TimePickerPopup
+                date={startDate}
+                timeText={startTime}
+                timeHeading={"Start Time"}
+                onApplyDateChange={() => {
+                  field.onChange(startDate);
+                  if (startDate !== event.start) {
+                    submitForm();
+                  }
+                }}
+                setDate={(date) => {
+                  if (date) {
+                    setStartDate(date);
+                  }
+                }}
+              />
+            )}
+          />
+          <span> - </span>
+          <FormField
+            control={form.control}
+            name="end"
+            render={({ field }) => (
+              <TimePickerPopup
+                disabled={isActiveTimer}
+                date={endDate}
+                timeText={endTime}
+                timeHeading={"End Time"}
+                onApplyDateChange={() => {
+                  field.onChange(endDate);
+                  if (endDate !== event.end) {
+                    submitForm();
+                  }
+                }}
+                setDate={(date) => {
+                  if (date) {
+                    setEndDate(date);
+                  }
+                }}
+              />
+            )}
+          />
           <Badge variant="outline" className="text-muted-foreground">
             {getHoursMinutesTextFromDates(
               event.start!,
@@ -356,6 +507,11 @@ export const TaskListItem = ({
                         ref={(e) => {
                           field.ref(e);
                           descriptionRef.current = e;
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && e.ctrlKey) {
+                            descriptionRef.current?.blur();
+                          }
                         }}
                         onBlur={() => {
                           field.onBlur();

@@ -5,6 +5,13 @@ import { useCalendarStore } from "~/app/_store";
 import { ProgressContainer, ProgressIndicator } from "~/components/ui/progress";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { CalendarEventType, calculateEventProgressBarInfo } from "~/lib/utils";
+import { TaskListItem } from "./task-list-item";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "~/components/ui/hover-card";
+import { HoverCardPortal } from "@radix-ui/react-hover-card";
 
 export const AllTaskEventsTimesheetProgress = () => {
   const selectedDate = useCalendarStore((s) => s.selectedDate);
@@ -103,10 +110,28 @@ const TimeSheetProgressIndicator = ({
     setEndDate(endDate);
   };
   return (
-    <ProgressIndicator
-      value={progressBarInfo?.value}
-      offset={progressBarInfo?.offset}
-      color={event.backgroundColor}
-    />
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <ProgressIndicator
+          value={progressBarInfo?.value}
+          offset={progressBarInfo?.offset}
+          color={event.backgroundColor}
+        />
+      </HoverCardTrigger>
+      <HoverCardPortal>
+        <HoverCardContent
+          align="start"
+          side="left"
+          sideOffset={10}
+          className="min-w-[400px] max-w-[500px] p-4"
+        >
+          <TaskListItem
+            event={event}
+            businessHoursStartTime={businessHoursStartTime}
+            businessHoursEndTime={businessHoursEndTime}
+          />
+        </HoverCardContent>
+      </HoverCardPortal>
+    </HoverCard>
   );
 };
