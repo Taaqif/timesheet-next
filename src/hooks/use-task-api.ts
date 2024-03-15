@@ -438,7 +438,6 @@ export const useStartTaskMutation = () => {
       await updateTask.mutateAsync({
         id: activeTask.id,
         task: { end: now },
-        teamworkTask: activeTask.teamworkTask,
         ignoreActiveTimer: true,
         preventInvalidateCache: true,
       });
@@ -494,7 +493,6 @@ export const useStopTaskMutation = () => {
         await updateTask.mutateAsync({
           id: activeTask.id,
           task: { ...activeTask, end: new Date() },
-          teamworkTask: activeTask.teamworkTask,
         });
       }
     },

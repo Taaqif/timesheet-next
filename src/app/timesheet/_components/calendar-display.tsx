@@ -37,13 +37,8 @@ import {
   HoverCardContent,
   HoverCardPortal,
 } from "~/components/ui/hover-card";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipPortal,
-} from "~/components/ui/tooltip";
 import { Clock } from "lucide-react";
+import { api } from "~/trpc/react";
 
 export type CalendarDisplayProps = {
   view?: "timelineDayWorkHours" | "timeGridDay";
@@ -60,6 +55,7 @@ export const CalendarDisplay = ({
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const updateTask = useUpdateTaskMutation();
   const createTask = useCreateTaskMutation();
+  const { data: activeTask } = api.task.getActiveTask.useQuery();
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -98,6 +94,21 @@ export const CalendarDisplay = ({
     },
     10,
   );
+
+  useEffect(() => {
+    if (activeTask) {
+      const calendarApi = calendarRef?.current?.getApi();
+      const activeTaskEvent = calendarApi?.getEventById(
+        `TASK_${activeTask?.id}`,
+      );
+      const interval = setInterval(() => {
+        activeTaskEvent?.moveEnd("00:00:01");
+      }, 1000);
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  }, [activeTask]);
 
   useEffect(() => {
     const calendarApi = calendarRef?.current?.getApi();

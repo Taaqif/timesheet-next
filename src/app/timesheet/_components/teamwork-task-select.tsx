@@ -97,7 +97,7 @@ const RenderTeamworkTaskWithChildren = ({
               {task.content}
             </div>
             {task.tags && (
-              <div className="mt-1 flex flex-wrap justify-end gap-2">
+              <div className="ml-1 flex flex-wrap justify-end gap-2">
                 <TeamworkTags tags={task.tags} />
               </div>
             )}

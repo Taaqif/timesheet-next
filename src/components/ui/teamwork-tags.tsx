@@ -17,6 +17,7 @@ export const TeamworkTags = (props: { tags: Tag[] }) => {
             t && (
               <Badge
                 key={index}
+                className="px-1 py-0.5 text-xs"
                 style={{
                   background: t?.color,
                 }}
