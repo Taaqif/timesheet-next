@@ -4,6 +4,8 @@ import { Input } from "~/components/ui/input";
 
 import { cn } from "~/lib/utils";
 import React from "react";
+import { Button } from "./button";
+import { ChevronUp, ChevronDown } from "lucide-react";
 
 export interface TimePickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -57,17 +59,21 @@ const TimePickerInput = React.forwardRef<
       [date, picker],
     );
 
+    const stepValue = (direction: "up" | "down") => {
+      const step = direction === "up" ? 1 : -1;
+      const newValue = getArrowByType(calculatedValue, step, picker);
+      if (flag) setFlag(false);
+      const tempDate = new Date(date);
+      setDate(setDateByType(tempDate, newValue, picker));
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Tab") return;
       e.preventDefault();
       if (e.key === "ArrowRight") onRightFocus?.();
       if (e.key === "ArrowLeft") onLeftFocus?.();
       if (["ArrowUp", "ArrowDown"].includes(e.key)) {
-        const step = e.key === "ArrowUp" ? 1 : -1;
-        const newValue = getArrowByType(calculatedValue, step, picker);
-        if (flag) setFlag(false);
-        const tempDate = new Date(date);
-        setDate(setDateByType(tempDate, newValue, picker));
+        stepValue(e.key === "ArrowUp" ? "up" : "down");
       }
       if (e.key >= "0" && e.key <= "9") {
         const newValue = !flag
@@ -81,27 +87,49 @@ const TimePickerInput = React.forwardRef<
     };
 
     return (
-      <Input
-        ref={ref}
-        id={id ?? picker}
-        name={name ?? picker}
-        className={cn(
-          "w-[48px] text-center font-mono text-base tabular-nums caret-transparent focus:bg-accent focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none",
-          className,
-        )}
-        value={value ?? calculatedValue}
-        onChange={(e) => {
-          e.preventDefault();
-          onChange?.(e);
-        }}
-        type={type}
-        inputMode="decimal"
-        onKeyDown={(e) => {
-          onKeyDown?.(e);
-          handleKeyDown(e);
-        }}
-        {...props}
-      />
+      <div className="flex flex-col items-center justify-center gap-1">
+        <Button
+          size={"icon"}
+          variant={"ghost"}
+          className="h-auto py-0.5"
+          onClick={() => {
+            stepValue("up");
+          }}
+        >
+          <ChevronUp />
+        </Button>
+        <Input
+          ref={ref}
+          id={id ?? picker}
+          name={name ?? picker}
+          className={cn(
+            "w-[48px] text-center font-mono text-base tabular-nums caret-transparent focus:bg-accent focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none",
+            className,
+          )}
+          value={value ?? calculatedValue}
+          onChange={(e) => {
+            e.preventDefault();
+            onChange?.(e);
+          }}
+          type={type}
+          inputMode="decimal"
+          onKeyDown={(e) => {
+            onKeyDown?.(e);
+            handleKeyDown(e);
+          }}
+          {...props}
+        />
+        <Button
+          size={"icon"}
+          variant={"ghost"}
+          className="h-auto py-0.5"
+          onClick={() => {
+            stepValue("down");
+          }}
+        >
+          <ChevronDown />
+        </Button>
+      </div>
     );
   },
 );
