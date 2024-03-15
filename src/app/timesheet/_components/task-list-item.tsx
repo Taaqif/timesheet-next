@@ -39,8 +39,8 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
-import { Progress } from "~/components/ui/progress";
 import { EventTimeSheetProgress } from "./timesheet-progress";
+import { useIntersectionObserver } from "usehooks-ts";
 
 const formSchema = z.object({
   description: z.string().optional(),
@@ -68,6 +68,9 @@ export const TaskListItem = ({
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
   const isActiveTimer = event.extendedProps?.type === CalendarEventType.TIMER;
+  const { isIntersecting, ref: intersectionRef } = useIntersectionObserver({
+    threshold: 0.5,
+  });
   const [time, setTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(event.end as Date);
   const [isOpen, setIsOpen] = useState(
@@ -96,7 +99,7 @@ export const TaskListItem = ({
     [task?.teamworkTask?.teamworkProjectId, teamworkProjects],
   );
 
-  const eventRef = useRef<HTMLDivElement>(null);
+  const eventRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -113,7 +116,6 @@ export const TaskListItem = ({
   });
 
   const submitForm = () => {
-    console.log("form being submitted");
     form
       .handleSubmit(async (values: z.infer<typeof formSchema>) => {
         if (task) {
@@ -216,7 +218,7 @@ export const TaskListItem = ({
     if (tag === "input" || tag === "textarea") {
       return;
     }
-    if (selectedEventId === task?.id) {
+    if (selectedEventId === task?.id && !isIntersecting) {
       eventRef.current?.scrollIntoView({
         behavior: "smooth",
       });
@@ -226,9 +228,17 @@ export const TaskListItem = ({
   return (
     <div
       className="flex scroll-m-5 flex-col gap-2 @container/event"
-      ref={eventRef}
-      onMouseEnter={() => {
-        // setSelectedEventId(event.id);
+      ref={(ref) => {
+        eventRef.current = ref;
+        intersectionRef(ref);
+      }}
+      onMouseOut={() => {
+        // setSelectedEventId(undefined);
+      }}
+      onMouseOver={() => {
+        if (task?.id) {
+          setSelectedEventId(+task.id);
+        }
       }}
     >
       <div>

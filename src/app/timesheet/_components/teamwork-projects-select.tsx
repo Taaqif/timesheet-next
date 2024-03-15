@@ -191,68 +191,71 @@ export const TeamworkProjectsSelect = React.forwardRef<
               </Button>
             }
           />
-          <CommandEmpty>No projects found.</CommandEmpty>
-          {teamworkProjectsLoading && (
-            <CommandLoading>Fetching projects...</CommandLoading>
-          )}
-          {!teamworkProjectsLoading && (
-            <CommandList>
-              {projectGroups.map((projectGroup, index) => {
-                return (
-                  <CommandGroup
-                    heading={
-                      <span className="group flex items-center gap-2">
-                        {projectGroup.company}
-                        <a
-                          href={`${teamworkConfig?.teamworkBaseUrl}/#/company/${projectGroup.companyId}`}
-                          target="_blank"
-                          className="flex h-full w-3 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
-                        >
-                          <Link className={"h-3 w-3"} />
-                        </a>
-                      </span>
-                    }
-                    key={`project_${index}`}
-                  >
-                    {projectGroup.projects.map((project) => (
-                      <CommandItem
-                        key={project.id}
-                        value={`${project.name} - ${project.company?.name}`}
-                        onSelect={() => {
-                          if ((projectId ?? "") === (project.id ?? "")) {
-                            setOpen(false);
-                            return;
-                          }
-                          onChange(project);
-                          setOpen(false);
-                        }}
-                        className="group relative"
-                      >
-                        <div className="flex">
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4 flex-shrink-0 group-hover:opacity-0",
-                              project.id === projectId
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
+          <CommandList>
+            {teamworkProjectsLoading ? (
+              <CommandLoading>Fetching projects...</CommandLoading>
+            ) : (
+              <CommandEmpty>No projects found.</CommandEmpty>
+            )}
+            {!teamworkProjectsLoading && (
+              <>
+                {projectGroups.map((projectGroup, index) => {
+                  return (
+                    <CommandGroup
+                      heading={
+                        <span className="group flex items-center gap-2">
+                          {projectGroup.company}
                           <a
-                            href={`${teamworkConfig?.teamworkBaseUrl}/#/projects/${project.id}`}
+                            href={`${teamworkConfig?.teamworkBaseUrl}/#/company/${projectGroup.companyId}`}
                             target="_blank"
-                            className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                            className="flex h-full w-3 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
                           >
-                            <Link className={"h-4 w-4"} />
+                            <Link className={"h-3 w-3"} />
                           </a>
-                          {project.name}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                );
-              })}
-            </CommandList>
-          )}
+                        </span>
+                      }
+                      key={`project_${index}`}
+                    >
+                      {projectGroup.projects.map((project) => (
+                        <CommandItem
+                          key={project.id}
+                          value={`${project.name} - ${project.company?.name}`}
+                          onSelect={() => {
+                            if ((projectId ?? "") === (project.id ?? "")) {
+                              setOpen(false);
+                              return;
+                            }
+                            onChange(project);
+                            setOpen(false);
+                          }}
+                          className="group relative"
+                        >
+                          <div className="flex">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4 flex-shrink-0 group-hover:opacity-0",
+                                project.id === projectId
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                            <a
+                              href={`${teamworkConfig?.teamworkBaseUrl}/#/projects/${project.id}`}
+                              target="_blank"
+                              className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                            >
+                              <Link className={"h-4 w-4"} />
+                            </a>
+                            {project.name}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  );
+                })}
+              </>
+            )}
+          </CommandList>
         </Command>
       </SelectContent>
     </SelectContainer>

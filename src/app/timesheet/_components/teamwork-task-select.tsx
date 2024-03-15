@@ -323,13 +323,14 @@ export const TeamworkTaskSelect = React.forwardRef<
                 </Button>
               }
             />
-            {teamworkProjectTasksLoading && (
-              <CommandLoading>Fetching tasks...</CommandLoading>
-            )}
-            {!teamworkProjectTasksLoading && (
-              <>
+            <CommandList>
+              {teamworkProjectTasksLoading ? (
+                <CommandLoading>Fetching tasks...</CommandLoading>
+              ) : (
                 <CommandEmpty>No tasks found.</CommandEmpty>
-                <CommandList>
+              )}
+              {!teamworkProjectTasksLoading && (
+                <>
                   {taskGroups.map((taskGroup, index) => {
                     return (
                       <CommandGroup
@@ -364,9 +365,9 @@ export const TeamworkTaskSelect = React.forwardRef<
                       </CommandGroup>
                     );
                   })}
-                </CommandList>
-              </>
-            )}
+                </>
+              )}
+            </CommandList>
           </Command>
         </SelectContent>
       )}

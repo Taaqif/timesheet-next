@@ -58,9 +58,9 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
       <div className="flex flex-col gap-4 p-4 ">
         {selectedCalendarEvents.map((event, index) => (
           <div
-            key={`event_${selectedDate.toISOString()}_${event.id}_${index}`}
+            key={`event_${selectedDate.toISOString()}_${index}`}
             className={cn("rounded-lg border p-3", {
-              "shadow-lg":
+              "bg-neutral-300/5 shadow-lg dark:bg-neutral-700/5":
                 selectedEventId ===
                 (
                   event?.extendedProps?.task as

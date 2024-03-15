@@ -3,7 +3,6 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
-import { api } from "~/trpc/react";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
@@ -32,6 +31,12 @@ import {
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
 import { createDuration } from "@fullcalendar/core/internal";
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+  HoverCardPortal,
+} from "~/components/ui/hover-card";
 import {
   Tooltip,
   TooltipTrigger,
@@ -155,12 +160,11 @@ export const CalendarDisplay = ({
                   (type === CalendarEventType.CALENDAR_EVENT ||
                     type === CalendarEventType.SCHEDULE)
                 ) {
-                  const event = arg.event.extendedProps as { subject?: string };
                   createTask.mutate({
                     task: {
                       start: arg.event.start,
                       end: arg.event.end,
-                      title: event.subject,
+                      description: arg.event.title,
                     },
                   });
                 }
@@ -363,8 +367,8 @@ const RenderContent = ({
   // }, [selectedEventId]);
 
   return (
-    <Tooltip
-      delayDuration={500}
+    <HoverCard
+      openDelay={500}
       open={open}
       onOpenChange={(isOpen) => {
         if (isOpen === false) {
@@ -377,7 +381,7 @@ const RenderContent = ({
         setOpen(isOpen);
       }}
     >
-      <TooltipTrigger asChild>
+      <HoverCardTrigger asChild>
         <div
           ref={eventRef}
           className="fc-event-main-frame"
@@ -415,9 +419,9 @@ const RenderContent = ({
             </div>
           </div>
         </div>
-      </TooltipTrigger>
-      <TooltipPortal>
-        <TooltipContent
+      </HoverCardTrigger>
+      <HoverCardPortal>
+        <HoverCardContent
           align="start"
           side="left"
           sideOffset={10}
@@ -456,8 +460,8 @@ const RenderContent = ({
               </div>
             )}
           </div>
-        </TooltipContent>
-      </TooltipPortal>
-    </Tooltip>
+        </HoverCardContent>
+      </HoverCardPortal>
+    </HoverCard>
   );
 };
