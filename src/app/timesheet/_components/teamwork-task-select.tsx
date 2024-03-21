@@ -298,7 +298,6 @@ export const TeamworkTaskSelect = React.forwardRef<
             "top-[10%] mx-2 translate-y-0": breakpoint === "mobile",
           })}
           align="start"
-          hideClose
         >
           <Command loop>
             <CommandInput

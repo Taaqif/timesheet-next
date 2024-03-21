@@ -1,5 +1,5 @@
 import { useCalendarStore } from "~/app/_store";
-import { type DeepPartial } from "utility-types";
+import { type Overwrite } from "utility-types";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 import dayjs from "dayjs";
@@ -11,13 +11,10 @@ import { toast } from "sonner";
 import { type EventInput } from "@fullcalendar/core";
 import { useEffect, useState } from "react";
 import {
-  TasksSelectSchema,
-  TasksWithTeamworkTaskSelectSchema,
-  TeamworkTasksSelectSchema,
+  type TasksSelectSchema,
+  type TeamworkTasksSelectSchema,
   getCalendarEvents,
 } from "~/lib/utils";
-import { Overwrite } from "@trpc/server";
-import { ignorePatterns } from ".eslintrc.cjs";
 
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
@@ -53,11 +50,11 @@ export const useDeleteTaskMutation = () => {
 
     const result = await mutateAsyncOrig(payload);
     const { existingTask } = result;
-    if (existingTask.teamworkTask?.teamworkTimeEntryId) {
-      await deleteTimeEntry.mutateAsync({
-        timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
-      });
-    }
+    // if (existingTask.teamworkTask?.teamworkTimeEntryId) {
+    //   await deleteTimeEntry.mutateAsync({
+    //     timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
+    //   });
+    // }
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     toast("Task deleted");
@@ -171,14 +168,6 @@ export const useUpdateTaskMutation = () => {
     const teamworkTaskToSet = {
       ...payload.teamworkTask,
     } as TeamworkTasksSelectSchema;
-    if (
-      !taskToSet.activeTimerRunning &&
-      taskToSet.logTime &&
-      !teamworkTaskToSet.teamworkTimeEntryId &&
-      teamworkTaskToSet.teamworkTaskId
-    ) {
-      teamworkTaskToSet.teamworkTimeEntryId = `${Math.ceil(Math.random() * -100)}`;
-    }
     void updateTaskCache({
       task: taskToSet,
       teamworkTask: teamworkTaskToSet,
@@ -188,84 +177,83 @@ export const useUpdateTaskMutation = () => {
       utils.task.getActiveTask.setData(undefined, () => isActiveTimer);
     }
 
-    const shouldIgnoreProcessTimeEntry =
-      +(payload.teamworkTask?.teamworkTimeEntryId ?? 0) < 0;
-
     const result = await mutateAsyncOrig(payload);
     const { existingTask, updatedTask } = result;
-    let timeEntryDeleted = false;
-    if (!updatedTask?.activeTimerRunning && !shouldIgnoreProcessTimeEntry) {
-      if (
-        !updatedTask?.logTime &&
-        existingTask?.teamworkTask?.teamworkTimeEntryId
-      ) {
-        await deleteTimeEntry.mutateAsync({
-          timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
-        });
-        timeEntryDeleted = true;
-        await updateTask.mutateAsync({
-          id: payload.id,
-          task: updatedTask!,
-          teamworkTask: {
-            teamworkTimeEntryId: null,
-          },
-        });
-      } else if (updatedTask?.logTime && teamworkPerson?.id) {
-        const timeEntry = getTimeEntry(updatedTask, teamworkPerson.id);
-        if (
-          existingTask.teamworkTask.teamworkTaskId !==
-            updatedTask?.teamworkTask.teamworkTaskId &&
-          updatedTask?.teamworkTask.teamworkTimeEntryId
-        ) {
-          // delete the time entry if the task has changed
-          await deleteTimeEntry.mutateAsync({
-            timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
-          });
-          timeEntryDeleted = true;
-          await updateTask.mutateAsync({
-            id: payload.id,
-            task: updatedTask,
-            teamworkTask: {
-              teamworkTimeEntryId: null,
-            },
-          });
-        }
-
-        if (
-          updatedTask?.teamworkTask?.teamworkTimeEntryId &&
-          timeEntryDeleted === false
-        ) {
-          // update time entry
-          await updateTimeEntry.mutateAsync({
-            timeEntryId: updatedTask?.teamworkTask?.teamworkTimeEntryId,
-            timeEntry,
-          });
-        } else if (updatedTask?.teamworkTask?.teamworkTaskId) {
-          // create new time entry
-          const id = await createTimeEntry.mutateAsync({
-            taskId: updatedTask?.teamworkTask?.teamworkTaskId,
-            timeEntry,
-          });
-          if (id) {
-            await updateTask.mutateAsync({
-              id: updatedTask.id,
-              task: updatedTask,
-              teamworkTask: {
-                teamworkTimeEntryId: id,
-              },
-            });
-          }
-        }
-      } else if (
-        updatedTask?.logTime &&
-        !updatedTask?.teamworkTask.teamworkTimeEntryId
-      ) {
-        await updateTask.mutateAsync({
-          id: updatedTask.id,
-          task: { ...updatedTask, logTime: false, billable: false },
-        });
-      }
-    }
+    // const shouldIgnoreProcessTimeEntry =
+    //   +(payload.teamworkTask?.teamworkTimeEntryId ?? 0) < 0;
+    // let timeEntryDeleted = false;
+    // if (!updatedTask?.activeTimerRunning && !shouldIgnoreProcessTimeEntry) {
+    //   if (
+    //     !updatedTask?.logTime &&
+    //     existingTask?.teamworkTask?.teamworkTimeEntryId
+    //   ) {
+    //     await deleteTimeEntry.mutateAsync({
+    //       timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
+    //     });
+    //     timeEntryDeleted = true;
+    //     await updateTask.mutateAsync({
+    //       id: payload.id,
+    //       task: updatedTask!,
+    //       teamworkTask: {
+    //         teamworkTimeEntryId: null,
+    //       },
+    //     });
+    //   } else if (updatedTask?.logTime && teamworkPerson?.id) {
+    //     const timeEntry = getTimeEntry(updatedTask, teamworkPerson.id);
+    //     if (
+    //       existingTask.teamworkTask.teamworkTaskId !==
+    //         updatedTask?.teamworkTask.teamworkTaskId &&
+    //       updatedTask?.teamworkTask.teamworkTimeEntryId
+    //     ) {
+    //       // delete the time entry if the task has changed
+    //       await deleteTimeEntry.mutateAsync({
+    //         timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
+    //       });
+    //       timeEntryDeleted = true;
+    //       await updateTask.mutateAsync({
+    //         id: payload.id,
+    //         task: updatedTask,
+    //         teamworkTask: {
+    //           teamworkTimeEntryId: null,
+    //         },
+    //       });
+    //     }
+    //
+    //     if (
+    //       updatedTask?.teamworkTask?.teamworkTimeEntryId &&
+    //       timeEntryDeleted === false
+    //     ) {
+    //       // update time entry
+    //       await updateTimeEntry.mutateAsync({
+    //         timeEntryId: updatedTask?.teamworkTask?.teamworkTimeEntryId,
+    //         timeEntry,
+    //       });
+    //     } else if (updatedTask?.teamworkTask?.teamworkTaskId) {
+    //       // create new time entry
+    //       const id = await createTimeEntry.mutateAsync({
+    //         taskId: updatedTask?.teamworkTask?.teamworkTaskId,
+    //         timeEntry,
+    //       });
+    //       if (id) {
+    //         await updateTask.mutateAsync({
+    //           id: updatedTask.id,
+    //           task: updatedTask,
+    //           teamworkTask: {
+    //             teamworkTimeEntryId: id,
+    //           },
+    //         });
+    //       }
+    //     }
+    //   } else if (
+    //     updatedTask?.logTime &&
+    //     !updatedTask?.teamworkTask.teamworkTimeEntryId
+    //   ) {
+    //     await updateTask.mutateAsync({
+    //       id: updatedTask.id,
+    //       task: { ...updatedTask, logTime: false, billable: false },
+    //     });
+    //   }
+    // }
     if (!payload.preventInvalidateCache) {
       void utils.task.getUserTasks.invalidate();
       void utils.task.getActiveTask.invalidate();
@@ -282,9 +270,6 @@ export const useUpdateTaskMutation = () => {
 
 export const useCreateTaskMutation = () => {
   const utils = api.useUtils();
-  const { data: teamworkPerson } = useSessionTeamworkPerson();
-  const createTimeEntry = api.teamwork.createTimeEntryForTask.useMutation({});
-  const updateTask = api.task.updatePersonalTask.useMutation({});
   const { data: session } = useSession();
   const weekOf = useCalendarStore((s) => s.weekOf);
 
@@ -330,26 +315,6 @@ export const useCreateTaskMutation = () => {
 
     const result = await mutateAsyncOrig(payload);
     const { createdTask } = result;
-    if (
-      createdTask?.logTime &&
-      teamworkPerson?.id &&
-      createdTask?.teamworkTask?.teamworkTaskId
-    ) {
-      const timeEntry = getTimeEntry(createdTask, teamworkPerson.id);
-      const id = await createTimeEntry.mutateAsync({
-        taskId: createdTask?.teamworkTask?.teamworkTaskId,
-        timeEntry,
-      });
-      if (id) {
-        await updateTask.mutateAsync({
-          id: createdTask.id,
-          task: { ...createdTask },
-          teamworkTask: {
-            teamworkTimeEntryId: id,
-          },
-        });
-      }
-    }
     toast("Task created");
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
@@ -376,9 +341,7 @@ type StartTaskPayload = Partial<
 >;
 export const useStartTaskMutation = () => {
   const utils = api.useUtils();
-  const { data: activeTask } = api.task.getActiveTask.useQuery();
   const weekOf = useCalendarStore((s) => s.weekOf);
-  const updateTask = useUpdateTaskMutation();
   const { data: session } = useSession();
   const {
     mutate: mutateOrig,
@@ -434,14 +397,6 @@ export const useStartTaskMutation = () => {
       },
       activeTaskTimer: true,
     });
-    if (activeTask) {
-      await updateTask.mutateAsync({
-        id: activeTask.id,
-        task: { end: now },
-        ignoreActiveTimer: true,
-        preventInvalidateCache: true,
-      });
-    }
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     return result;
@@ -456,8 +411,6 @@ export const useStartTaskMutation = () => {
 
 export const useStopTaskMutation = () => {
   const utils = api.useUtils();
-  const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const updateTask = useUpdateTaskMutation();
   const weekOf = useCalendarStore((s) => s.weekOf);
   const stopActiveTask = api.task.stopActiveTask.useMutation({
     onMutate: async (input) => {
@@ -487,14 +440,6 @@ export const useStopTaskMutation = () => {
         { weekOf: weekOf },
         context?.previousTasks,
       );
-    },
-    async onSuccess() {
-      if (activeTask) {
-        await updateTask.mutateAsync({
-          id: activeTask.id,
-          task: { ...activeTask, end: new Date() },
-        });
-      }
     },
     onSettled: () => {
       void utils.task.getUserTasks.invalidate();

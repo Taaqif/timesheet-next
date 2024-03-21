@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { env } from "~/env";
+import { logger } from "~/logger/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const teamworkBaseUrl = env.TEAMWORK_BASE_URL;
@@ -378,6 +379,7 @@ export const teamworkRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
+      logger.info("creating time entry", input);
       const response = await fetch(
         `${teamworkBaseUrl}/tasks/${input.taskId}/time_entries.json`,
         {
@@ -391,13 +393,16 @@ export const teamworkRouter = createTRPCRouter({
           },
         },
       );
-      const { timeLogId } = (await response.json()) as {
+      const responseJson = (await response.json()) as {
         timeLogId: string;
         status: string;
       };
+      const { timeLogId } = responseJson;
       if (!timeLogId) {
+        logger.error("could not create time entry");
         throw "could not create time entry";
       }
+      logger.info("created time entry", responseJson);
 
       return timeLogId;
     }),
@@ -409,6 +414,7 @@ export const teamworkRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
+      logger.info("updating time entry", input);
       const response = await fetch(
         `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json`,
         {
@@ -419,7 +425,10 @@ export const teamworkRouter = createTRPCRouter({
           },
         },
       );
-      await response.json();
+      const responseJson = (await response.json()) as {
+        status: string;
+      };
+      logger.info("updated time entry", responseJson);
     }),
   deleteTimeEntry: protectedProcedure
     .input(
@@ -428,6 +437,7 @@ export const teamworkRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
+      logger.info("deleting time entry", input);
       const response = await fetch(
         `${teamworkBaseUrl}/time_entries/${input.timeEntryId}.json`,
         {
@@ -437,7 +447,10 @@ export const teamworkRouter = createTRPCRouter({
           },
         },
       );
-      await response.json();
+      const responseJson = (await response.json()) as {
+        status: string;
+      };
+      logger.info("deleted time entry", responseJson);
     }),
   getTimeEntry: protectedProcedure
     .input(

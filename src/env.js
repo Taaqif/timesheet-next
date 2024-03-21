@@ -37,6 +37,9 @@ export const env = createEnv({
     TEAMWORK_API_KEY: z
       .string()
       .refine((str) => !!str, "You forgot to add a value"),
+    LOG_LEVEL: z
+      .enum(["error", "warn", "info", "verbose", "debug"])
+      .default("info"),
   },
 
   /**
@@ -62,6 +65,7 @@ export const env = createEnv({
     AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID,
     TEAMWORK_BASE_URL: process.env.TEAMWORK_BASE_URL,
     TEAMWORK_API_KEY: process.env.TEAMWORK_API_KEY,
+    LOG_LEVEL: process.env.LOG_LEVEL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

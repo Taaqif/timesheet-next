@@ -168,7 +168,6 @@ export const TeamworkProjectsSelect = React.forwardRef<
           "top-[10%] translate-y-0": breakpoint === "mobile",
         })}
         align="start"
-        hideClose
       >
         <Command loop>
           <CommandInput
