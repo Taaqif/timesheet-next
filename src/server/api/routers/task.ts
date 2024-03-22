@@ -1,4 +1,4 @@
-import { type InferSelectModel, and, between, eq, or } from "drizzle-orm";
+import { and, between, eq, or } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -7,12 +7,12 @@ import { tasks, teamworkTasks } from "~/server/db/schema";
 import dayjs from "dayjs";
 import { api } from "~/trpc/server";
 import { logger } from "~/logger/server";
-import { type TeamworkPerson, type TimeEntry } from "./teamwork";
+import { TeamworkPerson, type TimeEntry } from "./teamwork";
 import {
   type TasksSelectSchema,
   type TeamworkTasksSelectSchema,
 } from "~/lib/utils";
-import { ex } from "node_modules/@fullcalendar/core/internal-common";
+import { getCacheKey, setCacheKey } from "~/server/cache";
 
 const getTimeEntry = (
   createdTask: Omit<TasksSelectSchema, "id">,
@@ -75,10 +75,18 @@ const processTimeEntry = async ({
         timeEntryDeleted = true;
       }
 
-      const teamworkPeople = await api.teamwork.getPeopleBySearchTerm.query({
-        searchTerm: email ?? "",
-      });
-      const teamworkPerson = teamworkPeople?.[0] ?? null;
+      let teamworkPerson = await getCacheKey<TeamworkPerson>(
+        `teamworkPerson:${email}`,
+      );
+      if (!teamworkPerson) {
+        const teamworkPeople = await api.teamwork.getPeopleBySearchTerm.query({
+          searchTerm: email ?? "",
+        });
+        if (teamworkPeople?.[0]) {
+          teamworkPerson = teamworkPeople[0];
+          void setCacheKey(`teamworkPerson:${email}`, teamworkPerson);
+        }
+      }
       if (teamworkPerson?.id) {
         const timeEntry = getTimeEntry(taskToUpdate, teamworkPerson.id);
         if (
