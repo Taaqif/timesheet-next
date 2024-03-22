@@ -45,6 +45,8 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
+import { Badge } from "~/components/ui/badge";
+import { AllTaskEventsTimesheetBadge } from "./timesheet-total-hours-badge";
 
 export type CalendarProps = {
   defaultNavCollapsed?: boolean;
@@ -215,7 +217,7 @@ export function Calendar({
               {breakpoint !== "mobile" && (
                 <div className="flex gap-2">
                   <Button
-                    className="mr-2 hidden @lg/calendar-task-list:block"
+                    className="hidden @lg/calendar-task-list:block"
                     variant={
                       dayjs(selectedDate).isSame(dayjs(), "day")
                         ? "outline"
@@ -293,13 +295,15 @@ export function Calendar({
             </div>
             <Separator />
 
-            <div className="flex flex-col gap-2 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex flex-col gap-2 bg-background/95 px-7 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               {isCalendarCollapsed && isHorizontalCalendarOpen && (
                 <div className="h-[150px]">
                   <CalendarDisplay view="timelineDayWorkHours" />
                 </div>
               )}
-              <div className="flex flex-row justify-end gap-4 ">
+              <div className="flex flex-row items-center justify-end gap-4 ">
+                <AllTaskEventsTimesheetBadge />
+
                 {activeTask && (
                   <Button
                     variant="outline"
@@ -333,10 +337,12 @@ export function Calendar({
                   {activeTask ? "Start new task" : "Start task"}
                 </Button>
               </div>
-              <AllTaskEventsTimesheetProgress />
+              <div className="">
+                <AllTaskEventsTimesheetProgress />
+              </div>
             </div>
             <Separator />
-            <div className="mr-2 flex min-h-0 flex-grow">
+            <div className="flex min-h-0 flex-grow">
               <TaskListDisplay />
             </div>
           </div>

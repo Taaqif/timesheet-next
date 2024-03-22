@@ -12,6 +12,7 @@ import {
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
+import { Skeleton } from "~/components/ui/skeleton";
 
 export const AllTaskEventsTimesheetProgress = () => {
   const selectedDate = useCalendarStore((s) => s.selectedDate);
@@ -30,21 +31,23 @@ export const AllTaskEventsTimesheetProgress = () => {
     });
   }, [selectedDate, events]);
 
+  if (!calendarEventsFetched) {
+    return <Skeleton className="h-2 w-full rounded-xl" />;
+  }
+
   return (
-    <div>
-      <ProgressContainer>
-        {selectedCalendarEvents?.map((event, index) => {
-          return (
-            <TimeSheetProgressIndicator
-              key={index}
-              event={event}
-              businessHoursEndTime={businessHours?.endTime as string}
-              businessHoursStartTime={businessHours?.startTime as string}
-            />
-          );
-        })}
-      </ProgressContainer>
-    </div>
+    <ProgressContainer>
+      {selectedCalendarEvents?.map((event, index) => {
+        return (
+          <TimeSheetProgressIndicator
+            key={index}
+            event={event}
+            businessHoursEndTime={businessHours?.endTime as string}
+            businessHoursStartTime={businessHours?.startTime as string}
+          />
+        );
+      })}
+    </ProgressContainer>
   );
 };
 

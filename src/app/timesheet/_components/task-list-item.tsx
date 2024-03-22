@@ -52,6 +52,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { Skeleton } from "~/components/ui/skeleton";
+import { EmptyTaskListItem } from "./empty-task-list-item";
 
 interface TimePickerPopupProps {
   date: Date | undefined;
@@ -382,6 +383,10 @@ export const TaskListItem = ({
     }
   }, [selectedEventId]);
 
+  if (isTaskNotSaved) {
+    return <EmptyTaskListItem />;
+  }
+
   return (
     <div
       className="flex scroll-m-5 flex-col gap-2 @container/event"
@@ -411,70 +416,58 @@ export const TaskListItem = ({
           {+(task?.teamworkTask.teamworkTimeEntryId ?? 0) > 0 && (
             <Clock className="w-4" />
           )}
-          {isTaskNotSaved ? (
-            <Skeleton className="h-4 w-11 rounded-xl" />
-          ) : (
-            <FormField
-              control={form.control}
-              name="start"
-              render={({ field }) => (
-                <TimePickerPopup
-                  date={startDate}
-                  timeText={startTime}
-                  timeHeading={"Start Time"}
-                  onApplyDateChange={() => {
-                    field.onChange(startDate);
-                    if (
-                      dayjs(startDate).diff(event.start as Date, "minute") !== 0
-                    ) {
-                      submitForm();
-                    }
-                  }}
-                  setDate={(date) => {
-                    if (date) {
-                      setStartDate(date);
-                    }
-                  }}
-                />
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="start"
+            render={({ field }) => (
+              <TimePickerPopup
+                date={startDate}
+                timeText={startTime}
+                timeHeading={"Start Time"}
+                onApplyDateChange={() => {
+                  field.onChange(startDate);
+                  if (
+                    dayjs(startDate).diff(event.start as Date, "minute") !== 0
+                  ) {
+                    submitForm();
+                  }
+                }}
+                setDate={(date) => {
+                  if (date) {
+                    setStartDate(date);
+                  }
+                }}
+              />
+            )}
+          />
           <span> - </span>
-          {isTaskNotSaved ? (
-            <Skeleton className="h-4 w-11 rounded-xl" />
-          ) : (
-            <FormField
-              control={form.control}
-              name="end"
-              render={({ field }) => (
-                <TimePickerPopup
-                  disabled={isActiveTimer}
-                  date={endDate}
-                  timeText={endTime}
-                  error={form.formState.errors.end?.message}
-                  timeHeading={"End Time"}
-                  onApplyDateChange={() => {
-                    field.onChange(endDate);
-                    if (
-                      dayjs(endDate).diff(event.end as Date, "minute") !== 0
-                    ) {
-                      submitForm();
-                    }
-                  }}
-                  setDate={(date) => {
-                    if (date) {
-                      setEndDate(date);
-                    }
-                  }}
-                />
-              )}
-            />
-          )}
-          {!isTaskNotSaved && (
-            <Badge variant="outline" className="text-muted-foreground">
-              {startEndDiff}
-            </Badge>
-          )}
+          <FormField
+            control={form.control}
+            name="end"
+            render={({ field }) => (
+              <TimePickerPopup
+                disabled={isActiveTimer}
+                date={endDate}
+                timeText={endTime}
+                error={form.formState.errors.end?.message}
+                timeHeading={"End Time"}
+                onApplyDateChange={() => {
+                  field.onChange(endDate);
+                  if (dayjs(endDate).diff(event.end as Date, "minute") !== 0) {
+                    submitForm();
+                  }
+                }}
+                setDate={(date) => {
+                  if (date) {
+                    setEndDate(date);
+                  }
+                }}
+              />
+            )}
+          />
+          <Badge variant="outline" className="text-muted-foreground">
+            {startEndDiff}
+          </Badge>
         </span>
       </div>
 
@@ -484,11 +477,7 @@ export const TaskListItem = ({
             variant="ghost"
             className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
           >
-            {isTaskNotSaved ? (
-              <Skeleton className="h-4 w-full rounded-xl" />
-            ) : (
-              <div className="text-base md:text-lg">{event.title}</div>
-            )}
+            <div className="text-base md:text-lg">{event.title}</div>
             <div>
               <CaretSortIcon className="h-5 w-5" />
               <span className="sr-only">Toggle</span>
@@ -498,111 +487,99 @@ export const TaskListItem = ({
         <CollapsibleContent>
           <Form {...form}>
             <div className="grid w-full grid-cols-1 gap-4 @md/event:grid-cols-2">
-              {isTaskNotSaved ? (
-                <Skeleton className="h-5 rounded-xl" />
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="projectId"
-                  render={({ field }) => (
-                    <FormItem className=" grid gap-2">
-                      <FormLabel className="">Project</FormLabel>
-                      <FormControl>
-                        <TeamworkProjectsSelect
-                          ref={field.ref}
-                          tabIndex={0}
-                          projectId={field.value}
-                          onChange={(selectedProject) => {
-                            field.onChange(selectedProject?.id);
-                            form.setValue("taskId", "");
-                            form.setValue(
-                              "projectTitle",
-                              `${selectedProject?.company?.name}: ${selectedProject?.name}`,
-                            );
-                            setTimeout(() => {
-                              form.setFocus("taskId");
-                            }, 50);
-                            submitForm();
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-              {isTaskNotSaved ? (
-                <Skeleton className="h-5 rounded-xl" />
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="taskId"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel className="">Task</FormLabel>
-                      <FormControl>
-                        <TeamworkTaskSelect
-                          ref={field.ref}
-                          projectId={watchTeamworkProjectId}
-                          teamworkTaskId={field.value}
-                          onChange={(selectedTeamworkTask) => {
-                            field.onChange(selectedTeamworkTask?.id);
-                            form.setValue(
-                              "taskTitle",
-                              `${selectedTeamworkTask?.content} (${selectedTeamworkTask?.["todo-list-name"]})`,
-                            );
-                            setTimeout(() => {
-                              form.setFocus("description");
-                            }, 50);
-                            if (!task?.teamworkTask?.teamworkTimeEntryId) {
-                              form.setValue("billable", true);
-                              form.setValue("logTime", true);
-                            }
-                            submitForm();
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem className=" grid gap-2">
+                    <FormLabel className="">Project</FormLabel>
+                    <FormControl>
+                      <TeamworkProjectsSelect
+                        ref={field.ref}
+                        tabIndex={0}
+                        projectId={field.value}
+                        onChange={(selectedProject) => {
+                          field.onChange(selectedProject?.id);
+                          form.setValue("taskId", "");
+                          form.setValue(
+                            "projectTitle",
+                            `${selectedProject?.company?.name}: ${selectedProject?.name}`,
+                          );
+                          setTimeout(() => {
+                            form.setFocus("taskId");
+                          }, 50);
+                          submitForm();
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="taskId"
+                render={({ field }) => (
+                  <FormItem className="grid gap-2">
+                    <FormLabel className="">Task</FormLabel>
+                    <FormControl>
+                      <TeamworkTaskSelect
+                        ref={field.ref}
+                        projectId={watchTeamworkProjectId}
+                        teamworkTaskId={field.value}
+                        onChange={(selectedTeamworkTask) => {
+                          field.onChange(selectedTeamworkTask?.id);
+                          form.setValue(
+                            "taskTitle",
+                            `${selectedTeamworkTask?.content} (${selectedTeamworkTask?.["todo-list-name"]})`,
+                          );
+                          setTimeout(() => {
+                            form.setFocus("description");
+                          }, 50);
+                          if (!task?.teamworkTask?.teamworkTimeEntryId) {
+                            form.setValue("billable", true);
+                            form.setValue("logTime", true);
+                          }
+                          submitForm();
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              {isTaskNotSaved ? (
-                <Skeleton className="col-span-full h-16 rounded-xl" />
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem className="col-span-full grid gap-2">
-                      <FormLabel className="">Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Add some notes..."
-                          {...field}
-                          ref={(e) => {
-                            field.ref(e);
-                            descriptionRef.current = e;
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && e.ctrlKey) {
-                              descriptionRef.current?.blur();
-                            }
-                          }}
-                          onBlur={() => {
-                            field.onBlur();
-                            if (form.formState.dirtyFields.description) {
-                              submitForm();
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="col-span-full grid gap-2">
+                    <FormLabel className="">Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add some notes..."
+                        {...field}
+                        ref={(e) => {
+                          field.ref(e);
+                          descriptionRef.current = e;
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && e.ctrlKey) {
+                            descriptionRef.current?.blur();
+                          }
+                        }}
+                        onBlur={() => {
+                          field.onBlur();
+                          if (form.formState.dirtyFields.description) {
+                            submitForm();
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {watchTeamworkTaskId && (
                 <div className="flex gap-2">
                   <FormField

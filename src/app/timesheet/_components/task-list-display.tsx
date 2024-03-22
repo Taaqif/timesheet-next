@@ -7,6 +7,8 @@ import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
+import { Skeleton } from "~/components/ui/skeleton";
+import { EmptyTaskListItem } from "./empty-task-list-item";
 
 export type TaskListDisplayProps = {
   //
@@ -52,6 +54,23 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
       setFirstScroll(true);
     }
   }, [events]);
+  if (!calendarEventsFetched) {
+    return (
+      <div className="w-full">
+        <div className="flex flex-col gap-4 p-4 ">
+          <div className={cn("rounded-lg border p-3")}>
+            <EmptyTaskListItem />
+          </div>
+          <div className={cn("rounded-lg border p-3 opacity-50")}>
+            <EmptyTaskListItem />
+          </div>
+          <div className={cn("rounded-lg border p-3 opacity-30")}>
+            <EmptyTaskListItem />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ScrollArea className="w-full" viewportRef={scrollAreaViewportRef}>

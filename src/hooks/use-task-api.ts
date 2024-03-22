@@ -506,6 +506,6 @@ export const useCalendarEventsQuery = () => {
   return {
     events,
     businessHours,
-    isFetched: personalTasksFetched && calendarFetched && scheduleFetched,
+    isFetched: personalTasksFetched,
   };
 };

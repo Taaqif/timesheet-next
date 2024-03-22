@@ -382,7 +382,7 @@ export const taskRouter = createTRPCRouter({
           task: {
             ...existingActiveTask,
             activeTimerRunning: false,
-            end: input?.endDate ?? new Date(),
+            end: dayjs(input?.endDate).set("seconds", 0).toDate(),
           },
         });
       }
