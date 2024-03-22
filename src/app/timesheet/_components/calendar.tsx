@@ -45,7 +45,6 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
-import { Badge } from "~/components/ui/badge";
 import { AllTaskEventsTimesheetBadge } from "./timesheet-total-hours-badge";
 
 export type CalendarProps = {
@@ -301,41 +300,43 @@ export function Calendar({
                   <CalendarDisplay view="timelineDayWorkHours" />
                 </div>
               )}
-              <div className="flex flex-row items-center justify-end gap-4 ">
+              <div className="flex flex-col items-end justify-end gap-4 @md/calendar-task-list:flex-row @md/calendar-task-list:items-center ">
                 <AllTaskEventsTimesheetBadge />
 
-                {activeTask && (
+                <div className="flex flex-row items-center justify-end gap-4 ">
+                  {activeTask && (
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        stopActiveTask.mutate();
+                      }}
+                    >
+                      <TimerReset className="mr-1 h-4 w-4" />
+                      Stop task
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
                     type="button"
-                    onClick={() => {
-                      stopActiveTask.mutate();
+                    variant="secondary"
+                    onClick={async () => {
+                      const closestScheduleEvent = findClosestEvent({
+                        events,
+                        start: new Date(),
+                        type: CalendarEventType.CALENDAR_EVENT,
+                      });
+                      const newTask = await startActiveTask.mutateAsync({
+                        task: {
+                          description: closestScheduleEvent?.title,
+                        },
+                      });
+                      setSelectedEventId(newTask.createdTask?.id);
                     }}
                   >
-                    <TimerReset className="mr-1 h-4 w-4" />
-                    Stop task
+                    <Timer className="mr-1 h-4 w-4" />
+                    {activeTask ? "Start new task" : "Start task"}
                   </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={async () => {
-                    const closestScheduleEvent = findClosestEvent({
-                      events,
-                      start: new Date(),
-                      type: CalendarEventType.CALENDAR_EVENT,
-                    });
-                    const newTask = await startActiveTask.mutateAsync({
-                      task: {
-                        description: closestScheduleEvent?.title,
-                      },
-                    });
-                    setSelectedEventId(newTask.createdTask?.id);
-                  }}
-                >
-                  <Timer className="mr-1 h-4 w-4" />
-                  {activeTask ? "Start new task" : "Start task"}
-                </Button>
+                </div>
               </div>
               <div className="">
                 <AllTaskEventsTimesheetProgress />
