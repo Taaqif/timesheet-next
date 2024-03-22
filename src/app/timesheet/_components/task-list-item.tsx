@@ -384,7 +384,7 @@ export const TaskListItem = ({
   }, [selectedEventId]);
 
   if (isTaskNotSaved) {
-    return <EmptyTaskListItem />;
+    return <EmptyTaskListItem expanded />;
   }
 
   return (
@@ -472,18 +472,20 @@ export const TaskListItem = ({
       </div>
 
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="ghost"
-            className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
-          >
-            <div className="text-base md:text-lg">{event.title}</div>
-            <div>
-              <CaretSortIcon className="h-5 w-5" />
-              <span className="sr-only">Toggle</span>
-            </div>
-          </Button>
-        </CollapsibleTrigger>
+        {!!watchTeamworkProjectId && (
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="-mx-1 mb-2 flex h-auto w-full items-center justify-between space-x-4 whitespace-normal px-1 text-left"
+            >
+              <div className="text-base md:text-lg">{event.title}</div>
+              <div>
+                <CaretSortIcon className="h-5 w-5" />
+                <span className="sr-only">Toggle</span>
+              </div>
+            </Button>
+          </CollapsibleTrigger>
+        )}
         <CollapsibleContent>
           <Form {...form}>
             <div className="grid w-full grid-cols-1 gap-4 @md/event:grid-cols-2">
