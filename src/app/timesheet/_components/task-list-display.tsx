@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { type EventInput } from "@fullcalendar/core";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { type TasksWithTeamworkTaskSelectSchema, cn } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
-import { Skeleton } from "~/components/ui/skeleton";
 import { EmptyTaskListItem } from "./empty-task-list-item";
 
 export type TaskListDisplayProps = {
