@@ -424,7 +424,9 @@ export const TaskListItem = ({
                   timeHeading={"Start Time"}
                   onApplyDateChange={() => {
                     field.onChange(startDate);
-                    if (startDate !== event.start) {
+                    if (
+                      dayjs(startDate).diff(event.start as Date, "minute") !== 0
+                    ) {
                       submitForm();
                     }
                   }}
@@ -453,7 +455,9 @@ export const TaskListItem = ({
                   timeHeading={"End Time"}
                   onApplyDateChange={() => {
                     field.onChange(endDate);
-                    if (endDate !== event.end) {
+                    if (
+                      dayjs(endDate).diff(event.end as Date, "minute") !== 0
+                    ) {
                       submitForm();
                     }
                   }}
