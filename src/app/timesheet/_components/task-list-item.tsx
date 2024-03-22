@@ -5,6 +5,7 @@ import {
   type TasksWithTeamworkTaskSelectSchema,
   getHoursMinutesTextFromDates,
   CalendarEventType,
+  cn,
 } from "~/lib/utils";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
@@ -41,7 +42,7 @@ import { CaretSortIcon } from "@radix-ui/react-icons";
 import { EventTimeSheetProgress } from "./timesheet-progress";
 import { useIntersectionObserver } from "usehooks-ts";
 import {
-  Period,
+  type Period,
   TimePeriodSelect,
   TimePickerInput,
 } from "~/components/ui/time-picker-input";
@@ -52,11 +53,12 @@ import {
 } from "~/components/ui/popover";
 import { Skeleton } from "~/components/ui/skeleton";
 
-interface TimePickerDemoProps {
+interface TimePickerPopupProps {
   date: Date | undefined;
   timeText: string;
   disabled?: boolean;
   timeHeading: string;
+  error?: string;
   setDate: (date: Date | undefined) => void;
   onApplyDateChange: () => void;
 }
@@ -68,7 +70,8 @@ export function TimePickerPopup({
   onApplyDateChange,
   timeText,
   timeHeading,
-}: TimePickerDemoProps) {
+  error,
+}: TimePickerPopupProps) {
   const minuteRef = React.useRef<HTMLInputElement>(null);
   const hourRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
@@ -89,7 +92,7 @@ export function TimePickerPopup({
     >
       <PopoverTrigger asChild disabled={disabled}>
         <Button variant={"ghost"} className="h-auto px-1 py-1">
-          {timeText}
+          <span className={cn({ "text-red-500": !!error })}>{timeText}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto">
@@ -105,6 +108,7 @@ export function TimePickerPopup({
               <TimePickerInput
                 picker="12hours"
                 date={date}
+                period={period}
                 setDate={setDate}
                 ref={hourRef}
                 onRightFocus={() => minuteRef.current?.focus()}
@@ -123,6 +127,7 @@ export function TimePickerPopup({
               <TimePickerInput
                 picker="minutes"
                 date={date}
+                period={period}
                 setDate={setDate}
                 ref={minuteRef}
                 onLeftFocus={() => hourRef.current?.focus()}
@@ -173,17 +178,22 @@ export function TimePickerPopup({
   );
 }
 
-const formSchema = z.object({
-  start: z.date().optional(),
-  end: z.date().optional().nullable(),
-  description: z.string().optional(),
-  projectId: z.string().optional(),
-  projectTitle: z.string().optional(),
-  taskId: z.string().optional(),
-  taskTitle: z.string().optional(),
-  logTime: z.boolean().optional(),
-  billable: z.boolean().optional(),
-});
+const formSchema = z
+  .object({
+    start: z.date().optional(),
+    end: z.date().optional().nullable(),
+    description: z.string().optional(),
+    projectId: z.string().optional(),
+    projectTitle: z.string().optional(),
+    taskId: z.string().optional(),
+    taskTitle: z.string().optional(),
+    logTime: z.boolean().optional(),
+    billable: z.boolean().optional(),
+  })
+  .refine((data) => (data.end && data.start ? data.end > data.start : true), {
+    message: "End date cannot be earlier than start date.",
+    path: ["end"],
+  });
 
 export type TaskListItemProps = {
   event: EventInput;
@@ -439,6 +449,7 @@ export const TaskListItem = ({
                   disabled={isActiveTimer}
                   date={endDate}
                   timeText={endTime}
+                  error={form.formState.errors.end?.message}
                   timeHeading={"End Time"}
                   onApplyDateChange={() => {
                     field.onChange(endDate);

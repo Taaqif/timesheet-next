@@ -19,6 +19,7 @@ interface TimePickerInputProps
   picker: TimePickerType;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
+  period?: Period;
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
 }
@@ -39,6 +40,7 @@ const TimePickerInput = React.forwardRef<
       onChange,
       onKeyDown,
       picker,
+      period,
       onLeftFocus,
       onRightFocus,
       ...props
@@ -71,7 +73,7 @@ const TimePickerInput = React.forwardRef<
       const newValue = getArrowByType(calculatedValue, step, picker);
       if (flag) setFlag(false);
       const tempDate = new Date(date);
-      setDate(setDateByType(tempDate, newValue, picker));
+      setDate(setDateByType(tempDate, newValue, picker, period));
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -89,7 +91,7 @@ const TimePickerInput = React.forwardRef<
         if (flag) onRightFocus?.();
         setFlag((prev) => !prev);
         const tempDate = new Date(date);
-        setDate(setDateByType(tempDate, newValue, picker));
+        setDate(setDateByType(tempDate, newValue, picker, period));
       }
     };
 
