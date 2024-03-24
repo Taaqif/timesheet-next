@@ -96,10 +96,10 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
               <div
                 style={{
                   background: rgbColor
-                    ? `rgba(${rgbColor[0]},${rgbColor[1]},${rgbColor[2]}, 0.1)`
+                    ? `rgba(${rgbColor[0]},${rgbColor[1]},${rgbColor[2]}, 0.3)`
                     : "",
                 }}
-                className="pointer-events-none absolute right-[-10px] top-[-30px] h-40 w-40 rounded-full blur-2xl transition"
+                className="pointer-events-none absolute right-[-30px] top-[-30px] h-40 w-40 rounded-full blur-2xl transition"
               ></div>
             </div>
           );
