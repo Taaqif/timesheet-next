@@ -54,6 +54,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^1.0.0",
+    "color-string": "^1.9.1",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.10",
     "drizzle-orm": "^0.30.4",
@@ -86,6 +87,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@types/color-string": "^1.5.5",
     "@types/eslint": "^8.56.6",
     "@types/lodash": "^4.17.0",
     "@types/node": "^20.11.30",

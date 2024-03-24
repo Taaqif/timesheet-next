@@ -7,7 +7,7 @@ import { TaskListItem } from "./task-list-item";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
 import { EmptyTaskListItem } from "./empty-task-list-item";
-
+import colorString from "color-string";
 export type TaskListDisplayProps = {
   //
 };
@@ -73,26 +73,37 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   return (
     <ScrollArea className="w-full" viewportRef={scrollAreaViewportRef}>
       <div className="flex flex-col gap-4 p-4 ">
-        {selectedCalendarEvents.map((event, index) => (
-          <div
-            key={`event_${selectedDate.toISOString()}_${index}`}
-            className={cn("rounded-lg border p-3", {
-              "bg-neutral-300/5 shadow-lg dark:bg-neutral-700/5":
-                selectedEventId ===
-                (
-                  event?.extendedProps?.task as
-                    | TasksWithTeamworkTaskSelectSchema
-                    | undefined
-                )?.id,
-            })}
-          >
-            <TaskListItem
-              event={event}
-              businessHoursStartTime={businessHours?.startTime as string}
-              businessHoursEndTime={businessHours?.endTime as string}
-            />
-          </div>
-        ))}
+        {selectedCalendarEvents.map((event, index) => {
+          const rgbColor = colorString.get.rgb(event.backgroundColor ?? null);
+          return (
+            <div
+              key={`event_${selectedDate.toISOString()}_${index}`}
+              className={cn("relative overflow-hidden rounded-lg border p-3", {
+                "bg-neutral-300/5 shadow-lg dark:bg-neutral-700/5":
+                  selectedEventId ===
+                  (
+                    event?.extendedProps?.task as
+                      | TasksWithTeamworkTaskSelectSchema
+                      | undefined
+                  )?.id,
+              })}
+            >
+              <TaskListItem
+                event={event}
+                businessHoursStartTime={businessHours?.startTime as string}
+                businessHoursEndTime={businessHours?.endTime as string}
+              />
+              <div
+                style={{
+                  background: rgbColor
+                    ? `rgba(${rgbColor[0]},${rgbColor[1]},${rgbColor[2]}, 0.1)`
+                    : "",
+                }}
+                className="pointer-events-none absolute right-[-10px] top-[-30px] h-40 w-40 rounded-full blur-2xl transition"
+              ></div>
+            </div>
+          );
+        })}
 
         {selectedCalendarEvents?.length === 0 && calendarEventsFetched && (
           <div className="flex flex-col items-center justify-center gap-5 p-10">
