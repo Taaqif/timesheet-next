@@ -108,11 +108,6 @@ const getTimeEntry = (
 
 export const useUpdateTaskMutation = () => {
   const utils = api.useUtils();
-  const { data: teamworkPerson } = useSessionTeamworkPerson();
-  const updateTimeEntry = api.teamwork.updateTimeEntry.useMutation({});
-  const createTimeEntry = api.teamwork.createTimeEntryForTask.useMutation({});
-  const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
-  const updateTask = api.task.updatePersonalTask.useMutation({});
   const weekOf = useCalendarStore((s) => s.weekOf);
 
   const {
@@ -122,7 +117,6 @@ export const useUpdateTaskMutation = () => {
   } = api.task.updatePersonalTask.useMutation({});
   const mutateAsync = async (
     payload: RouterInputs["task"]["updatePersonalTask"] & {
-      ignoreActiveTimer?: boolean;
       preventInvalidateCache?: boolean;
     },
   ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
@@ -162,9 +156,6 @@ export const useUpdateTaskMutation = () => {
       ]);
     };
     const taskToSet = { ...payload.task } as TasksSelectSchema;
-    if (payload.ignoreActiveTimer) {
-      taskToSet.activeTimerRunning = false;
-    }
     const teamworkTaskToSet = {
       ...payload.teamworkTask,
     } as TeamworkTasksSelectSchema;
@@ -179,88 +170,17 @@ export const useUpdateTaskMutation = () => {
 
     const result = await mutateAsyncOrig(payload);
     const { existingTask, updatedTask } = result;
-    // const shouldIgnoreProcessTimeEntry =
-    //   +(payload.teamworkTask?.teamworkTimeEntryId ?? 0) < 0;
-    // let timeEntryDeleted = false;
-    // if (!updatedTask?.activeTimerRunning && !shouldIgnoreProcessTimeEntry) {
-    //   if (
-    //     !updatedTask?.logTime &&
-    //     existingTask?.teamworkTask?.teamworkTimeEntryId
-    //   ) {
-    //     await deleteTimeEntry.mutateAsync({
-    //       timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
-    //     });
-    //     timeEntryDeleted = true;
-    //     await updateTask.mutateAsync({
-    //       id: payload.id,
-    //       task: updatedTask!,
-    //       teamworkTask: {
-    //         teamworkTimeEntryId: null,
-    //       },
-    //     });
-    //   } else if (updatedTask?.logTime && teamworkPerson?.id) {
-    //     const timeEntry = getTimeEntry(updatedTask, teamworkPerson.id);
-    //     if (
-    //       existingTask.teamworkTask.teamworkTaskId !==
-    //         updatedTask?.teamworkTask.teamworkTaskId &&
-    //       updatedTask?.teamworkTask.teamworkTimeEntryId
-    //     ) {
-    //       // delete the time entry if the task has changed
-    //       await deleteTimeEntry.mutateAsync({
-    //         timeEntryId: updatedTask?.teamworkTask.teamworkTimeEntryId,
-    //       });
-    //       timeEntryDeleted = true;
-    //       await updateTask.mutateAsync({
-    //         id: payload.id,
-    //         task: updatedTask,
-    //         teamworkTask: {
-    //           teamworkTimeEntryId: null,
-    //         },
-    //       });
-    //     }
-    //
-    //     if (
-    //       updatedTask?.teamworkTask?.teamworkTimeEntryId &&
-    //       timeEntryDeleted === false
-    //     ) {
-    //       // update time entry
-    //       await updateTimeEntry.mutateAsync({
-    //         timeEntryId: updatedTask?.teamworkTask?.teamworkTimeEntryId,
-    //         timeEntry,
-    //       });
-    //     } else if (updatedTask?.teamworkTask?.teamworkTaskId) {
-    //       // create new time entry
-    //       const id = await createTimeEntry.mutateAsync({
-    //         taskId: updatedTask?.teamworkTask?.teamworkTaskId,
-    //         timeEntry,
-    //       });
-    //       if (id) {
-    //         await updateTask.mutateAsync({
-    //           id: updatedTask.id,
-    //           task: updatedTask,
-    //           teamworkTask: {
-    //             teamworkTimeEntryId: id,
-    //           },
-    //         });
-    //       }
-    //     }
-    //   } else if (
-    //     updatedTask?.logTime &&
-    //     !updatedTask?.teamworkTask.teamworkTimeEntryId
-    //   ) {
-    //     await updateTask.mutateAsync({
-    //       id: updatedTask.id,
-    //       task: { ...updatedTask, logTime: false, billable: false },
-    //     });
-    //   }
-    // }
     if (!payload.preventInvalidateCache) {
       void utils.task.getUserTasks.invalidate();
       void utils.task.getActiveTask.invalidate();
     }
     return result;
   };
-  const mutate = (payload: RouterInputs["task"]["updatePersonalTask"]) => {
+  const mutate = (
+    payload: RouterInputs["task"]["updatePersonalTask"] & {
+      preventInvalidateCache?: boolean;
+    },
+  ) => {
     mutateAsync(payload).catch(() => {
       //noop
     });

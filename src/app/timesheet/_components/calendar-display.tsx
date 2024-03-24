@@ -284,6 +284,7 @@ export const CalendarDisplay = ({
             if (task && start && end) {
               updateTask.mutate({
                 id: task.id,
+                preventInvalidateCache: true,
                 task: {
                   start,
                   end,
