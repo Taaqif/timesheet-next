@@ -13,6 +13,7 @@ import { cn } from "~/lib/utils";
 import React from "react";
 import { Button } from "./button";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { useDebounceCallback } from "usehooks-ts";
 
 interface TimePickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -95,8 +96,19 @@ const TimePickerInput = React.forwardRef<
       }
     };
 
+    const debouncedWheelEventCallback = useDebounceCallback(stepValue, 20);
+
     return (
-      <div className="flex flex-col items-center justify-center gap-1">
+      <div
+        className="flex flex-col items-center justify-center gap-1"
+        onWheel={(e) => {
+          if (e.deltaY < 0) {
+            debouncedWheelEventCallback("up");
+          } else if (e.deltaY > 0) {
+            debouncedWheelEventCallback("down");
+          }
+        }}
+      >
         <Button
           size={"icon"}
           variant={"ghost"}
@@ -383,8 +395,18 @@ const TimePeriodSelect = React.forwardRef<
     }
   };
 
+  const debouncedWheelEventCallback = useDebounceCallback(
+    handleValueChange,
+    20,
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center gap-1">
+    <div
+      className="flex flex-col items-center justify-center gap-1"
+      onWheel={() => {
+        debouncedWheelEventCallback(period === "AM" ? "PM" : "AM");
+      }}
+    >
       <Button
         size={"icon"}
         variant={"ghost"}
