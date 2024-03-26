@@ -4,6 +4,11 @@ import { Mail, MapPin } from "lucide-react";
 import React from "react";
 import { Button } from "~/components/ui/button";
 import { getInitials, getTextColor } from "~/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 export type CalendarEventItemProps = {
   calendarEvent: ICalendarViewInfo;
@@ -24,18 +29,20 @@ export const CalendarEventItem = ({
         )}
         {calendarEvent.organizer?.emailAddress && (
           <>
-            <a
-              href={`mailto:${calendarEvent.organizer?.emailAddress?.address}`}
-              className="flex items-center gap-2 truncate text-nowrap"
-            >
-              <Mail className="w-4" />
-              <span>
-                {calendarEvent.organizer?.emailAddress?.name}
-                <span className="ml-1">
-                  ({calendarEvent.organizer?.emailAddress?.address})
-                </span>
-              </span>
-            </a>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={`mailto:${calendarEvent.organizer?.emailAddress?.address}`}
+                  className="flex items-center gap-2 truncate text-nowrap"
+                >
+                  <Mail className="w-4" />
+                  <span>{calendarEvent.organizer?.emailAddress?.name}</span>
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>{calendarEvent.organizer?.emailAddress?.address}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         )}
         <Attendees attendees={calendarEvent.attendees} />
@@ -68,18 +75,25 @@ const Attendees = ({ attendees }: AttendeesProps) => {
       {attendees?.map((attendee, index) => (
         <React.Fragment key={index}>
           {attendee.emailAddress?.name && (
-            <div
-              key={index}
-              className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full "
-              style={{
-                ...getTextColor(attendee.emailAddress.name),
-              }}
-              title={attendee.emailAddress.address ?? ""}
-            >
-              <span className="font-medium ">
-                {getInitials(attendee.emailAddress.name)}
-              </span>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={`mailto:${attendee.emailAddress.address}`}
+                  className="relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full "
+                  style={{
+                    ...getTextColor(attendee.emailAddress.name),
+                  }}
+                >
+                  <span className="font-medium ">
+                    {getInitials(attendee.emailAddress.name)}
+                  </span>
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{attendee.emailAddress.name}</p>
+                <p>{attendee.emailAddress.address}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </React.Fragment>
       ))}
