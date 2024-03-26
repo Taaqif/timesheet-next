@@ -134,6 +134,7 @@ export const CalendarDisplay = ({
     <div className="h-full">
       <FullCalendar
         ref={calendarRef}
+        dayHeaders={false}
         schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
         events={events}
         views={{

@@ -131,6 +131,13 @@
   background: transparent;
   box-shadow: none !important;
 }
+.fc .fc-daygrid-body-natural .fc-daygrid-day-events {
+  margin-bottom: 0;
+  min-height: 65px;
+}
+.fc .fc-timegrid-divider {
+  padding: 0;
+}
 * {
   @apply border-border;
 }
