@@ -18,16 +18,15 @@ import {
 
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
-  const deleteTimeEntry = api.teamwork.deleteTimeEntry.useMutation({});
   const weekOf = useCalendarStore((s) => s.weekOf);
   const {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
     ...rest
-  } = api.task.deletePersonalTask.useMutation();
+  } = api.task.deleteTask.useMutation();
   const mutateAsync = async (
-    payload: RouterInputs["task"]["deletePersonalTask"],
-  ): Promise<RouterOutputs["task"]["deletePersonalTask"]> => {
+    payload: RouterInputs["task"]["deleteTask"],
+  ): Promise<RouterOutputs["task"]["deleteTask"]> => {
     await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
@@ -60,7 +59,7 @@ export const useDeleteTaskMutation = () => {
     toast("Task deleted");
     return result;
   };
-  const mutate = (payload: RouterInputs["task"]["deletePersonalTask"]) => {
+  const mutate = (payload: RouterInputs["task"]["deleteTask"]) => {
     mutateAsync(payload).catch(() => {
       //noop
     });
@@ -114,12 +113,12 @@ export const useUpdateTaskMutation = () => {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
     ...rest
-  } = api.task.updatePersonalTask.useMutation({});
+  } = api.task.updateTask.useMutation({});
   const mutateAsync = async (
-    payload: RouterInputs["task"]["updatePersonalTask"] & {
+    payload: RouterInputs["task"]["updateTask"] & {
       preventInvalidateCache?: boolean;
     },
-  ): Promise<RouterOutputs["task"]["updatePersonalTask"]> => {
+  ): Promise<RouterOutputs["task"]["updateTask"]> => {
     await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
@@ -177,7 +176,7 @@ export const useUpdateTaskMutation = () => {
     return result;
   };
   const mutate = (
-    payload: RouterInputs["task"]["updatePersonalTask"] & {
+    payload: RouterInputs["task"]["updateTask"] & {
       preventInvalidateCache?: boolean;
     },
   ) => {
@@ -197,10 +196,10 @@ export const useCreateTaskMutation = () => {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
     ...rest
-  } = api.task.createPersonalTask.useMutation({});
+  } = api.task.createTask.useMutation({});
   const mutateAsync = async (
-    payload: RouterInputs["task"]["createPersonalTask"],
-  ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
+    payload: RouterInputs["task"]["createTask"],
+  ): Promise<RouterOutputs["task"]["createTask"]> => {
     await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
@@ -240,7 +239,7 @@ export const useCreateTaskMutation = () => {
     void utils.task.getActiveTask.invalidate();
     return result;
   };
-  const mutate = (payload: RouterInputs["task"]["createPersonalTask"]) => {
+  const mutate = (payload: RouterInputs["task"]["createTask"]) => {
     mutateAsync(payload).catch(() => {
       //noop
     });
@@ -250,12 +249,9 @@ export const useCreateTaskMutation = () => {
 
 type StartTaskPayload = Partial<
   Overwrite<
-    RouterInputs["task"]["createPersonalTask"],
+    RouterInputs["task"]["createTask"],
     {
-      task: Omit<
-        RouterInputs["task"]["createPersonalTask"]["task"],
-        "start" | "end"
-      >;
+      task: Omit<RouterInputs["task"]["createTask"]["task"], "start" | "end">;
     }
   >
 >;
@@ -267,10 +263,10 @@ export const useStartTaskMutation = () => {
     mutate: mutateOrig,
     mutateAsync: mutateAsyncOrig,
     ...rest
-  } = api.task.createPersonalTask.useMutation({});
+  } = api.task.createTask.useMutation({});
   const mutateAsync = async (
     payload?: StartTaskPayload,
-  ): Promise<RouterOutputs["task"]["createPersonalTask"]> => {
+  ): Promise<RouterOutputs["task"]["createTask"]> => {
     await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
@@ -387,8 +383,7 @@ export const useCalendarEventsQuery = () => {
   const weekOf = useCalendarStore((s) => s.weekOf);
   const [events, setEvents] = useState<EventInput[]>([]);
   const [businessHours, setBusinessHours] = useState<EventInput>();
-  const { data: personalTasks, isFetched: personalTasksFetched } =
-    useGetTasksQuery();
+  const { data: tasks, isFetched: tasksFetched } = useGetTasksQuery();
   const { data: calendarEvents, isFetched: calendarFetched } =
     api.outlook.getMyCalendarEvents.useQuery(
       {
@@ -399,7 +394,7 @@ export const useCalendarEventsQuery = () => {
       },
     );
   const { data: schedule, isFetched: scheduleFetched } =
-    api.outlook.getMySchedule.useQuery(
+    api.outlook.getUserSchedule.useQuery(
       {
         weekOf: weekOf,
       },
@@ -409,11 +404,11 @@ export const useCalendarEventsQuery = () => {
     );
   useEffect(() => {
     setEventData();
-  }, [schedule, personalTasks, calendarEvents]);
+  }, [schedule, tasks, calendarEvents]);
 
   const setEventData = () => {
     const { newEvents, businessHours } = getCalendarEvents({
-      tasks: personalTasks,
+      tasks: tasks,
       schedule,
       calendarEvents,
     });
@@ -426,6 +421,6 @@ export const useCalendarEventsQuery = () => {
   return {
     events,
     businessHours,
-    isFetched: personalTasksFetched,
+    isFetched: tasksFetched,
   };
 };

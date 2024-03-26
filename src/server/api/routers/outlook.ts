@@ -10,6 +10,9 @@ import { type TimelinePipe } from "@pnp/core";
 import "@pnp/graph/users";
 import "@pnp/graph/calendars";
 import dayjs from "dayjs";
+import { users } from "~/server/db/schema";
+import { logger } from "~/logger/server";
+import { eq } from "drizzle-orm";
 export function AccessToken(accessToken: string): TimelinePipe<Queryable> {
   return (instance: Queryable) => {
     instance.on.auth.replace(async function (url: URL, init: RequestInit) {
@@ -45,15 +48,22 @@ export const outlookRouter = createTRPCRouter({
       const events = await client.me.calendarView(start, end).top(999)();
       return events;
     }),
-  getMySchedule: protectedProcedure
-    .input(z.object({ weekOf: z.string() }))
+  getUserSchedule: protectedProcedure
+    .input(z.object({ weekOf: z.string(), userId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input?.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not create task";
+      }
       const client = getGraphApiClient(ctx.session.user.access_token);
       const start = dayjs(input.weekOf).startOf("week").toDate();
       const end = dayjs(input.weekOf).endOf("week").toDate();
 
       const schedule = await client.me.calendar.getSchedule({
-        schedules: [ctx.session.user.email],
+        schedules: [user.email],
         startTime: {
           dateTime: start.toISOString(),
           timeZone: "Etc/GMT",

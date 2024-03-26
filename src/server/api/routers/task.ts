@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { tasks, teamworkTasks } from "~/server/db/schema";
+import { tasks, teamworkTasks, users } from "~/server/db/schema";
 import dayjs from "dayjs";
 import { api } from "~/trpc/server";
 import { logger } from "~/logger/server";
@@ -121,20 +121,6 @@ const processTimeEntry = async ({
 };
 
 export const taskRouter = createTRPCRouter({
-  getPersonalTask: protectedProcedure
-    .input(z.object({ taskId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      const myTasks = await ctx.db.query.tasks.findFirst({
-        with: {
-          teamworkTask: true,
-        },
-        where: and(
-          eq(tasks.userId, ctx.session?.user.id),
-          eq(tasks.id, input.taskId),
-        ),
-      });
-      return myTasks ?? [];
-    }),
   getUserTasks: protectedProcedure
     .input(z.object({ weekOf: z.string(), userId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
@@ -151,9 +137,10 @@ export const taskRouter = createTRPCRouter({
       });
       return userTasks ?? [];
     }),
-  createPersonalTask: protectedProcedure
+  createTask: protectedProcedure
     .input(
       z.object({
+        userId: z.string().optional(),
         task: createInsertSchema(tasks).omit({
           userId: true,
           id: true,
@@ -171,6 +158,13 @@ export const taskRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       logger.info("creating task", input);
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not create task";
+      }
       if (input.activeTaskTimer) {
         logger.info("stopping active task");
         //stop all timers
@@ -181,16 +175,16 @@ export const taskRouter = createTRPCRouter({
       let taskToCreate: any = {
         ...input.task,
         activeTimerRunning: input.activeTaskTimer ?? false,
-        userId: ctx.session.user.id,
+        userId: user.id,
       };
       // eslint-disable-next-line
       let teamworkTaskToCreate: any = {
         ...input.teamworkTask,
         activeTimerRunning: input.activeTaskTimer ?? false,
-        userId: ctx.session.user.id,
+        userId: user.id,
       };
       const { teamWorkTaskToUpdate, taskToUpdate } = await processTimeEntry({
-        email: ctx.session?.user.email,
+        email: user.email,
         // eslint-disable-next-line
         task: taskToCreate,
         // eslint-disable-next-line
@@ -215,10 +209,7 @@ export const taskRouter = createTRPCRouter({
           with: {
             teamworkTask: true,
           },
-          where: and(
-            eq(tasks.id, createdTaskId),
-            eq(tasks.userId, ctx.session.user.id),
-          ),
+          where: and(eq(tasks.id, createdTaskId), eq(tasks.userId, user.id)),
         });
 
         logger.info(`created task`, createdTask);
@@ -228,10 +219,11 @@ export const taskRouter = createTRPCRouter({
         throw "could not create task";
       }
     }),
-  updatePersonalTask: protectedProcedure
+  updateTask: protectedProcedure
     .input(
       z.object({
         id: z.number(),
+        userId: z.string().optional(),
         task: createInsertSchema(tasks).partial().omit({
           userId: true,
           id: true,
@@ -247,14 +239,18 @@ export const taskRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       logger.info("Updating task", input);
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not create task";
+      }
       let existingTaskToUpdate = await ctx.db.query.tasks.findFirst({
         with: {
           teamworkTask: true,
         },
-        where: and(
-          eq(tasks.id, input.id),
-          eq(tasks.userId, ctx.session.user.id),
-        ),
+        where: and(eq(tasks.id, input.id), eq(tasks.userId, user.id)),
       });
       if (existingTaskToUpdate) {
         existingTaskToUpdate = {
@@ -284,9 +280,7 @@ export const taskRouter = createTRPCRouter({
         await ctx.db
           .update(tasks)
           .set({ ...taskToUpdateFromTimeEntry })
-          .where(
-            and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
-          );
+          .where(and(eq(tasks.id, input.id), eq(tasks.userId, user.id)));
 
         //check if teamwork task exists?
         const existingTeamworkTask = await ctx.db.query.teamworkTasks.findFirst(
@@ -308,10 +302,7 @@ export const taskRouter = createTRPCRouter({
           with: {
             teamworkTask: true,
           },
-          where: and(
-            eq(tasks.id, input.id),
-            eq(tasks.userId, ctx.session.user.id),
-          ),
+          where: and(eq(tasks.id, input.id), eq(tasks.userId, user.id)),
         });
         logger.info("Updated task", {
           existingTask: existingTaskToUpdate,
@@ -325,31 +316,34 @@ export const taskRouter = createTRPCRouter({
       logger.error(`Could not find task`);
       throw "cannot find task";
     }),
-  deletePersonalTask: protectedProcedure
+  deleteTask: protectedProcedure
     .input(
       z.object({
+        userId: z.string().optional(),
         id: z.number(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not create task";
+      }
       const existingTask = await ctx.db.query.tasks.findFirst({
         with: {
           teamworkTask: true,
         },
-        where: and(
-          eq(tasks.id, input.id),
-          eq(tasks.userId, ctx.session.user.id),
-        ),
+        where: and(eq(tasks.id, input.id), eq(tasks.userId, user.id)),
       });
       if (!existingTask) {
-        logger.error(`Could not delete task`);
+        logger.error(`Could not find task`);
         throw "could not delete task";
       }
       await ctx.db
         .delete(tasks)
-        .where(
-          and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
-        );
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, user.id)));
       if (existingTask.teamworkTask?.teamworkTimeEntryId) {
         await api.teamwork.deleteTimeEntry.mutate({
           timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
@@ -362,22 +356,30 @@ export const taskRouter = createTRPCRouter({
     .input(
       z
         .object({
+          userId: z.string().optional(),
           endDate: z.date().optional(),
         })
         .optional(),
     )
     .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input?.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not create task";
+      }
       const existingActiveTask = await ctx.db.query.tasks.findFirst({
         with: {
           teamworkTask: true,
         },
         where: and(
-          eq(tasks.userId, ctx.session.user.id),
+          eq(tasks.userId, user.id),
           eq(tasks.activeTimerRunning, true),
         ),
       });
       if (existingActiveTask) {
-        await api.task.updatePersonalTask.mutate({
+        await api.task.updateTask.mutate({
           id: existingActiveTask.id,
           task: {
             ...existingActiveTask,
@@ -388,16 +390,31 @@ export const taskRouter = createTRPCRouter({
       }
       logger.info("stopped active task", { input });
     }),
-  getActiveTask: protectedProcedure.query(async ({ ctx }) => {
-    const timer = await ctx.db.query.tasks.findFirst({
-      with: {
-        teamworkTask: true,
-      },
-      where: and(
-        eq(tasks.userId, ctx.session?.user.id),
-        eq(tasks.activeTimerRunning, true),
-      ),
-    });
-    return timer ?? null;
-  }),
+  getActiveTask: protectedProcedure
+    .input(
+      z
+        .object({
+          userId: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input?.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not create task";
+      }
+      const timer = await ctx.db.query.tasks.findFirst({
+        with: {
+          teamworkTask: true,
+        },
+        where: and(
+          eq(tasks.userId, user.id),
+          eq(tasks.activeTimerRunning, true),
+        ),
+      });
+      return timer ?? null;
+    }),
 });
