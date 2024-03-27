@@ -123,8 +123,8 @@ const TimeSheetProgressIndicator = ({
       </HoverCardTrigger>
       <HoverCardPortal>
         <HoverCardContent
-          align="start"
-          side="left"
+          align="center"
+          side="bottom"
           sideOffset={10}
           className="min-w-[400px] max-w-[500px] p-4"
         >
