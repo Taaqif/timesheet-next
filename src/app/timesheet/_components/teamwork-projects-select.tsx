@@ -1,5 +1,11 @@
 import { Check, ChevronsUpDown, Link } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -65,9 +71,9 @@ export const TeamworkProjectsSelect = React.forwardRef<
     if (teamworkProjects && teamworkProjects.length > 0) {
       setTeamworkProjectOptions();
     }
-  }, [teamworkProjects]);
+  }, [teamworkProjects, teamworkPerson]);
 
-  const setTeamworkProjectOptions = () => {
+  const setTeamworkProjectOptions = useCallback(() => {
     const userTeamworkProjects =
       teamworkProjects?.filter((t) =>
         t.people?.some((p) => p == teamworkPerson?.id),
@@ -92,7 +98,7 @@ export const TeamworkProjectsSelect = React.forwardRef<
         });
       });
     setProjects(options);
-  };
+  }, [teamworkProjects, teamworkPerson]);
   const { breakpoint } = useBreakpoint();
 
   const SelectContainer: typeof Popover | typeof Dialog =

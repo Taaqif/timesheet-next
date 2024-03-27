@@ -1,5 +1,11 @@
 import { Check, ChevronsUpDown, Link } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -189,7 +195,7 @@ export const TeamworkTaskSelect = React.forwardRef<
     }
   }, [teamworkProjectTasks]);
 
-  const setTeamworkProjectTasksOptions = () => {
+  const setTeamworkProjectTasksOptions = useCallback(() => {
     // eslint-disable-next-line
     const groupedByTasklist = groupBy(
       teamworkProjectTasks,
@@ -215,7 +221,7 @@ export const TeamworkTaskSelect = React.forwardRef<
       }
     });
     setTaskGroups(options);
-  };
+  }, [teamworkProjectTasks]);
 
   const { breakpoint } = useBreakpoint();
 
