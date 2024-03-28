@@ -8,6 +8,8 @@ import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { NotepadText } from "lucide-react";
 import { EmptyTaskListItem } from "./empty-task-list-item";
 import colorString from "color-string";
+import { useTheme } from "next-themes";
+import { resolve } from "path";
 export type TaskListDisplayProps = {
   //
 };
@@ -15,6 +17,7 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
   const [firstScroll, setFirstScroll] = useState(false);
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme } = useTheme();
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const {
     events,
@@ -96,7 +99,7 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
               <div
                 style={{
                   background: rgbColor
-                    ? `rgba(${rgbColor[0]},${rgbColor[1]},${rgbColor[2]}, 0.5)`
+                    ? `rgba(${rgbColor[0]},${rgbColor[1]},${rgbColor[2]}, ${resolvedTheme === "dark" ? 0.5 : 1})`
                     : "",
                 }}
                 className="pointer-events-none absolute right-0 top-[-30px] z-[-1] h-10 w-full rounded-full blur-2xl transition dark:z-auto"

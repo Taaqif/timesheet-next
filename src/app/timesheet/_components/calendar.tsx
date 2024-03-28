@@ -7,7 +7,6 @@ import {
 } from "~/components/ui/resizable";
 import { Separator } from "~/components/ui/separator";
 import { CalendarEventType, cn, findClosestEvent } from "~/lib/utils";
-import { Nav } from "./nav";
 import {
   CalendarClock,
   CalendarDays,
@@ -46,6 +45,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
 import { AllTaskEventsTimesheetBadge } from "./timesheet-total-hours-badge";
+import { Menu } from "~/app/_components/Menu";
 
 export type CalendarProps = {
   defaultNavCollapsed?: boolean;
@@ -150,33 +150,7 @@ export function Calendar({
               "min-w-[50px] transition-all duration-300 ease-in-out",
           )}
         >
-          <div
-            className={cn(
-              "flex h-[68px] items-center justify-center",
-              isNavCollapsed ? "h-[68px]" : "px-2",
-            )}
-          >
-            {/* <AccountSwitcher isCollapsed={isCollapsed} accounts={accounts} /> */}
-          </div>
-          <Separator />
-          <Nav
-            isCollapsed={isNavCollapsed}
-            links={[
-              {
-                title: "Timesheet",
-                label: "",
-                icon: CalendarClock,
-                variant: "default",
-              },
-              {
-                title: "Schedule",
-                label: "",
-                icon: CalendarRange,
-                variant: "ghost",
-              },
-            ]}
-          />
-          <Separator />
+          <Menu isNavCollapsed={isNavCollapsed} />
         </ResizablePanel>
         <ResizableHandle
           withHandle={breakpoint !== "mobile"}
