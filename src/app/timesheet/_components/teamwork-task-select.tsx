@@ -38,6 +38,7 @@ import {
   Tooltip,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 type TeamworkTaskWithChildren = TeamworkTask & {
   children: TeamworkTaskWithChildren[];
@@ -129,6 +130,16 @@ const RenderTeamworkTaskWithChildren = ({
               </Tooltip>
               <div style={{ width: `${10 * level}px`, height: "16px" }}></div>
               {task.content}
+              {task.completed && (
+                <div className="ml-1 inline justify-end gap-2">
+                  <Badge
+                    variant="outline"
+                    className="bg-green-800 px-2 text-white"
+                  >
+                    Completed
+                  </Badge>
+                </div>
+              )}
               {!!task["estimated-minutes"] && task["estimated-minutes"] > 0 && (
                 <div className="ml-1 inline justify-end gap-2">
                   <Badge variant="outline" className="px-2">
@@ -178,6 +189,7 @@ export const TeamworkTaskSelect = React.forwardRef<
   const [open, setOpen] = useState(false);
   const [firstOpen, setFirstOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const utils = api.useUtils();
 
@@ -199,6 +211,7 @@ export const TeamworkTaskSelect = React.forwardRef<
   } = api.teamwork.getAllProjectTasks.useQuery(
     {
       projectId: projectId!,
+      includeCompleted: showCompleted,
     },
     {
       enabled: !!projectId && firstOpen,
@@ -356,6 +369,21 @@ export const TeamworkTaskSelect = React.forwardRef<
                 </Button>
               }
             />
+            <Tabs
+              value={showCompleted ? "completed" : "active"}
+              onValueChange={(value) => {
+                setShowCompleted(value === "completed");
+              }}
+            >
+              <TabsList className="w-full rounded-none border-b bg-transparent">
+                <TabsTrigger value="active" className="!shadow-none">
+                  Active Tasks
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="!shadow-none">
+                  Include Completed Tasks
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             <CommandList>
               {teamworkProjectTasksLoading ? (
                 <CommandLoading>Fetching tasks...</CommandLoading>
