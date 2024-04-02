@@ -371,6 +371,12 @@ export const TaskListItem = ({
   }, [selectedProject]);
 
   useEffect(() => {
+    if (!isOpen && (!task?.teamworkTask?.teamworkTaskId || !event.title)) {
+      setIsOpen(true);
+    }
+  }, [task, event]);
+
+  useEffect(() => {
     const activeElement = document.activeElement;
     const tag = activeElement?.tagName.toLowerCase();
     if (tag === "input" || tag === "textarea") {

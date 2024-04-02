@@ -369,21 +369,23 @@ export const TeamworkTaskSelect = React.forwardRef<
                 </Button>
               }
             />
-            <Tabs
-              value={showCompleted ? "completed" : "active"}
-              onValueChange={(value) => {
-                setShowCompleted(value === "completed");
-              }}
-            >
-              <TabsList className="w-full rounded-none border-b bg-transparent">
-                <TabsTrigger value="active" className="!shadow-none">
-                  Active Tasks
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="!shadow-none">
-                  Include Completed Tasks
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {!teamworkProjectTasksLoading && (
+              <Tabs
+                value={showCompleted ? "completed" : "active"}
+                onValueChange={(value) => {
+                  setShowCompleted(value === "completed");
+                }}
+              >
+                <TabsList className="w-full rounded-none border-b bg-transparent">
+                  <TabsTrigger value="active" className="!shadow-none">
+                    Active Tasks
+                  </TabsTrigger>
+                  <TabsTrigger value="completed" className="!shadow-none">
+                    Include Completed Tasks
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
             <CommandList>
               {teamworkProjectTasksLoading ? (
                 <CommandLoading>Fetching tasks...</CommandLoading>
