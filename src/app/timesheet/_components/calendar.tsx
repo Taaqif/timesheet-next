@@ -315,21 +315,23 @@ export function Calendar({
                     className={cn(isCalendarCollapsed ? "h-[68px]" : "px-2")}
                   ></div>
                   <Separator />
-                  <Nav
-                    isCollapsed={isCalendarCollapsed}
-                    links={[
-                      {
-                        title: "Show calendar",
-                        label: "",
-                        icon: CalendarDays,
-                        variant: "ghost",
-                        onClick: () => {
-                          calendarPanelRef?.current?.resize(40);
-                          // setIsCalendarCollapsed(false);
+                  <div className="group" data-collapsed={isCalendarCollapsed}>
+                    <Nav
+                      isCollapsed={isCalendarCollapsed}
+                      links={[
+                        {
+                          title: "Show calendar",
+                          label: "",
+                          icon: CalendarDays,
+                          variant: "ghost",
+                          onClick: () => {
+                            calendarPanelRef?.current?.resize(40);
+                            // setIsCalendarCollapsed(false);
+                          },
                         },
-                      },
-                    ]}
-                  />
+                      ]}
+                    />
+                  </div>
                 </>
               )}
 
