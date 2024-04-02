@@ -33,6 +33,11 @@ import { TeamworkTags } from "~/components/ui/teamwork-tags";
 import { Badge } from "~/components/ui/badge";
 import { useBreakpoint } from "~/hooks/use-breakpoint";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import {
+  TooltipContent,
+  Tooltip,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 type TeamworkTaskWithChildren = TeamworkTask & {
   children: TeamworkTaskWithChildren[];
@@ -74,6 +79,17 @@ const RenderTeamworkTaskWithChildren = ({
   parent: string;
   teamworkConfig?: TeamworkConfig;
 }) => {
+  const selectedTaskRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    setTimeout(() => {
+      if (selectedTaskRef) {
+        selectedTaskRef.current?.scrollIntoView({
+          block: "center",
+          inline: "center",
+        });
+      }
+    }, 10);
+  }, []);
   return (
     <>
       {tasks.map((task, index) => (
@@ -83,39 +99,50 @@ const RenderTeamworkTaskWithChildren = ({
             onSelect={() => {
               onSelect(task);
             }}
-            className="group relative"
+            className="group relative flex-col items-start"
           >
-            <div className="flex">
+            <div
+              className="flex"
+              ref={(ref) => {
+                if (selectedTaskId === task.id) {
+                  selectedTaskRef.current = ref;
+                }
+              }}
+            >
               <Check
                 className={cn(
                   "mr-2 h-4 w-4 flex-shrink-0 group-hover:opacity-0",
                   task.id === selectedTaskId ? "opacity-100" : "opacity-0",
                 )}
               />
-              <a
-                href={`${teamworkConfig?.teamworkBaseUrl}/#/tasks/${task.id}`}
-                target="_blank"
-                className="absolute top-2 flex w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
-              >
-                <Link className={"h-4 w-4"} />
-              </a>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={`${teamworkConfig?.teamworkBaseUrl}/#/tasks/${task.id}`}
+                    target="_blank"
+                    className="absolute top-2 flex w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                  >
+                    <Link className={"h-4 w-4"} />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="left">Open in teamwork</TooltipContent>
+              </Tooltip>
               <div style={{ width: `${10 * level}px`, height: "16px" }}></div>
               {task.content}
+              {!!task["estimated-minutes"] && task["estimated-minutes"] > 0 && (
+                <div className="ml-1 inline justify-end gap-2">
+                  <Badge variant="outline" className="px-2">
+                    {getHoursMinutesTextFromMinutes(
+                      task["estimated-minutes"],
+                      true,
+                    )}
+                  </Badge>
+                </div>
+              )}
             </div>
             {task.tags && (
-              <div className="ml-1 flex flex-wrap justify-end gap-2">
+              <div className="mt-1 flex w-full flex-wrap justify-end gap-2">
                 <TeamworkTags tags={task.tags} />
-              </div>
-            )}
-            {!!task["estimated-minutes"] && task["estimated-minutes"] > 0 && (
-              <div className="mt-1 flex flex-wrap justify-end gap-2">
-                <Badge variant="outline">
-                  Est{" "}
-                  {getHoursMinutesTextFromMinutes(
-                    task["estimated-minutes"],
-                    true,
-                  )}
-                </Badge>
               </div>
             )}
           </CommandItem>

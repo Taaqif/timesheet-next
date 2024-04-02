@@ -81,7 +81,7 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
           return (
             <div
               key={`event_${selectedDate.toISOString()}_${index}`}
-              className={cn("relative overflow-hidden rounded-lg border p-3", {
+              className={cn("transition relative overflow-hidden rounded-lg border p-3", {
                 "bg-neutral-300/5 shadow-lg dark:bg-neutral-700/5":
                   selectedEventId ===
                   (

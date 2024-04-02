@@ -7,7 +7,7 @@ import { tasks, teamworkTasks, users } from "~/server/db/schema";
 import dayjs from "dayjs";
 import { api } from "~/trpc/server";
 import { logger } from "~/logger/server";
-import { TeamworkPerson, type TimeEntry } from "./teamwork";
+import { type TeamworkPerson, type TimeEntry } from "./teamwork";
 import {
   type TasksSelectSchema,
   type TeamworkTasksSelectSchema,
@@ -32,6 +32,11 @@ const getTimeEntry = (
     isbillable: createdTask.billable ?? false,
     description: createdTask.description ?? "",
   };
+  // if there is a ticket attached to this task, assign it
+  const matchedId = createdTask.title?.match(/#(\d{8})/);
+  if (matchedId?.[1]) {
+    timeEntry.ticketId = +matchedId[1];
+  }
   return timeEntry;
 };
 

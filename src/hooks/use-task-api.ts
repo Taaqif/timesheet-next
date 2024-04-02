@@ -84,27 +84,6 @@ export const useSessionTeamworkPerson = () => {
   return sessionTeamworkPerson;
 };
 
-const getTimeEntry = (
-  createdTask: InferSelectModel<typeof tasks>,
-  teamworkPersonId: string,
-) => {
-  const start = dayjs(createdTask.start);
-  const end = dayjs(createdTask.end);
-  const minsTotal = end.diff(start, "minute");
-  const hours = Math.floor(minsTotal / 60);
-  const minutes = minsTotal % 60;
-  const timeEntry: TimeEntry = {
-    date: start.format("YYYYMMDD"),
-    time: start.format("HH:mm"),
-    "person-id": teamworkPersonId,
-    hours: hours,
-    minutes: minutes,
-    isbillable: createdTask.billable ?? false,
-    description: createdTask.description ?? "",
-  };
-  return timeEntry;
-};
-
 export const useUpdateTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
