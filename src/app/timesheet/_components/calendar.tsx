@@ -45,26 +45,22 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
 import { AllTaskEventsTimesheetBadge } from "./timesheet-total-hours-badge";
-import { Menu } from "~/app/_components/Menu";
+import { Nav } from "~/app/_components/Nav";
 
 export type CalendarProps = {
-  defaultNavCollapsed?: boolean;
   defaultCalendarCollapsed?: boolean;
   defaultLayout?: number[];
 };
 export function Calendar({
-  defaultNavCollapsed = false,
   defaultCalendarCollapsed = false,
-  defaultLayout = [265, 440, 655],
+  defaultLayout = [60, 40],
 }: CalendarProps) {
   const navCollapsedSize = 4;
   const selectedDate = useCalendarStore((s) => s.selectedDate);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const calendarPanelRef = useRef<ImperativePanelHandle>(null);
-  const navPanelRef = useRef<ImperativePanelHandle>(null);
 
-  const [isNavCollapsed, setIsNavCollapsed] = useState(defaultNavCollapsed);
   const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(
     defaultCalendarCollapsed,
   );
@@ -95,10 +91,6 @@ export function Calendar({
       if (!isCalendarCollapsed) {
         setIsCalendarCollapsed(true);
       }
-      if (!isNavCollapsed) {
-        setIsNavCollapsed(true);
-        navPanelRef.current?.collapse();
-      }
     }
   }, [breakpoint]);
 
@@ -119,44 +111,14 @@ export function Calendar({
       <ResizablePanelGroup
         direction="horizontal"
         onLayout={(sizes: number[]) => {
-          document.cookie = `react-resizable-panels:layout=${JSON.stringify(
+          document.cookie = `react-resizable-panels:calendar-layout=${JSON.stringify(
             sizes,
           )}`;
           window.dispatchEvent(new Event("resize"));
         }}
         className="h-full items-stretch"
       >
-        <ResizablePanel
-          ref={navPanelRef}
-          defaultSize={defaultLayout[0]}
-          collapsedSize={navCollapsedSize}
-          collapsible={true}
-          minSize={10}
-          maxSize={15}
-          onExpand={() => {
-            setIsNavCollapsed(false);
-            document.cookie = `react-resizable-panels:nav-collapsed=${JSON.stringify(
-              false,
-            )}`;
-          }}
-          onCollapse={() => {
-            setIsNavCollapsed(true);
-            document.cookie = `react-resizable-panels:nav-collapsed=${JSON.stringify(
-              true,
-            )}`;
-          }}
-          className={cn(
-            isNavCollapsed &&
-              "min-w-[50px] transition-all duration-300 ease-in-out",
-          )}
-        >
-          <Menu isNavCollapsed={isNavCollapsed} />
-        </ResizablePanel>
-        <ResizableHandle
-          withHandle={breakpoint !== "mobile"}
-          disabled={breakpoint === "mobile"}
-        />
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+        <ResizablePanel defaultSize={defaultLayout[0]} minSize={30}>
           <div className="flex h-full flex-col @container/calendar-task-list">
             <div className="flex flex-row justify-between gap-2 px-4 py-4 @lg/calendar-task-list:items-center">
               <Popover
@@ -325,7 +287,7 @@ export function Calendar({
             <ResizableHandle withHandle />
             <ResizablePanel
               ref={calendarPanelRef}
-              defaultSize={defaultLayout[2]}
+              defaultSize={defaultLayout[1]}
               maxSize={40}
               minSize={15}
               collapsedSize={navCollapsedSize}

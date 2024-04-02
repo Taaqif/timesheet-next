@@ -1,14 +1,16 @@
-import { CalendarClock, CalendarRange } from "lucide-react";
+import { CalendarClock, CalendarRange, SquareKanban } from "lucide-react";
 import React from "react";
 import { Nav } from "./Nav";
 import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
+import { usePathname } from "next/navigation";
 
 export type MenuProps = {
   isNavCollapsed: boolean;
 };
 export const Menu = ({ isNavCollapsed }: MenuProps) => {
+  const pathname = usePathname();
   return (
     <div className="group flex h-full flex-col" data-collapsed={isNavCollapsed}>
       <div
@@ -26,9 +28,17 @@ export const Menu = ({ isNavCollapsed }: MenuProps) => {
           links={[
             {
               title: "Timesheet",
+              href: "/timesheet",
               label: "",
               icon: CalendarClock,
-              variant: "default",
+              variant: pathname === "/timesheet" ? "default" : "ghost",
+            },
+            {
+              title: "Todo",
+              label: "",
+              href: "/todo",
+              icon: SquareKanban,
+              variant: pathname === "/todo" ? "default" : "ghost",
             },
             {
               title: "Schedule",

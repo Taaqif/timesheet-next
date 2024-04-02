@@ -10,6 +10,8 @@ import { getServerAuthSession } from "~/server/auth";
 import { AuthSessionProvider } from "~/components/auth-session-provider";
 import { Toaster } from "~/components/ui/sonner";
 import { TooltipProvider } from "~/components/ui/tooltip";
+import NavLayout from "./_components/NavLayout";
+import { cookies } from "next/headers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,6 +30,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerAuthSession();
+  const navCollapsed = cookies().get("react-resizable-panels:nav-collapsed");
+  const navLayout = cookies().get("react-resizable-panels:nav-layout");
+  const defaultLayout = navLayout
+    ? (JSON.parse(navLayout.value) as number[])
+    : undefined;
+  const defaultNavCollapsed = navCollapsed
+    ? (JSON.parse(navCollapsed.value) as boolean)
+    : undefined;
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${inter.variable}`}>
@@ -40,7 +50,14 @@ export default async function RootLayout({
           >
             <Theme>
               <TooltipProvider delayDuration={0}>
-                <TRPCReactProvider>{children}</TRPCReactProvider>
+                <TRPCReactProvider>
+                  <NavLayout
+                    defaultLayout={defaultLayout}
+                    defaultNavCollapsed={defaultNavCollapsed}
+                  >
+                    {children}
+                  </NavLayout>
+                </TRPCReactProvider>
               </TooltipProvider>
             </Theme>
             <Toaster />
