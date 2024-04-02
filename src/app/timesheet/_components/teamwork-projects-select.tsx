@@ -29,6 +29,11 @@ import { useSessionTeamworkPerson } from "~/hooks/use-task-api";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import { useBreakpoint } from "~/hooks/use-breakpoint";
 import { SymbolIcon } from "@radix-ui/react-icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 type TeamworkProjectGroup = {
   company: string;
@@ -245,13 +250,20 @@ export const TeamworkProjectsSelect = React.forwardRef<
                                   : "opacity-0",
                               )}
                             />
-                            <a
-                              href={`${teamworkConfig?.teamworkBaseUrl}/#/projects/${project.id}`}
-                              target="_blank"
-                              className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
-                            >
-                              <Link className={"h-4 w-4"} />
-                            </a>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <a
+                                  href={`${teamworkConfig?.teamworkBaseUrl}/#/projects/${project.id}`}
+                                  target="_blank"
+                                  className="absolute top-0 flex h-full w-4 flex-shrink-0 items-center opacity-0 transition group-hover:opacity-100"
+                                >
+                                  <Link className={"h-4 w-4"} />
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipContent side="left">
+                                Open in teamwork
+                              </TooltipContent>
+                            </Tooltip>
                             {project.name}
                           </div>
                         </CommandItem>

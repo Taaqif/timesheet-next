@@ -9,7 +9,6 @@ import { NotepadText } from "lucide-react";
 import { EmptyTaskListItem } from "./empty-task-list-item";
 import colorString from "color-string";
 import { useTheme } from "next-themes";
-import { resolve } from "path";
 export type TaskListDisplayProps = {
   //
 };
@@ -81,15 +80,18 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
           return (
             <div
               key={`event_${selectedDate.toISOString()}_${index}`}
-              className={cn("transition relative overflow-hidden rounded-lg border p-3", {
-                "bg-neutral-300/5 shadow-lg dark:bg-neutral-700/5":
-                  selectedEventId ===
-                  (
-                    event?.extendedProps?.task as
-                      | TasksWithTeamworkTaskSelectSchema
-                      | undefined
-                  )?.id,
-              })}
+              className={cn(
+                "relative overflow-hidden rounded-lg border p-3 transition",
+                {
+                  "bg-neutral-300/5 shadow-lg dark:bg-neutral-700/5":
+                    selectedEventId ===
+                    (
+                      event?.extendedProps?.task as
+                        | TasksWithTeamworkTaskSelectSchema
+                        | undefined
+                    )?.id,
+                },
+              )}
             >
               <TaskListItem
                 event={event}
