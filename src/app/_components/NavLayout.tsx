@@ -18,7 +18,7 @@ export type NavLayoutProps = {
 export default function NavLayout({
   children,
   defaultNavCollapsed = false,
-  defaultLayout = [15, 85],
+  defaultLayout = [10, 90],
 }: NavLayoutProps) {
   const navCollapsedSize = 4;
 
@@ -53,7 +53,7 @@ export default function NavLayout({
           collapsedSize={navCollapsedSize}
           collapsible={true}
           minSize={10}
-          maxSize={15}
+          maxSize={10}
           onExpand={() => {
             setIsNavCollapsed(false);
             document.cookie = `react-resizable-panels:nav-collapsed=${JSON.stringify(
