@@ -5,6 +5,10 @@ import { createInsertSchema } from "drizzle-zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, teamworkTasks, users } from "~/server/db/schema";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import { api } from "~/trpc/server";
 import { logger } from "~/logger/server";
 import { type TeamworkPerson, type TimeEntry } from "./teamwork";
@@ -18,8 +22,8 @@ const getTimeEntry = (
   createdTask: Omit<TasksSelectSchema, "id">,
   teamworkPersonId: string,
 ) => {
-  const start = dayjs(createdTask.start);
-  const end = dayjs(createdTask.end);
+  const start = dayjs.tz(createdTask.start, createdTask.timezone);
+  const end = dayjs(createdTask.end, createdTask.timezone);
   const minsTotal = end.diff(start, "minute");
   const hours = Math.floor(minsTotal / 60);
   const minutes = minsTotal % 60;
@@ -173,7 +177,10 @@ export const taskRouter = createTRPCRouter({
       if (input.activeTaskTimer) {
         logger.info("stopping active task");
         //stop all timers
-        await api.task.stopActiveTask.mutate();
+        await api.task.stopActiveTask.mutate({
+          userId: user.id,
+          timezone: input.task.timezone!,
+        });
       }
 
       // eslint-disable-next-line
@@ -359,12 +366,11 @@ export const taskRouter = createTRPCRouter({
     }),
   stopActiveTask: protectedProcedure
     .input(
-      z
-        .object({
-          userId: z.string().optional(),
-          endDate: z.date().optional(),
-        })
-        .optional(),
+      z.object({
+        userId: z.string().optional(),
+        endDate: z.date().optional(),
+        timezone: z.string(),
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.query.users.findFirst({
@@ -389,7 +395,10 @@ export const taskRouter = createTRPCRouter({
           task: {
             ...existingActiveTask,
             activeTimerRunning: false,
-            end: dayjs(input?.endDate).set("seconds", 0).toDate(),
+            end: dayjs
+              .tz(input.endDate, input.timezone)
+              .set("seconds", 0)
+              .toDate(),
           },
         });
       }

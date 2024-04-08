@@ -3,10 +3,11 @@ import { type Overwrite } from "utility-types";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 import dayjs from "dayjs";
-import { type TimeEntry } from "~/server/api/routers/teamwork";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import { type RouterInputs, type RouterOutputs } from "~/trpc/shared";
-import { type InferSelectModel } from "drizzle-orm";
-import { type tasks } from "~/server/db/schema";
 import { toast } from "sonner";
 import { type EventInput } from "@fullcalendar/core";
 import { useEffect, useState } from "react";
@@ -184,6 +185,8 @@ export const useCreateTaskMutation = () => {
 
     const previousTasks = utils.task.getUserTasks.getData();
 
+    const tz = dayjs.tz.guess();
+
     const tempTask = {
       id: Math.ceil(Math.random() * -100),
       userId: session?.user.id ?? "",
@@ -192,6 +195,7 @@ export const useCreateTaskMutation = () => {
       logTime: null,
       billable: null,
       description: null,
+      timezone: tz,
       activeTimerRunning: payload.activeTaskTimer ?? false,
       ...payload.task,
       teamworkTask: {
@@ -251,6 +255,7 @@ export const useStartTaskMutation = () => {
 
     const previousTasks = utils.task.getUserTasks.getData();
     const now = new Date();
+    const tz = dayjs.tz.guess();
 
     const tempActiveTask = {
       id: Math.ceil(Math.random() * -100),
@@ -260,6 +265,7 @@ export const useStartTaskMutation = () => {
       logTime: null,
       billable: null,
       description: null,
+      timezone: tz,
       ...payload?.task,
       start: now,
       end: null,

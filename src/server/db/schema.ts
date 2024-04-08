@@ -77,6 +77,7 @@ export const tasks = pgTable("task", {
   id: serial("id").primaryKey(),
   start: timestamp("start").notNull(),
   end: timestamp("end"),
+  timezone: text("timezone").default("").notNull(),
   title: text("text"),
   description: text("description"),
   activeTimerRunning: boolean("activeTimerRunning").default(false),
