@@ -214,6 +214,7 @@ export const useCreateTaskMutation = () => {
     if (payload.activeTaskTimer) {
       utils.task.getActiveTask.setData(undefined, () => tempTask);
     }
+    payload.task.timezone = tz;
 
     const result = await mutateAsyncOrig(payload);
     const { createdTask } = result;
@@ -293,6 +294,7 @@ export const useStartTaskMutation = () => {
     const result = await mutateAsyncOrig({
       task: {
         ...payload?.task,
+        timezone: tz,
         start: now,
         end: null,
       },
