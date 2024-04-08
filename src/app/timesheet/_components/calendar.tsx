@@ -30,6 +30,10 @@ import {
 } from "~/hooks/use-task-api";
 import { useCalendarStore } from "~/app/_store";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import {
   Popover,
   PopoverContent,
@@ -80,6 +84,7 @@ export function Calendar({
 
       if (now.isAfter(timerStart, "day")) {
         stopActiveTask.mutate({
+          timezone: dayjs.tz.guess(),
           endDate: timerStart.endOf("day").toDate(),
         });
       }
@@ -243,7 +248,9 @@ export function Calendar({
                       variant="outline"
                       type="button"
                       onClick={() => {
-                        stopActiveTask.mutate();
+                        stopActiveTask.mutate({
+                          timezone: dayjs.tz.guess(),
+                        });
                       }}
                     >
                       <TimerReset className="mr-1 h-4 w-4" />
