@@ -167,6 +167,12 @@ export const useUpdateTaskMutation = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
+type CreateTaskPayload = Overwrite<
+  RouterInputs["task"]["createTask"],
+  {
+    task: Omit<RouterInputs["task"]["createTask"]["task"], "timezone">;
+  }
+>;
 export const useCreateTaskMutation = () => {
   const utils = api.useUtils();
   const { data: session } = useSession();
@@ -178,7 +184,7 @@ export const useCreateTaskMutation = () => {
     ...rest
   } = api.task.createTask.useMutation({});
   const mutateAsync = async (
-    payload: RouterInputs["task"]["createTask"],
+    payload: CreateTaskPayload,
   ): Promise<RouterOutputs["task"]["createTask"]> => {
     await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
@@ -214,16 +220,21 @@ export const useCreateTaskMutation = () => {
     if (payload.activeTaskTimer) {
       utils.task.getActiveTask.setData(undefined, () => tempTask);
     }
-    payload.task.timezone = tz;
 
-    const result = await mutateAsyncOrig(payload);
+    const result = await mutateAsyncOrig({
+      ...payload,
+      task: {
+        ...payload.task,
+        timezone: tz,
+      },
+    });
     const { createdTask } = result;
     toast("Task created");
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     return result;
   };
-  const mutate = (payload: RouterInputs["task"]["createTask"]) => {
+  const mutate = (payload: CreateTaskPayload) => {
     mutateAsync(payload).catch(() => {
       //noop
     });
@@ -312,45 +323,50 @@ export const useStartTaskMutation = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
+type StopTaskPayload = Omit<RouterInputs["task"]["stopActiveTask"], "timezone">;
 export const useStopTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
-  const stopActiveTask = api.task.stopActiveTask.useMutation({
-    onMutate: async (input) => {
-      await utils.task.getActiveTask.cancel();
-      await utils.task.getUserTasks.cancel();
+  const {
+    mutate: mutateOrig,
+    mutateAsync: mutateAsyncOrig,
+    ...rest
+  } = api.task.stopActiveTask.useMutation({});
+  const mutateAsync = async (
+    payload?: StopTaskPayload,
+  ): Promise<RouterOutputs["task"]["stopActiveTask"]> => {
+    await utils.task.getActiveTask.cancel();
+    await utils.task.getUserTasks.cancel();
 
-      const previousTasks = utils.task.getUserTasks.getData();
+    const previousTasks = utils.task.getUserTasks.getData();
 
-      utils.task.getUserTasks.setData(
-        { weekOf: weekOf },
-        (oldQueryData) =>
-          oldQueryData?.map((q) => {
-            if (q.activeTimerRunning) {
-              q.end = input?.endDate ?? new Date();
-              q.activeTimerRunning = false;
-            }
-            return q;
-          }) ?? [],
-      );
+    utils.task.getUserTasks.setData(
+      { weekOf: weekOf },
+      (oldQueryData) =>
+        oldQueryData?.map((q) => {
+          if (q.activeTimerRunning) {
+            q.end = payload?.endDate ?? new Date();
+            q.activeTimerRunning = false;
+          }
+          return q;
+        }) ?? [],
+    );
 
-      utils.task.getActiveTask.setData(undefined, () => undefined);
+    utils.task.getActiveTask.setData(undefined, () => undefined);
 
-      return { previousTasks };
-    },
-    onError: (_err, _newTodo, context) => {
-      utils.task.getUserTasks.setData(
-        { weekOf: weekOf },
-        context?.previousTasks,
-      );
-    },
-    onSettled: () => {
-      void utils.task.getUserTasks.invalidate();
-      void utils.task.getActiveTask.invalidate();
-    },
-  });
+    const tz = dayjs.tz.guess();
 
-  return stopActiveTask;
+    const result = await mutateAsyncOrig({ ...payload, timezone: tz });
+    void utils.task.getUserTasks.invalidate();
+    void utils.task.getActiveTask.invalidate();
+    return result;
+  };
+  const mutate = (payload?: StopTaskPayload) => {
+    mutateAsync(payload).catch(() => {
+      //noop
+    });
+  };
+  return { mutate, mutateAsync, ...rest };
 };
 
 export const useGetTasksQuery = () => {
