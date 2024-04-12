@@ -1,4 +1,8 @@
-import { useCalendarStore, useLocalIdMappingStore } from "~/app/_store";
+import {
+  useCalendarStore,
+  useLocalIdMappingStore,
+  useProcessQueueStore,
+} from "~/app/_store";
 import { type Overwrite } from "utility-types";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
@@ -84,6 +88,7 @@ export const useUpdateTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
   const { waitForNewLocalIdMapping } = useLocalIdMappingStore();
+  const { waitForProcessingComplete, setProcessing } = useProcessQueueStore();
 
   const {
     mutate: mutateOrig,
@@ -94,11 +99,11 @@ export const useUpdateTaskMutation = () => {
     payload: RouterInputs["task"]["updateTask"] & {
       preventInvalidateCache?: boolean;
     },
-  ): Promise<RouterOutputs["task"]["updateTask"]> => {
+  ): Promise<RouterOutputs["task"]["updateTask"] | undefined> => {
     await utils.task.getUserTasks.cancel();
     await utils.task.getActiveTask.cancel();
 
-    const previousTasks = utils.task.getUserTasks.getData();
+    const previousTasks = utils.task.getUserTasks.getData({ weekOf: weekOf });
     let isActiveTimer: RouterOutputs["task"]["getActiveTask"] = null;
 
     const updateTaskCache = async ({
@@ -148,13 +153,23 @@ export const useUpdateTaskMutation = () => {
       const newId = await waitForNewLocalIdMapping("task", payload.id);
       id = +newId;
     }
-    const result = await mutateAsyncOrig({ ...payload, id: id });
-    const { existingTask, updatedTask } = result;
-    if (!payload.preventInvalidateCache) {
-      void utils.task.getUserTasks.invalidate();
-      void utils.task.getActiveTask.invalidate();
+    const processingKey = `task_${id}`;
+    try {
+      await waitForProcessingComplete(processingKey);
+      setProcessing(processingKey, true);
+      const result = await mutateAsyncOrig({ ...payload, id: id });
+      setProcessing(`task_${id}`, false);
+      const { existingTask, updatedTask } = result;
+      if (!payload.preventInvalidateCache) {
+        void utils.task.getUserTasks.invalidate();
+        void utils.task.getActiveTask.invalidate();
+      }
+      return result;
+    } catch (error) {
+      console.error(error);
+      setProcessing(processingKey, false);
+      utils.task.getUserTasks.setData({ weekOf: weekOf }, () => previousTasks);
     }
-    return result;
   };
   const mutate = (
     payload: RouterInputs["task"]["updateTask"] & {
@@ -374,7 +389,6 @@ export const useStopTaskMutation = () => {
     utils.task.getActiveTask.setData(undefined, () => undefined);
 
     const tz = dayjs.tz.guess();
-
     const result = await mutateAsyncOrig({ ...payload, timezone: tz });
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
