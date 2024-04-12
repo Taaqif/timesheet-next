@@ -389,10 +389,6 @@ export const TaskListItem = ({
     }
   }, [selectedEventId]);
 
-  if (isTaskNotSaved) {
-    return <EmptyTaskListItem expanded />;
-  }
-
   return (
     <div
       className="flex scroll-m-5 flex-col gap-2 @container/event"

@@ -16,6 +16,7 @@ import {
   type TeamworkTasksSelectSchema,
   getCalendarEvents,
 } from "~/lib/utils";
+import { useLocalIdMapping } from "./use-local-id-mapping";
 
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
@@ -50,11 +51,6 @@ export const useDeleteTaskMutation = () => {
 
     const result = await mutateAsyncOrig(payload);
     const { existingTask } = result;
-    // if (existingTask.teamworkTask?.teamworkTimeEntryId) {
-    //   await deleteTimeEntry.mutateAsync({
-    //     timeEntryId: existingTask.teamworkTask.teamworkTimeEntryId,
-    //   });
-    // }
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     toast("Task deleted");
@@ -88,6 +84,7 @@ export const useSessionTeamworkPerson = () => {
 export const useUpdateTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
+  const { waitForNewLocalIdMapping } = useLocalIdMapping();
 
   const {
     mutate: mutateOrig,
@@ -147,7 +144,12 @@ export const useUpdateTaskMutation = () => {
       utils.task.getActiveTask.setData(undefined, () => isActiveTimer);
     }
 
-    const result = await mutateAsyncOrig(payload);
+    let id = payload.id;
+    if (id < -1) {
+      const newId = await waitForNewLocalIdMapping("task", payload.id);
+      id = +newId;
+    }
+    const result = await mutateAsyncOrig({ ...payload, id: id });
     const { existingTask, updatedTask } = result;
     if (!payload.preventInvalidateCache) {
       void utils.task.getUserTasks.invalidate();
@@ -176,6 +178,8 @@ type CreateTaskPayload = Overwrite<
 export const useCreateTaskMutation = () => {
   const utils = api.useUtils();
   const { data: session } = useSession();
+  const { generateUniqueLocalId, addLocalIdMapping, updateLocalIdMapping } =
+    useLocalIdMapping();
   const weekOf = useCalendarStore((s) => s.weekOf);
 
   const {
@@ -193,8 +197,12 @@ export const useCreateTaskMutation = () => {
 
     const tz = dayjs.tz.guess();
 
+    const localTaskId = generateUniqueLocalId("task") * -1;
+    const localTeamworkTaskId = generateUniqueLocalId("teamworkTask") * -1;
+    addLocalIdMapping("task", localTaskId);
+
     const tempTask = {
-      id: Math.ceil(Math.random() * -100),
+      id: localTaskId,
       userId: session?.user.id ?? "",
       end: null,
       title: null,
@@ -205,7 +213,7 @@ export const useCreateTaskMutation = () => {
       activeTimerRunning: payload.activeTaskTimer ?? false,
       ...payload.task,
       teamworkTask: {
-        taskId: Math.ceil(Math.random() * -100),
+        taskId: localTeamworkTaskId,
         teamworkTaskId: null,
         teamworkProjectId: null,
         teamworkTimeEntryId: null,
@@ -229,6 +237,9 @@ export const useCreateTaskMutation = () => {
       },
     });
     const { createdTask } = result;
+    if (createdTask?.id) {
+      updateLocalIdMapping("task", localTaskId, createdTask.id);
+    }
     toast("Task created");
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
@@ -253,6 +264,8 @@ type StartTaskPayload = Partial<
 export const useStartTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
+  const { generateUniqueLocalId, addLocalIdMapping, updateLocalIdMapping } =
+    useLocalIdMapping();
   const { data: session } = useSession();
   const {
     mutate: mutateOrig,
@@ -268,9 +281,12 @@ export const useStartTaskMutation = () => {
     const previousTasks = utils.task.getUserTasks.getData();
     const now = new Date();
     const tz = dayjs.tz.guess();
+    const localTaskId = generateUniqueLocalId("task") * -1;
+    const localTeamworkTaskId = generateUniqueLocalId("teamworkTask") * -1;
+    addLocalIdMapping("task", localTaskId);
 
     const tempActiveTask = {
-      id: Math.ceil(Math.random() * -100),
+      id: localTaskId,
       activeTimerRunning: true,
       userId: session?.user.id ?? "",
       title: null,
@@ -282,7 +298,7 @@ export const useStartTaskMutation = () => {
       start: now,
       end: null,
       teamworkTask: {
-        taskId: Math.ceil(Math.random() * -100),
+        taskId: localTeamworkTaskId,
         teamworkTaskId: null,
         teamworkProjectId: null,
         teamworkTimeEntryId: null,
@@ -311,6 +327,10 @@ export const useStartTaskMutation = () => {
       },
       activeTaskTimer: true,
     });
+    const { createdTask } = result;
+    if (createdTask?.id) {
+      updateLocalIdMapping("task", localTaskId, createdTask.id);
+    }
     void utils.task.getUserTasks.invalidate();
     void utils.task.getActiveTask.invalidate();
     return result;
