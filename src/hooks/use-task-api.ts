@@ -1,4 +1,4 @@
-import { useCalendarStore } from "~/app/_store";
+import { useCalendarStore, useLocalIdMappingStore } from "~/app/_store";
 import { type Overwrite } from "utility-types";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
@@ -16,7 +16,6 @@ import {
   type TeamworkTasksSelectSchema,
   getCalendarEvents,
 } from "~/lib/utils";
-import { useLocalIdMapping } from "./use-local-id-mapping";
 
 export const useDeleteTaskMutation = () => {
   const utils = api.useUtils();
@@ -84,7 +83,7 @@ export const useSessionTeamworkPerson = () => {
 export const useUpdateTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
-  const { waitForNewLocalIdMapping } = useLocalIdMapping();
+  const { waitForNewLocalIdMapping } = useLocalIdMappingStore();
 
   const {
     mutate: mutateOrig,
@@ -179,7 +178,7 @@ export const useCreateTaskMutation = () => {
   const utils = api.useUtils();
   const { data: session } = useSession();
   const { generateUniqueLocalId, addLocalIdMapping, updateLocalIdMapping } =
-    useLocalIdMapping();
+    useLocalIdMappingStore();
   const weekOf = useCalendarStore((s) => s.weekOf);
 
   const {
@@ -265,7 +264,7 @@ export const useStartTaskMutation = () => {
   const utils = api.useUtils();
   const weekOf = useCalendarStore((s) => s.weekOf);
   const { generateUniqueLocalId, addLocalIdMapping, updateLocalIdMapping } =
-    useLocalIdMapping();
+    useLocalIdMappingStore();
   const { data: session } = useSession();
   const {
     mutate: mutateOrig,
