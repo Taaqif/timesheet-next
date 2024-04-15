@@ -234,7 +234,7 @@ export function Calendar({
                   <CalendarDisplay view="timelineDayWorkHours" />
                 </div>
               )}
-              <div className="flex flex-col items-end justify-end gap-4 @md/calendar-task-list:flex-row @md/calendar-task-list:items-center ">
+              <div className="flex flex-row items-center justify-end gap-4  ">
                 <AllTaskEventsTimesheetBadge />
 
                 <div className="flex flex-row items-center justify-end gap-4 ">
@@ -247,7 +247,7 @@ export function Calendar({
                       }}
                     >
                       <TimerReset className="mr-1 h-4 w-4" />
-                      Stop task
+                      Stop
                     </Button>
                   )}
                   <Button
@@ -268,7 +268,7 @@ export function Calendar({
                     }}
                   >
                     <Timer className="mr-1 h-4 w-4" />
-                    {activeTask ? "Start new task" : "Start task"}
+                    Start
                   </Button>
                 </div>
               </div>
