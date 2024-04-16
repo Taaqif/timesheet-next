@@ -21,6 +21,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "~/components/ui/context-menu";
+import { Skeleton } from "~/components/ui/skeleton";
 
 export type TodoCardType =
   RouterOutputs["todo"]["getBoardListsCards"]["cards"][number];
@@ -185,3 +186,13 @@ export function TodoCard({ card, isOverlay }: TodoCardProps) {
     </Card>
   );
 }
+
+export const EmptyTodoCard = () => {
+  return (
+    <Card className="">
+      <CardContent className="group relative whitespace-pre-wrap px-3 py-2 text-left">
+        <Skeleton className="my-1 h-5 w-[100px]" />
+      </CardContent>
+    </Card>
+  );
+};

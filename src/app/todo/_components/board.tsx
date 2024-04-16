@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
-import { BoardContainer, BoardList } from "./board-list";
+import { BoardContainer, BoardList, EmptyBoardList } from "./board-list";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -45,6 +45,7 @@ import {
   useUpdateTodoCardMutation,
   useUpdateTodoListMutation,
 } from "~/hooks/use-todo-api";
+import { Skeleton } from "@radix-ui/themes";
 
 const dropAnimation: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
@@ -66,7 +67,7 @@ export const Board = ({ boardId }: BoardProps) => {
   const updateList = useUpdateTodoListMutation();
   const updateCard = useUpdateTodoCardMutation();
   const addListTextAreaRef = useRef<HTMLTextAreaElement>(null);
-  const { data: boardData } = useGetTodoBoardListsCards({
+  const { data: boardData, isFetched } = useGetTodoBoardListsCards({
     boardId: boardId,
   });
 
@@ -96,7 +97,6 @@ export const Board = ({ boardId }: BoardProps) => {
   );
 
   useEffect(() => {
-    console.log("boardData changed");
     resetBoardData();
   }, [boardData]);
 
@@ -385,6 +385,11 @@ export const Board = ({ boardId }: BoardProps) => {
     },
     [activeId, items],
   );
+
+  if (!isFetched) {
+    return <EmptyBoard />;
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -490,5 +495,26 @@ export const Board = ({ boardId }: BoardProps) => {
           document.body,
         )}
     </DndContext>
+  );
+};
+
+export const EmptyBoard = () => {
+  return (
+    <div className="flex min-h-0 flex-1 p-4">
+      <div className="flex flex-row gap-4">
+        <div className="opacity-100">
+          <EmptyBoardList numberOfCards={6} />
+        </div>
+        <div className="opacity-50">
+          <EmptyBoardList numberOfCards={3} />
+        </div>
+        <div className="opacity-30">
+          <EmptyBoardList numberOfCards={5} />
+        </div>
+        <div className="opacity-10">
+          <Skeleton className="h-9 w-[250px]" />
+        </div>
+      </div>
+    </div>
   );
 };

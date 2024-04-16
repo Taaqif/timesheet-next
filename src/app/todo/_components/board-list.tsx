@@ -6,7 +6,7 @@ import {
 import { useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { type TodoCardType, TodoCard } from "./todo-card";
+import { type TodoCardType, TodoCard, EmptyTodoCard } from "./todo-card";
 import { cva } from "class-variance-authority";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -27,6 +27,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "~/components/ui/context-menu";
+import { Skeleton } from "~/components/ui/skeleton";
 
 export type BoardListType =
   RouterOutputs["todo"]["getBoardListsCards"]["lists"][number];
@@ -314,3 +315,28 @@ export function BoardContainer({ children }: { children: React.ReactNode }) {
     </ScrollArea>
   );
 }
+
+export const EmptyBoardList = ({
+  numberOfCards,
+}: {
+  numberOfCards: number;
+}) => {
+  return (
+    <div>
+      <Card className="flex max-h-full w-[250px] max-w-full flex-shrink-0 snap-center flex-col bg-primary-foreground md:w-[350px]">
+        <div>
+          <CardHeader className="space-between group relative flex flex-row items-center space-y-0 border-b-2 p-4 font-semibold ">
+            <Skeleton className="h-5 w-[200px]" />
+          </CardHeader>
+        </div>
+        <div className="flex min-h-0 flex-grow flex-col gap-2 p-2">
+          <div className="flex flex-col gap-2">
+            {[...Array(numberOfCards).keys()].map((task) => (
+              <EmptyTodoCard key={task} />
+            ))}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
