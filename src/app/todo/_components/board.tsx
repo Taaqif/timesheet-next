@@ -426,7 +426,7 @@ export const Board = ({ boardId }: BoardProps) => {
         </SortableContext>
         {isAddingList ? (
           <div>
-            <Card className="flex w-[350px] max-w-full flex-shrink-0 snap-center flex-col bg-primary-foreground">
+            <Card className="flex w-[250px] max-w-full flex-shrink-0 snap-center flex-col bg-primary-foreground md:w-[350px]">
               <CardHeader className="space-between flex border-b-2 p-4 font-semibold">
                 <Textarea
                   ref={addListTextAreaRef}
@@ -469,7 +469,11 @@ export const Board = ({ boardId }: BoardProps) => {
             </Card>
           </div>
         ) : (
-          <Button variant="outline" className="w-[350px]" onClick={addList}>
+          <Button
+            variant="outline"
+            className="w-[250px] md:w-[350px]"
+            onClick={addList}
+          >
             <Plus className="mr-1 h-4 w-4" /> Add a list
           </Button>
         )}
