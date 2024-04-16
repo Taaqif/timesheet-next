@@ -89,7 +89,6 @@ export const useCreateTodoListMutation = () => {
       },
     });
     toast("Todo list created");
-    void utils.todo.getBoardListsCards.invalidate();
     return result;
   };
   const mutate = (payload: CreateTodoListPayload) => {
@@ -153,7 +152,6 @@ export const useCreateTodoCardMutation = () => {
       },
     });
     toast("Todo card created");
-    void utils.todo.getBoardListsCards.invalidate();
     return result;
   };
   const mutate = (payload: CreateTodoCardPayload) => {
