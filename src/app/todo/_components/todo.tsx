@@ -65,7 +65,7 @@ export function Todo({ selectedBoardId }: TodoProps) {
         if (foundBoard) {
           setSelectedBoard(foundBoard);
         } else {
-          router.replace("/");
+          router.replace("/todo");
         }
       } else if (userBoards[0]) {
         router.replace(`/todo/${userBoards[0].id}`);
