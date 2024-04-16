@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Separator } from "~/components/ui/separator";
 import {
   CalendarIcon,
+  Check,
   ChevronDown,
   Kanban,
   ListTodo,
@@ -125,10 +126,19 @@ export function Todo({ selectedBoardId }: TodoProps) {
                     href={`/todo/${board.id}`}
                   >
                     {board.name}
+                    {selectedBoardId === board.id && (
+                      <Button
+                        variant="link"
+                        size="icon"
+                        className="absolute right-0 transition group-hover:opacity-0 "
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="link"
                       size="icon"
-                      className="absolute right-0 opacity-0 group-hover:opacity-100"
+                      className="absolute right-0 opacity-0 transition group-hover:opacity-100"
                       onClick={(e) => {
                         e.preventDefault();
                         setEditBoardId(board.id);
@@ -142,13 +152,20 @@ export function Todo({ selectedBoardId }: TodoProps) {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuItem
-                className="mt-2"
+                className="mt-2 cursor-pointer"
                 onSelect={() => {
+                  setBoardName("");
                   setShowBoardDialog(true);
                 }}
               >
                 Create board
-                <Plus className="ml-2 h-4 w-4" />
+                <Button
+                  variant="link"
+                  size="icon"
+                  className="absolute right-0 transition"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

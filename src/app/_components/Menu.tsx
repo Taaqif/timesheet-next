@@ -38,7 +38,7 @@ export const Menu = ({ isNavCollapsed }: MenuProps) => {
               label: "",
               href: "/todo",
               icon: SquareKanban,
-              variant: pathname === "/todo" ? "default" : "ghost",
+              variant: pathname.startsWith("/todo") ? "default" : "ghost",
             },
             {
               title: "Schedule",
