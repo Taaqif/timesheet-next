@@ -6,6 +6,7 @@ import {
   pgTableCreator,
   serial,
   boolean,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "@auth/core/adapters";
 import { relations } from "drizzle-orm";
@@ -102,4 +103,39 @@ export const teamworkTasks = pgTable("teamworkTask", {
   teamworkProjectId: text("teamworkProjectId"),
   teamworkTaskId: text("teamworkTaskId"),
   teamworkTimeEntryId: text("teamworkLogTimeId"),
+});
+
+export const todoBoard = pgTable("todoBoard", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const todoList = pgTable("todoList", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  position: doublePrecision("position").notNull(),
+  boardId: text("boardId")
+    .notNull()
+    .references(() => todoBoard.id, { onDelete: "cascade" }),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const todoCard = pgTable("todoCard", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  position: doublePrecision("position").notNull(),
+  listId: text("listId")
+    .notNull()
+    .references(() => todoList.id, { onDelete: "cascade" }),
+  boardId: text("boardId")
+    .notNull()
+    .references(() => todoBoard.id, { onDelete: "cascade" }),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 });
