@@ -80,7 +80,7 @@ export function BoardList({
   };
 
   const variants = cva(
-    "w-[350px] max-w-full bg-primary-foreground flex flex-col flex-shrink-0 snap-center",
+    "w-[350px] max-h-full max-w-full bg-primary-foreground flex flex-col flex-shrink-0 snap-center",
     {
       variants: {
         dragging: {
@@ -230,59 +230,59 @@ export function BoardList({
             </ContextMenuContent>
           </ContextMenu>
         </div>
-        <ScrollArea>
-          <CardContent className="flex flex-grow flex-col gap-2 p-2">
-            <SortableContext
-              items={tasksIds}
-              strategy={verticalListSortingStrategy}
-            >
+        <ScrollArea className="flex min-h-0 flex-grow flex-col gap-2 p-2">
+          <SortableContext
+            items={tasksIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="flex flex-col gap-2">
               {cards.map((task) => (
                 <TodoCard key={task.id} card={task} />
               ))}
-            </SortableContext>
-            <div>
-              {isAddingCard && (
-                <div className="mb-2 overflow-hidden rounded-lg border bg-card text-card-foreground shadow">
-                  <div className="group relative whitespace-pre-wrap p-6 px-3 py-2 text-left">
-                    <Textarea
-                      ref={addCardTextAreaRef}
-                      rows={1}
-                      value={addCardName}
-                      onChange={(e) => {
-                        setAddCardName(e.target.value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          cancelAdd();
-                        }
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCard();
-                        }
-                      }}
-                      className="h-auto min-h-0 resize-none rounded-none border-none bg-transparent p-0 text-base focus-visible:ring-0"
-                      placeholder="Enter a title..."
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Button variant="outline" className="" onClick={addCard}>
-                  <Plus className="mr-1 h-4 w-4" /> Add a card
-                </Button>
+              <div>
                 {isAddingCard && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className=""
-                    onClick={cancelAdd}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="mb-2 overflow-hidden rounded-lg border bg-card text-card-foreground shadow">
+                    <div className="group relative whitespace-pre-wrap p-6 px-3 py-2 text-left">
+                      <Textarea
+                        ref={addCardTextAreaRef}
+                        rows={1}
+                        value={addCardName}
+                        onChange={(e) => {
+                          setAddCardName(e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            cancelAdd();
+                          }
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addCard();
+                          }
+                        }}
+                        className="h-auto min-h-0 resize-none rounded-none border-none bg-transparent p-0 text-base focus-visible:ring-0"
+                        placeholder="Enter a title..."
+                      />
+                    </div>
+                  </div>
                 )}
+                <div className="flex gap-2">
+                  <Button variant="outline" className="" onClick={addCard}>
+                    <Plus className="mr-1 h-4 w-4" /> Add a card
+                  </Button>
+                  {isAddingCard && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className=""
+                      onClick={cancelAdd}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </CardContent>
+          </SortableContext>
         </ScrollArea>
       </Card>
     </div>
@@ -292,7 +292,7 @@ export function BoardList({
 export function BoardContainer({ children }: { children: React.ReactNode }) {
   const dndContext = useDndContext();
 
-  const variations = cva("px-2 md:px-0 flex pb-4", {
+  const variations = cva("flex-1 min-h-0 p-4 flex ", {
     variants: {
       dragging: {
         default: "snap-x snap-mandatory",
@@ -302,16 +302,14 @@ export function BoardContainer({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <ScrollArea
+    <div
       className={cn(
-        "h-full",
         variations({
           dragging: dndContext.active ? "active" : "default",
         }),
       )}
     >
       <div className="flex flex-row gap-4">{children}</div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+    </div>
   );
 }

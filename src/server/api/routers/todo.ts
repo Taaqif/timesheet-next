@@ -58,6 +58,59 @@ export const todoRouter = createTRPCRouter({
         .insert(todoBoard)
         .values({ ...input.board, userId: user.id, id });
     }),
+  updateUserBoard: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().optional(),
+        board: createInsertSchema(todoBoard).omit({
+          userId: true,
+        }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input?.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not find user";
+      }
+      const board = await ctx.db.query.todoBoard.findFirst({
+        where: eq(todoBoard.id, input?.board.id),
+      });
+      if (!board) {
+        logger.error(`Could not find board`);
+        throw "could not find board";
+      }
+      await ctx.db
+        .update(todoBoard)
+        .set({ ...input.board })
+        .where(eq(todoBoard.id, input?.board.id));
+    }),
+  deleteUserBoard: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().optional(),
+        boardId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input?.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not find user";
+      }
+      const board = await ctx.db.query.todoBoard.findFirst({
+        where: eq(todoBoard.id, input?.boardId),
+      });
+      if (!board) {
+        logger.error(`Could not find board`);
+        throw "could not find board";
+      }
+      await ctx.db.delete(todoBoard).where(eq(todoBoard.id, input?.boardId));
+    }),
   createList: protectedProcedure
     .input(
       z.object({
