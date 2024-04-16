@@ -1,4 +1,4 @@
-import { Calendar, LogIn, LogOut } from "lucide-react";
+import { Calendar, KanbanSquare, LogIn, LogOut } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
@@ -21,6 +21,12 @@ export default async function Home() {
               <Link href="/timesheet">
                 <Calendar className="mr-2 h-4 w-4" />
                 Timesheet
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/todo">
+                <KanbanSquare className="mr-2 h-4 w-4" />
+                Todo
               </Link>
             </Button>
           </>

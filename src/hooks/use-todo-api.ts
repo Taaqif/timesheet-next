@@ -7,6 +7,150 @@ import { v4 as uuidv4 } from "uuid";
 
 const INDEX_STEP = 65536;
 
+export const useGetTodoBoardsQuery = () => {
+  return api.todo.getUserBoards.useQuery();
+};
+type CreateTodoBoardPayload = Overwrite<
+  RouterInputs["todo"]["createUserBoard"],
+  {
+    board: Omit<RouterInputs["todo"]["createUserBoard"]["board"], "id">;
+  }
+>;
+export const useCreateTodoBoardMutation = () => {
+  const utils = api.useUtils();
+  const { data: session } = useSession();
+
+  const {
+    mutate: mutateOrig,
+    mutateAsync: mutateAsyncOrig,
+    ...rest
+  } = api.todo.createUserBoard.useMutation({});
+  const mutateAsync = async (
+    payload: CreateTodoBoardPayload,
+  ): Promise<RouterOutputs["todo"]["createUserBoard"]> => {
+    await utils.todo.getUserBoards.cancel();
+
+    const id = uuidv4();
+    utils.todo.getUserBoards.setData(undefined, (oldQueryData) => [
+      ...(oldQueryData ?? []),
+      {
+        ...payload.board,
+        userId: session!.user.id,
+        id,
+      },
+    ]);
+    const result = await mutateAsyncOrig({
+      board: {
+        ...payload.board,
+        id,
+      },
+    });
+    toast("Todo board created");
+    return result;
+  };
+  const mutate = (payload: CreateTodoBoardPayload) => {
+    mutateAsync(payload).catch(() => {
+      //noop
+    });
+  };
+  return { mutate, mutateAsync, ...rest };
+};
+
+type UpdateTodoBoardPayload = {
+  board: RouterInputs["todo"]["updateUserBoard"]["board"];
+};
+export const useUpdateTodoBoardMutation = () => {
+  const utils = api.useUtils();
+  const { data: session } = useSession();
+
+  const {
+    mutate: mutateOrig,
+    mutateAsync: mutateAsyncOrig,
+    ...rest
+  } = api.todo.updateUserBoard.useMutation({});
+  const mutateAsync = async (
+    payload: UpdateTodoBoardPayload,
+  ): Promise<RouterOutputs["todo"]["updateList"]> => {
+    await utils.todo.getUserBoards.cancel();
+    await utils.todo.getUserBoard.cancel();
+
+    utils.todo.getUserBoard.setData(
+      { boardId: payload.board.id },
+      (oldQueryData) => ({
+        ...(oldQueryData ?? {}),
+        ...payload.board,
+        userId: session!.user.id,
+      }),
+    );
+    utils.todo.getUserBoards.setData(undefined, (oldQueryData) =>
+      oldQueryData?.map((f) => {
+        if (f.id === payload.board.id) {
+          return {
+            ...f,
+            ...payload.board,
+            userId: session!.user.id,
+          };
+        }
+        return f;
+      }),
+    );
+
+    const result = await mutateAsyncOrig({
+      board: {
+        ...payload.board,
+      },
+    });
+    toast("Todo board updated");
+    return result;
+  };
+  const mutate = (payload: UpdateTodoBoardPayload) => {
+    mutateAsync(payload).catch(() => {
+      //noop
+    });
+  };
+  return { mutate, mutateAsync, ...rest };
+};
+
+type DeleteTodoBoardPayload = {
+  boardId: RouterInputs["todo"]["deleteUserBoard"]["boardId"];
+};
+export const useDeleteTodoBoardMutation = () => {
+  const utils = api.useUtils();
+  const { data: session } = useSession();
+
+  const {
+    mutate: mutateOrig,
+    mutateAsync: mutateAsyncOrig,
+    ...rest
+  } = api.todo.deleteUserBoard.useMutation({});
+  const mutateAsync = async (
+    payload: DeleteTodoBoardPayload,
+  ): Promise<RouterOutputs["todo"]["updateList"]> => {
+    await utils.todo.getUserBoards.cancel();
+    await utils.todo.getUserBoard.cancel();
+
+    utils.todo.getUserBoard.setData(
+      { boardId: payload.boardId },
+      (oldQueryData) => undefined,
+    );
+    utils.todo.getUserBoards.setData(undefined, (oldQueryData) =>
+      oldQueryData?.filter((f) => f.id !== payload.boardId),
+    );
+
+    const result = await mutateAsyncOrig({
+      boardId: payload.boardId,
+    });
+    toast("");
+    return result;
+  };
+  const mutate = (payload: DeleteTodoBoardPayload) => {
+    mutateAsync(payload).catch(() => {
+      //noop
+    });
+  };
+  return { mutate, mutateAsync, ...rest };
+};
+
 export const useGetTodoBoardListsCards = ({ boardId }: { boardId: string }) => {
   return api.todo.getBoardListsCards.useQuery(
     {

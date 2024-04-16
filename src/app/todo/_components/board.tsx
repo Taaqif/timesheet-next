@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { api } from "~/trpc/react";
 import { BoardContainer, BoardList, EmptyBoardList } from "./board-list";
 import { createPortal } from "react-dom";
 import {
@@ -32,7 +31,6 @@ import {
   arrayMove,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { coordinateGetter } from "./multipleContainersKeyboardCoordinates";
 import { TodoCard } from "./todo-card";
 import { Plus, X } from "lucide-react";
 import { Card, CardHeader } from "~/components/ui/card";

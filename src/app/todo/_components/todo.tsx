@@ -35,15 +35,21 @@ import { Input } from "~/components/ui/input";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "~/components/ui/skeleton";
+import {
+  useCreateTodoBoardMutation,
+  useDeleteTodoBoardMutation,
+  useGetTodoBoardsQuery,
+  useUpdateTodoBoardMutation,
+} from "~/hooks/use-todo-api";
 
 export type TodoProps = {
   selectedBoardId?: string;
 };
 export function Todo({ selectedBoardId }: TodoProps) {
-  const { data: userBoards, isLoading } = api.todo.getUserBoards.useQuery();
-  const createBoard = api.todo.createUserBoard.useMutation();
-  const updateBoard = api.todo.updateUserBoard.useMutation();
-  const deleteBoard = api.todo.deleteUserBoard.useMutation();
+  const { data: userBoards, isLoading } = useGetTodoBoardsQuery();
+  const createBoard = useCreateTodoBoardMutation();
+  const updateBoard = useUpdateTodoBoardMutation();
+  const deleteBoard = useDeleteTodoBoardMutation();
   const [showBoardDialog, setShowBoardDialog] = useState(false);
   const [editBoardId, setEditBoardId] = useState("");
   const [boardName, setBoardName] = useState("");
@@ -72,6 +78,7 @@ export function Todo({ selectedBoardId }: TodoProps) {
       deleteBoard.mutate({
         boardId: editBoardId,
       });
+      setShowBoardDialog(false);
     }
   };
 

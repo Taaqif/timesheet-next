@@ -44,6 +44,7 @@ export const todoRouter = createTRPCRouter({
         await api.todo.createUserBoard.mutate({
           board: {
             name: "My Board",
+            id: uuidv4(),
           },
           userId: user.id,
         });
@@ -59,7 +60,6 @@ export const todoRouter = createTRPCRouter({
         userId: z.string().optional(),
         board: createInsertSchema(todoBoard).omit({
           userId: true,
-          id: true,
         }),
       }),
     )
@@ -71,10 +71,9 @@ export const todoRouter = createTRPCRouter({
         logger.error(`Could not find user`);
         throw "could not find user";
       }
-      const id = uuidv4();
       await ctx.db
         .insert(todoBoard)
-        .values({ ...input.board, userId: user.id, id });
+        .values({ ...input.board, userId: user.id });
     }),
   updateUserBoard: protectedProcedure
     .input(
