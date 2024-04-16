@@ -5,11 +5,12 @@ import { Todo } from "./_components/todo";
 export const metadata = {
   title: "Todo",
 };
+export type TodoPageProps = { params: { board: string } };
 
-export default async function page() {
+export default async function page({ params }: TodoPageProps) {
   return (
     <div className="h-svh">
-      <Todo />
+      <Todo selectedBoardId={params.board} />
     </div>
   );
 }

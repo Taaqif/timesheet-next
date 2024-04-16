@@ -8,6 +8,24 @@ import { v4 as uuidv4 } from "uuid";
 import { api } from "~/trpc/server";
 
 export const todoRouter = createTRPCRouter({
+  getUserBoard: protectedProcedure
+    .input(z.object({ userId: z.string().optional(), boardId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, input?.userId ?? ctx.session.user.id),
+      });
+      if (!user) {
+        logger.error(`Could not find user`);
+        throw "could not find user";
+      }
+      const board = await ctx.db.query.todoBoard.findFirst({
+        where: and(
+          eq(todoBoard.userId, user.id),
+          eq(todoBoard.id, input.boardId),
+        ),
+      });
+      return board;
+    }),
   getUserBoards: protectedProcedure
     .input(z.object({ userId: z.string().optional() }).optional())
     .query(async ({ ctx, input }) => {

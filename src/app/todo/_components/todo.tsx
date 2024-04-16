@@ -31,11 +31,13 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export type TodoProps = {
-  //
+  selectedBoardId?: string;
 };
-export function Todo({}: TodoProps) {
+export function Todo({ selectedBoardId }: TodoProps) {
   const { data: userBoards } = api.todo.getUserBoards.useQuery();
   const createBoard = api.todo.createUserBoard.useMutation();
   const updateBoard = api.todo.updateUserBoard.useMutation();
@@ -46,11 +48,22 @@ export function Todo({}: TodoProps) {
   const [selectedBoard, setSelectedBoard] =
     useState<NonNullable<typeof userBoards>[number]>();
 
+  const router = useRouter();
+
   useEffect(() => {
-    if (userBoards && !selectedBoard) {
-      setSelectedBoard(userBoards[0]);
+    if (userBoards) {
+      if (selectedBoardId) {
+        const foundBoard = userBoards.find((f) => f.id === selectedBoardId);
+        if (foundBoard) {
+          setSelectedBoard(foundBoard);
+        } else {
+          router.replace("/");
+        }
+      } else if (userBoards[0]) {
+        router.replace(`/todo/${userBoards[0].id}`);
+      }
     }
-  }, [userBoards]);
+  }, [userBoards, selectedBoardId]);
 
   const deleteExistingBoard = () => {
     if (!!editBoardId) {
@@ -98,29 +111,28 @@ export function Todo({}: TodoProps) {
             <DropdownMenuLabel>Select a board</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {userBoards?.map((board) => (
-              <DropdownMenuItem
-                key={board.id}
-                className={cn("group", {
-                  "font-bold": selectedBoard?.id === board.id,
-                })}
-                onSelect={() => {
-                  setSelectedBoard(board);
-                }}
-              >
-                {board.name}
-                <Button
-                  variant="link"
-                  size="icon"
-                  className="absolute right-0 opacity-0 group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setEditBoardId(board.id);
-                    setBoardName(board.name);
-                    setShowBoardDialog(true);
-                  }}
+              <DropdownMenuItem key={board.id} asChild>
+                <Link
+                  className={cn("group", {
+                    "font-bold": selectedBoard?.id === board.id,
+                  })}
+                  href={`/todo/${board.id}`}
                 >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                  {board.name}
+                  <Button
+                    variant="link"
+                    size="icon"
+                    className="absolute right-0 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setEditBoardId(board.id);
+                      setBoardName(board.name);
+                      setShowBoardDialog(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </Link>
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
