@@ -136,7 +136,6 @@ export const todoRouter = createTRPCRouter({
         list: createInsertSchema(todoList).omit({
           boardId: true,
           userId: true,
-          id: true,
         }),
       }),
     )
@@ -155,10 +154,9 @@ export const todoRouter = createTRPCRouter({
         logger.error(`Could not find board`);
         throw "could not find board";
       }
-      const id = uuidv4();
       await ctx.db
         .insert(todoList)
-        .values({ ...input.list, userId: user.id, id, boardId: board.id });
+        .values({ ...input.list, userId: user.id, boardId: board.id });
     }),
   updateList: protectedProcedure
     .input(
@@ -327,7 +325,6 @@ export const todoRouter = createTRPCRouter({
           boardId: true,
           listId: true,
           userId: true,
-          id: true,
         }),
       }),
     )
@@ -356,11 +353,9 @@ export const todoRouter = createTRPCRouter({
         logger.error(`Could not find list`);
         throw "could not find list";
       }
-      const id = uuidv4();
       await ctx.db.insert(todoCard).values({
         ...input.card,
         userId: user.id,
-        id,
         boardId: board.id,
         listId: list.id,
       });

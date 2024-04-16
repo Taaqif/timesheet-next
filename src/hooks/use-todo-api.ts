@@ -207,7 +207,7 @@ export const useCreateTodoListMutation = () => {
     const lists = previous?.lists;
     const lastList = lists?.[lists.length - 1];
     const position = (lastList?.position ?? 0) + INDEX_STEP;
-
+    const id = uuidv4();
     utils.todo.getBoardListsCards.setData(
       { boardId: payload.boardId },
       (oldQueryData) => ({
@@ -215,7 +215,7 @@ export const useCreateTodoListMutation = () => {
           ...(oldQueryData?.lists ?? []),
           {
             ...payload.list,
-            id: uuidv4(),
+            id: id,
             userId: session!.user.id,
             boardId: payload.boardId,
             position: position,
@@ -229,6 +229,7 @@ export const useCreateTodoListMutation = () => {
       ...payload,
       list: {
         ...payload.list,
+        id: id,
         position: position,
       },
     });
@@ -245,7 +246,7 @@ export const useCreateTodoListMutation = () => {
 type CreateTodoCardPayload = Overwrite<
   Omit<RouterInputs["todo"]["createCard"], "userId">,
   {
-    card: Omit<RouterInputs["todo"]["createCard"]["card"], "position">;
+    card: Omit<RouterInputs["todo"]["createCard"]["card"], "position" | "id">;
   }
 >;
 export const useCreateTodoCardMutation = () => {
@@ -270,6 +271,7 @@ export const useCreateTodoCardMutation = () => {
     const lastCard = listCards?.[listCards.length - 1];
     const position = (lastCard?.position ?? 0) + INDEX_STEP;
 
+    const id = uuidv4();
     utils.todo.getBoardListsCards.setData(
       { boardId: payload.boardId },
       (oldQueryData) => ({
@@ -277,7 +279,7 @@ export const useCreateTodoCardMutation = () => {
           ...(oldQueryData?.cards ?? []),
           {
             ...payload.card,
-            id: uuidv4(),
+            id: id,
             userId: session!.user.id,
             boardId: payload.boardId,
             listId: payload.listId,
@@ -292,6 +294,7 @@ export const useCreateTodoCardMutation = () => {
       ...payload,
       card: {
         ...payload.card,
+        id: id,
         position: position,
       },
     });
