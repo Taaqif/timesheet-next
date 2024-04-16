@@ -254,7 +254,7 @@ export const todoRouter = createTRPCRouter({
       });
       if (!card) {
         logger.error(`Could not find card`);
-        throw "could not find cardt";
+        throw "could not find card";
       }
       await ctx.db
         .update(todoCard)
@@ -289,7 +289,7 @@ export const todoRouter = createTRPCRouter({
       });
       if (!card) {
         logger.error(`Could not find card`);
-        throw "could not find cardt";
+        throw "could not find card";
       }
       await ctx.db
         .delete(todoCard)

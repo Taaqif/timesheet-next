@@ -302,7 +302,7 @@ export function BoardContainer({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div
+    <ScrollArea
       className={cn(
         variations({
           dragging: dndContext.active ? "active" : "default",
@@ -310,6 +310,7 @@ export function BoardContainer({ children }: { children: React.ReactNode }) {
       )}
     >
       <div className="flex flex-row gap-4">{children}</div>
-    </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }
