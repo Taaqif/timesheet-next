@@ -248,6 +248,9 @@ export function BoardList({
                         ref={addCardTextAreaRef}
                         rows={1}
                         value={addCardName}
+                        onBlur={(e) => {
+                          addCard();
+                        }}
                         onChange={(e) => {
                           setAddCardName(e.target.value);
                         }}

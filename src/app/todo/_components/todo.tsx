@@ -107,7 +107,7 @@ export function Todo({ selectedBoardId }: TodoProps) {
     <div className="flex h-full flex-col ">
       <div className="flex flex-row items-center gap-2 px-4 py-4 ">
         <SquareKanban className="h-5 w-5" />
-        {isLoading ? (
+        {isLoading || !selectedBoardId ? (
           <div className="flex h-9 items-center justify-center">
             <Skeleton className="h-4 w-[250px]" />
           </div>
@@ -216,7 +216,7 @@ export function Todo({ selectedBoardId }: TodoProps) {
         </Dialog>
       </div>
       <Separator />
-      {isLoading ? (
+      {isLoading || !selectedBoardId ? (
         <EmptyBoard />
       ) : (
         <>{!!selectedBoard?.id && <Board boardId={selectedBoard.id} />}</>
