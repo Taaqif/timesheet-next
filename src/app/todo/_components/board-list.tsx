@@ -231,12 +231,12 @@ export function BoardList({
             </ContextMenuContent>
           </ContextMenu>
         </div>
-        <ScrollArea className="flex min-h-0 flex-grow flex-col gap-2 p-2">
+        <ScrollArea className="flex min-h-0 flex-grow flex-col">
           <SortableContext
             items={tasksIds}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 p-2">
               {cards.map((task) => (
                 <TodoCard key={task.id} card={task} />
               ))}
@@ -304,6 +304,7 @@ export function BoardContainer({ children }: { children: React.ReactNode }) {
 
   return (
     <ScrollArea
+      viewportClassName="flex [&>div]:!flex [&>div]:flex-1 [&>div]:min-h-0 "
       className={cn(
         variations({
           dragging: dndContext.active ? "active" : "default",
