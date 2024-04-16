@@ -82,10 +82,15 @@ export const Board = ({ boardId }: BoardProps) => {
 
   const sensors = useSensors(
     useSensor(MouseSensor),
-    useSensor(TouchSensor),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 0.01,
+        distance: 0.1,
       },
     }),
   );

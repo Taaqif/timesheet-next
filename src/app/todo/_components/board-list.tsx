@@ -80,7 +80,7 @@ export function BoardList({
   };
 
   const variants = cva(
-    "w-[350px] max-h-full max-w-full bg-primary-foreground flex flex-col flex-shrink-0 snap-center",
+    "w-[250px] md:w-[350px] max-h-full max-w-full bg-primary-foreground flex flex-col flex-shrink-0 snap-center",
     {
       variants: {
         dragging: {
