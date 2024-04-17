@@ -9,7 +9,6 @@ import type { MouseEvent, TouchEvent } from "react";
 const handler = ({ nativeEvent: event }: MouseEvent | TouchEvent) => {
   let cur = event.target as HTMLElement;
 
-  console.log(cur);
   while (cur) {
     if (cur.dataset.noDnd) {
       return false;

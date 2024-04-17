@@ -245,6 +245,7 @@ export const taskRouter = createTRPCRouter({
           .omit({
             id: true,
             taskId: true,
+            teamworkTimeEntryId: true,
           })
           .optional(),
       }),
