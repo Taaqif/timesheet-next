@@ -145,6 +145,7 @@ export function TodoCard({ card, isOverlay }: TodoCardProps) {
             {isEdit ? (
               <>
                 <Textarea
+                  data-no-dnd
                   ref={textAreaRef}
                   rows={1}
                   value={editContent}
@@ -155,6 +156,7 @@ export function TodoCard({ card, isOverlay }: TodoCardProps) {
                   placeholder="Enter a title..."
                 />
                 <Button
+                  data-no-dnd
                   size="icon"
                   ref={saveIconRef}
                   onClick={save}

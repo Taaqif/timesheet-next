@@ -191,6 +191,7 @@ export function BoardList({
                 {isEdit ? (
                   <>
                     <Textarea
+                      data-no-dnd
                       ref={addListTextAreaRef}
                       value={editContent}
                       rows={1}
@@ -201,6 +202,7 @@ export function BoardList({
                       placeholder="Enter a title..."
                     />
                     <Button
+                      data-no-dnd
                       size="icon"
                       onClick={save}
                       variant="ghost"
@@ -245,6 +247,7 @@ export function BoardList({
                   <div className="mb-2 overflow-hidden rounded-lg border bg-card text-card-foreground shadow">
                     <div className="group relative whitespace-pre-wrap p-6 px-3 py-2 text-left">
                       <Textarea
+                        data-no-dnd
                         ref={addCardTextAreaRef}
                         rows={1}
                         value={addCardName}
@@ -275,6 +278,7 @@ export function BoardList({
                   </Button>
                   {isAddingCard && (
                     <Button
+                      data-no-dnd
                       variant="ghost"
                       size="icon"
                       className=""

@@ -7,8 +7,6 @@ import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
-  MouseSensor,
-  TouchSensor,
   useSensors,
   useSensor,
   type DragEndEvent,
@@ -24,7 +22,6 @@ import {
   MeasuringStrategy,
   type DropAnimation,
   defaultDropAnimationSideEffects,
-  PointerSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -44,6 +41,7 @@ import {
   useUpdateTodoListMutation,
 } from "~/hooks/use-todo-api";
 import { Skeleton } from "@radix-ui/themes";
+import { MouseSensor, PointerSensor, TouchSensor } from "./dndSensor";
 
 const dropAnimation: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
@@ -83,7 +81,7 @@ export const Board = ({ boardId }: BoardProps) => {
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+        delay: 500,
         tolerance: 5,
       },
     }),
