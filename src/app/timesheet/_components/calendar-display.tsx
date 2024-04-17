@@ -411,7 +411,7 @@ const RenderContent = ({
           }}
         >
           <div className="fc-event-time flex items-center gap-1">
-            {+(task?.teamworkTask.teamworkTimeEntryId ?? 0) > 0 && (
+            {+(task?.teamworkTask?.teamworkTimeEntryId ?? 0) > 0 && (
               <Clock className="inline h-auto w-3" />
             )}
             {!!arg.timeText && time}

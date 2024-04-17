@@ -415,7 +415,7 @@ export const TaskListItem = ({
       <div className="text-sm text-muted-foreground">
         <span className="mr-1 flex items-center gap-1">
           {isActiveTimer && <History className="w-4" />}
-          {+(task?.teamworkTask.teamworkTimeEntryId ?? 0) > 0 && (
+          {+(task?.teamworkTask?.teamworkTimeEntryId ?? 0) > 0 && (
             <Clock className="w-4" />
           )}
           <FormField
