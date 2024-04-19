@@ -13,10 +13,12 @@ import { api } from "~/trpc/server";
 import { logger } from "~/logger/server";
 import { type TeamworkPerson, type TimeEntry } from "./teamwork";
 import {
+  TasksWithTeamworkTaskSelectSchema,
   type TasksSelectSchema,
   type TeamworkTasksSelectSchema,
 } from "~/lib/utils";
 import { getCacheKey, setCacheKey } from "~/server/cache";
+import { ex } from "node_modules/@fullcalendar/core/internal-common";
 
 const getTimeEntry = (
   createdTask: Omit<TasksSelectSchema, "id">,
@@ -46,10 +48,12 @@ const getTimeEntry = (
 
 const processTimeEntry = async ({
   task,
+  existingTask,
   teamworkTask,
   email,
 }: {
   task: Omit<TasksSelectSchema, "id">;
+  existingTask?: Omit<TasksWithTeamworkTaskSelectSchema, "id">;
   teamworkTask?: Omit<TeamworkTasksSelectSchema, "id">;
   email: string;
 }) => {
@@ -72,15 +76,18 @@ const processTimeEntry = async ({
       teamWorkTaskToUpdate.teamworkTaskId = null;
     } else if (taskToUpdate?.logTime) {
       if (
-        teamWorkTaskToUpdate.teamworkTaskId !==
-          teamWorkTaskToUpdate.teamworkTaskId &&
-        teamWorkTaskToUpdate.teamworkTimeEntryId
+        (teamWorkTaskToUpdate.teamworkProjectId !==
+          existingTask?.teamworkTask?.teamworkProjectId ||
+          teamWorkTaskToUpdate.teamworkTaskId !==
+            existingTask?.teamworkTask?.teamworkTaskId) &&
+        existingTask?.teamworkTask.teamworkTimeEntryId
       ) {
-        // delete the time entry if the task has changed
+        // delete the time entry if the task/project has changed
         await api.teamwork.deleteTimeEntry.mutate({
-          timeEntryId: teamWorkTaskToUpdate.teamworkTimeEntryId,
+          timeEntryId: existingTask?.teamworkTask.teamworkTimeEntryId,
         });
         teamWorkTaskToUpdate.teamworkTaskId = null;
+        teamWorkTaskToUpdate.teamworkTimeEntryId = null;
         timeEntryDeleted = true;
       }
 
@@ -259,13 +266,14 @@ export const taskRouter = createTRPCRouter({
         logger.error(`Could not find user`);
         throw "could not create task";
       }
-      let existingTaskToUpdate = await ctx.db.query.tasks.findFirst({
+      const existingTask = await ctx.db.query.tasks.findFirst({
         with: {
           teamworkTask: true,
         },
         where: and(eq(tasks.id, input.id), eq(tasks.userId, user.id)),
       });
-      if (existingTaskToUpdate) {
+      if (existingTask) {
+        let existingTaskToUpdate = { ...existingTask };
         existingTaskToUpdate = {
           ...existingTaskToUpdate,
           ...input.task,
@@ -278,6 +286,7 @@ export const taskRouter = createTRPCRouter({
         const { teamWorkTaskToUpdate, taskToUpdate } = await processTimeEntry({
           email: ctx.session?.user.email,
           teamworkTask: existingTaskToUpdate.teamworkTask,
+          existingTask,
           task: existingTaskToUpdate,
         });
         existingTaskToUpdate = {
