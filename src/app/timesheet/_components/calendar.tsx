@@ -46,6 +46,7 @@ import {
 import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
 import { AllTaskEventsTimesheetBadge } from "./timesheet-total-hours-badge";
 import { Nav } from "~/app/_components/Nav";
+import { ScrollArea } from "~/components/ui/scroll-area";
 
 export type CalendarProps = {
   defaultCalendarCollapsed?: boolean;
@@ -60,6 +61,8 @@ export function Calendar({
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const setSelectedEventId = useCalendarStore((s) => s.setSelectedEventId);
   const calendarPanelRef = useRef<ImperativePanelHandle>(null);
+  const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+  const [firstScroll, setFirstScroll] = useState(false);
 
   const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(
     defaultCalendarCollapsed,
@@ -94,6 +97,17 @@ export function Calendar({
     }
   }, [breakpoint]);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (firstScroll === false && events.length > 0) {
+      scrollToBottom();
+      setFirstScroll(true);
+    }
+  }, [events]);
+
   const goToToday = () => {
     setSelectedDate(new Date());
   };
@@ -104,6 +118,16 @@ export function Calendar({
 
   const goPrevious = () => {
     setSelectedDate(dayjs(selectedDate).add(-1, "day").toDate());
+  };
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      if (scrollAreaViewportRef.current) {
+        scrollAreaViewportRef.current.scroll({
+          top: scrollAreaViewportRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
   };
 
   return (
@@ -227,58 +251,69 @@ export function Calendar({
               )}
             </div>
             <Separator />
-
-            <div className="flex flex-col gap-2 bg-background/95 px-7 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              {isCalendarCollapsed && isHorizontalCalendarOpen && (
-                <div className="h-[150px]">
-                  <CalendarDisplay view="timelineDayWorkHours" />
-                </div>
-              )}
-              <div className="flex flex-row items-center justify-end gap-4  ">
-                <AllTaskEventsTimesheetBadge />
-
-                <div className="flex flex-row items-center justify-end gap-4 ">
-                  {activeTask && (
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={() => {
-                        stopActiveTask.mutate({});
-                      }}
-                    >
-                      <TimerReset className="mr-1 h-4 w-4" />
-                      Stop
-                    </Button>
+            <div className="relative flex min-h-0 flex-grow flex-col">
+              <div className="absolute left-0 right-0 top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="flex flex-col gap-2 px-7 py-4 ">
+                  {isCalendarCollapsed && isHorizontalCalendarOpen && (
+                    <div className="h-[120px]">
+                      <CalendarDisplay view="timelineDayWorkHours" />
+                    </div>
                   )}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={async () => {
-                      const closestScheduleEvent = findClosestEvent({
-                        events,
-                        start: new Date(),
-                        type: CalendarEventType.CALENDAR_EVENT,
-                      });
-                      const newTask = await startActiveTask.mutateAsync({
-                        task: {
-                          description: closestScheduleEvent?.title,
-                        },
-                      });
-                      setSelectedEventId(newTask.createdTask?.id);
-                    }}
-                  >
-                    <Timer className="mr-1 h-4 w-4" />
-                    Start
-                  </Button>
+                  <div className="flex flex-row items-center justify-end gap-4  ">
+                    <AllTaskEventsTimesheetBadge />
+
+                    <div className="flex flex-row items-center justify-end gap-4 ">
+                      {activeTask && (
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            stopActiveTask.mutate({});
+                          }}
+                        >
+                          <TimerReset className="mr-1 h-4 w-4" />
+                          Stop
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={async () => {
+                          const closestScheduleEvent = findClosestEvent({
+                            events,
+                            start: new Date(),
+                            type: CalendarEventType.CALENDAR_EVENT,
+                          });
+                          const newTask = await startActiveTask.mutateAsync({
+                            task: {
+                              description: closestScheduleEvent?.title,
+                            },
+                          });
+                          setSelectedEventId(newTask.createdTask?.id);
+                        }}
+                      >
+                        <Timer className="mr-1 h-4 w-4" />
+                        Start
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="">
+                    <AllTaskEventsTimesheetProgress />
+                  </div>
                 </div>
+                <Separator />
               </div>
-              <div className="">
-                <AllTaskEventsTimesheetProgress />
+              <div className="flex min-h-0 flex-grow">
+                <ScrollArea
+                  className="w-full"
+                  viewportRef={scrollAreaViewportRef}
+                  viewportClassName={cn("pt-20", {
+                    "pt-52": isCalendarCollapsed && isHorizontalCalendarOpen,
+                  })}
+                >
+                  <TaskListDisplay />
+                </ScrollArea>
               </div>
-            </div>
-            <Separator />
-            <div className="flex min-h-0 flex-grow">
-              <TaskListDisplay />
             </div>
           </div>
         </ResizablePanel>
