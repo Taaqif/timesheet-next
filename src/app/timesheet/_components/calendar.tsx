@@ -8,15 +8,13 @@ import {
 import { Separator } from "~/components/ui/separator";
 import { CalendarEventType, cn, findClosestEvent } from "~/lib/utils";
 import {
-  CalendarClock,
   CalendarDays,
   CalendarIcon,
-  CalendarRange,
   ChevronLeft,
   ChevronRight,
+  CirclePause,
+  CirclePlay,
   MoreVertical,
-  Timer,
-  TimerReset,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { CalendarDisplay } from "./calendar-display";
@@ -271,7 +269,7 @@ export function Calendar({
                             stopActiveTask.mutate({});
                           }}
                         >
-                          <TimerReset className="mr-1 h-4 w-4" />
+                          <CirclePause className="mr-1 h-4 w-4" />
                           Stop
                         </Button>
                       )}
@@ -292,7 +290,7 @@ export function Calendar({
                           setSelectedEventId(newTask.createdTask?.id);
                         }}
                       >
-                        <Timer className="mr-1 h-4 w-4" />
+                        <CirclePlay className="mr-1 h-4 w-4" />
                         Start
                       </Button>
                     </div>
