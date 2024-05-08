@@ -179,7 +179,12 @@ export function Calendar({
                     </div>
                     <div>
                       <div className="rounded-md border bg-popover px-4 py-2">
-                        <TimesheetTotalHoursWeek date={selectedDate} />
+                        <TimesheetTotalHoursWeek
+                          onDateClick={(date) => {
+                            setSelectedDate(date);
+                          }}
+                          date={selectedDate}
+                        />
                       </div>
                     </div>
                   </div>
