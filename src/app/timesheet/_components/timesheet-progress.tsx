@@ -30,7 +30,7 @@ export const AllTaskEventsTimesheetProgress = ({ date }: { date: Date }) => {
   }, [date, events]);
 
   if (!calendarEventsFetched) {
-    return <Skeleton className="h-2 w-full rounded-xl" />;
+    return <Skeleton className="h-2.5 w-full rounded-xl" />;
   }
 
   return (
