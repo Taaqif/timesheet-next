@@ -25,7 +25,6 @@ import { useDebounceCallback } from "usehooks-ts";
 import {
   useCalendarEventsQuery,
   useCreateTaskMutation,
-  useGetTasksQuery,
   useUpdateTaskMutation,
 } from "~/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
@@ -42,9 +41,11 @@ import { api } from "~/trpc/react";
 
 export type CalendarDisplayProps = {
   view?: "timelineDayWorkHours" | "timeGridDay";
+  date: Date;
 };
 export const CalendarDisplay = ({
   view = "timeGridDay",
+  date,
 }: CalendarDisplayProps) => {
   const calendarRef = useRef<FullCalendar>(null);
   const closestEventsAtStart = useRef<EventApi[]>([]);
@@ -59,7 +60,9 @@ export const CalendarDisplay = ({
 
   const [isDragging, setIsDragging] = useState(false);
 
-  const { events, businessHours } = useCalendarEventsQuery();
+  const { events, businessHours } = useCalendarEventsQuery({
+    date,
+  });
 
   const debouncedEventResizeCallback = useDebounceCallback(
     (start: Date, end: Date) => {

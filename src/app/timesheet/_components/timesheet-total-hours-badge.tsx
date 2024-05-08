@@ -1,7 +1,5 @@
-import { type EventInput } from "@fullcalendar/core";
 import dayjs from "dayjs";
-import React, { useEffect, useMemo, useState } from "react";
-import { useCalendarStore } from "~/app/_store";
+import React, { useMemo } from "react";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -11,9 +9,16 @@ import {
 } from "~/lib/utils";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export const AllTaskEventsTimesheetBadge = () => {
-  const selectedDate = useCalendarStore((s) => s.selectedDate);
-  const { events, isFetched: calendarEventsFetched } = useCalendarEventsQuery();
+export const AllTaskEventsTimesheetBadge = ({
+  date,
+  compact,
+}: {
+  date: Date;
+  compact?: boolean;
+}) => {
+  const { events, isFetched: calendarEventsFetched } = useCalendarEventsQuery({
+    date,
+  });
 
   const diff = useMemo(() => {
     return events.reduce((curr, event) => {
@@ -22,16 +27,13 @@ export const AllTaskEventsTimesheetBadge = () => {
         | undefined;
       const isActiveTimer =
         event.extendedProps?.type === CalendarEventType.TIMER;
-      const shouldShow = dayjs(event.start as Date).isSame(
-        dayjs(selectedDate),
-        "day",
-      );
+      const shouldShow = dayjs(event.start as Date).isSame(dayjs(date), "day");
       if (shouldShow && task && !isActiveTimer) {
         curr += dayjs(event.end as Date).diff(event.start as Date, "seconds");
       }
       return curr;
     }, 0);
-  }, [selectedDate, events]);
+  }, [date, events]);
 
   if (!calendarEventsFetched) {
     return <Skeleton className="h-4 w-11 rounded-xl" />;
@@ -40,8 +42,10 @@ export const AllTaskEventsTimesheetBadge = () => {
   return (
     <Badge variant="outline" className="text-muted-foreground">
       {diff > 0
-        ? `Logged ${getHoursMinutesSecondsTextFromSeconds(diff, true)}`
-        : "No time logged"}
+        ? `${!compact ? "Logged" : ""} ${getHoursMinutesSecondsTextFromSeconds(diff, true)}`
+        : compact
+          ? "-"
+          : "No time logged"}
     </Badge>
   );
 };

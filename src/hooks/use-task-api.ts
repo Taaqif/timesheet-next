@@ -402,8 +402,8 @@ export const useStopTaskMutation = () => {
   return { mutate, mutateAsync, ...rest };
 };
 
-export const useGetTasksQuery = () => {
-  const weekOf = useCalendarStore((s) => s.weekOf);
+export const useGetTasksQuery = ({ date }: { date: Date }) => {
+  const weekOf = dayjs(date).startOf("week").format("YYYY-MM-DD");
   const tasks = api.task.getUserTasks.useQuery(
     {
       weekOf: weekOf,
@@ -415,11 +415,13 @@ export const useGetTasksQuery = () => {
   return tasks;
 };
 
-export const useCalendarEventsQuery = () => {
-  const weekOf = useCalendarStore((s) => s.weekOf);
+export const useCalendarEventsQuery = ({ date }: { date: Date }) => {
+  const weekOf = dayjs(date).startOf("week").format("YYYY-MM-DD");
   const [events, setEvents] = useState<EventInput[]>([]);
   const [businessHours, setBusinessHours] = useState<EventInput>();
-  const { data: tasks, isFetched: tasksFetched } = useGetTasksQuery();
+  const { data: tasks, isFetched: tasksFetched } = useGetTasksQuery({
+    date,
+  });
   const { data: calendarEvents, isFetched: calendarFetched } =
     api.outlook.getMyCalendarEvents.useQuery(
       {

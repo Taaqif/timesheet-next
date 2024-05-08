@@ -14,22 +14,21 @@ import {
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export const AllTaskEventsTimesheetProgress = () => {
-  const selectedDate = useCalendarStore((s) => s.selectedDate);
+export const AllTaskEventsTimesheetProgress = ({ date }: { date: Date }) => {
   const {
     events,
     businessHours,
     isFetched: calendarEventsFetched,
-  } = useCalendarEventsQuery();
+  } = useCalendarEventsQuery({
+    date,
+  });
 
   const selectedCalendarEvents = useMemo(() => {
     return events.filter((event) => {
       const hasTask = !!event?.extendedProps?.task;
-      return (
-        hasTask && dayjs(event.start as Date).isSame(dayjs(selectedDate), "day")
-      );
+      return hasTask && dayjs(event.start as Date).isSame(dayjs(date), "day");
     });
-  }, [selectedDate, events]);
+  }, [date, events]);
 
   if (!calendarEventsFetched) {
     return <Skeleton className="h-2 w-full rounded-xl" />;

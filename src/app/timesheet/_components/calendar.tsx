@@ -45,6 +45,7 @@ import { AllTaskEventsTimesheetProgress } from "./timesheet-progress";
 import { AllTaskEventsTimesheetBadge } from "./timesheet-total-hours-badge";
 import { Nav } from "~/app/_components/Nav";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { TimesheetTotalHoursWeek } from "./timesheet-total-hours-week";
 
 export type CalendarProps = {
   defaultCalendarCollapsed?: boolean;
@@ -69,7 +70,9 @@ export function Calendar({
   const [isHorizontalCalendarOpen, setIsHorizontalCalendarOpen] =
     useState(false);
   const { data: activeTask } = api.task.getActiveTask.useQuery();
-  const { events } = useCalendarEventsQuery();
+  const { events } = useCalendarEventsQuery({
+    date: selectedDate,
+  });
   const stopActiveTask = useStopTaskMutation();
   const startActiveTask = useStartTaskMutation();
   const { breakpoint } = useBreakpoint();
@@ -156,19 +159,30 @@ export function Calendar({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-auto p-0"
+                  className="w-auto border-none bg-transparent p-0"
                   side="bottom"
                   align="start"
                 >
-                  <CalendarPicker
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      setSelectedDate(date!);
-                      setIsDatePickerOpen(false);
-                    }}
-                    initialFocus
-                  />
+                  <div className="flex gap-2">
+                    <div>
+                      <div className="rounded-md border bg-popover p-0">
+                        <CalendarPicker
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => {
+                            setSelectedDate(date!);
+                            // setIsDatePickerOpen(false);
+                          }}
+                          initialFocus
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="rounded-md border bg-popover px-4 py-2">
+                        <TimesheetTotalHoursWeek date={selectedDate} />
+                      </div>
+                    </div>
+                  </div>
                 </PopoverContent>
               </Popover>
               {breakpoint !== "mobile" && (
@@ -254,11 +268,14 @@ export function Calendar({
                 <div className="flex flex-col gap-2 px-7 py-4 ">
                   {isCalendarCollapsed && isHorizontalCalendarOpen && (
                     <div className="h-[120px]">
-                      <CalendarDisplay view="timelineDayWorkHours" />
+                      <CalendarDisplay
+                        date={selectedDate}
+                        view="timelineDayWorkHours"
+                      />
                     </div>
                   )}
                   <div className="flex flex-row items-center justify-end gap-4  ">
-                    <AllTaskEventsTimesheetBadge />
+                    <AllTaskEventsTimesheetBadge date={selectedDate} />
 
                     <div className="flex flex-row items-center justify-end gap-4 ">
                       {activeTask && (
@@ -296,7 +313,7 @@ export function Calendar({
                     </div>
                   </div>
                   <div className="">
-                    <AllTaskEventsTimesheetProgress />
+                    <AllTaskEventsTimesheetProgress date={selectedDate} />
                   </div>
                 </div>
                 <Separator />
@@ -309,7 +326,7 @@ export function Calendar({
                     "pt-52": isCalendarCollapsed && isHorizontalCalendarOpen,
                   })}
                 >
-                  <TaskListDisplay />
+                  <TaskListDisplay date={selectedDate} />
                 </ScrollArea>
               </div>
             </div>
@@ -370,7 +387,7 @@ export function Calendar({
 
               {!isCalendarCollapsed && (
                 <div className="h-full">
-                  <CalendarDisplay />
+                  <CalendarDisplay date={selectedDate} />
                 </div>
               )}
             </ResizablePanel>

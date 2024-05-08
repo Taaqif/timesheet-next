@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { type TasksWithTeamworkTaskSelectSchema, cn } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
@@ -9,27 +8,23 @@ import { NotepadText } from "lucide-react";
 import { EmptyTaskListItem } from "./empty-task-list-item";
 import colorString from "color-string";
 import { useTheme } from "next-themes";
-export type TaskListDisplayProps = {
-  //
-};
-export const TaskListDisplay = ({}: TaskListDisplayProps) => {
-  const selectedDate = useCalendarStore((s) => s.selectedDate);
+export const TaskListDisplay = ({ date }: { date: Date }) => {
   const { resolvedTheme } = useTheme();
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const {
     events,
     businessHours,
     isFetched: calendarEventsFetched,
-  } = useCalendarEventsQuery();
+  } = useCalendarEventsQuery({
+    date,
+  });
 
   const selectedCalendarEvents = useMemo(() => {
     return events.filter((event) => {
       const hasTask = !!event?.extendedProps?.task;
-      return (
-        dayjs(event.start as Date).isSame(dayjs(selectedDate), "day") && hasTask
-      );
+      return dayjs(event.start as Date).isSame(dayjs(date), "day") && hasTask;
     });
-  }, [selectedDate, events]);
+  }, [date, events]);
 
   if (!calendarEventsFetched) {
     return (
@@ -55,7 +50,7 @@ export const TaskListDisplay = ({}: TaskListDisplayProps) => {
         const rgbColor = colorString.get.rgb(event.backgroundColor ?? null);
         return (
           <div
-            key={`event_${selectedDate.toISOString()}_${index}`}
+            key={`event_${date.toISOString()}_${index}`}
             className={cn(
               "relative overflow-hidden rounded-lg border p-3 transition",
               {

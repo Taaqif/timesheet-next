@@ -324,3 +324,10 @@ export function arrayMove<T>(array: T[], from: number, to: number): T[] {
 
   return newArray;
 }
+
+export function getWeekDates(date: Date) {
+    const startDate = dayjs(date).startOf('week');
+    return Array.from({ length: 7 }, (_, i) =>
+        startDate.add(i, 'day').toDate()
+    );
+}
