@@ -1,7 +1,6 @@
 import { type EventInput } from "@fullcalendar/core";
 import dayjs from "dayjs";
 import React, { useEffect, useMemo, useState } from "react";
-import { useCalendarStore } from "~/app/_store";
 import { ProgressContainer, ProgressIndicator } from "~/components/ui/progress";
 import { useCalendarEventsQuery } from "~/hooks/use-task-api";
 import { CalendarEventType, calculateEventProgressBarInfo } from "~/lib/utils";

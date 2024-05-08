@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -14,7 +14,6 @@ import {
 } from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
-  getCalendarEvents,
   getHoursMinutesTextFromDates,
   CalendarEventType,
   findClosestEvent,
@@ -151,7 +150,7 @@ export const CalendarDisplay = ({
         businessHours={businessHours}
         slotDuration="00:15"
         snapDuration="00:01"
-        datesSet={({ view }) => {
+        datesSet={({}) => {
           const date = calendarRef?.current?.getApi().getDate();
           if (date) {
             setSelectedDate(date);
@@ -342,7 +341,6 @@ const RenderContent = ({
     | undefined;
   const [time, setTime] = useState<string>("");
   const [endDate, setEndDate] = useState<Date>(arg.event.end ?? new Date());
-  const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const [open, setOpen] = useState(false);
   const eventRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
