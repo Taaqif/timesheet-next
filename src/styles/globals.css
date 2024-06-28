@@ -95,7 +95,10 @@
   font-size: 15px;
   text-wrap: nowrap;
   border: none;
-  /* background: var(--color-background); */
+}
+.fc .fc-timegrid-now-indicator-arrow span {
+  background: var(--color-page-background);
+  padding: 0 3px;
 }
 .fc .fc-timegrid-now-indicator-line {
   border-width: 2px 0px 0px;
@@ -138,6 +141,35 @@
 .fc .fc-timegrid-divider {
   padding: 0;
 }
+
+/* .fc-timegrid-body .fc-timegrid-cols .fc-day .fc-timegrid-col-frame:after { */
+/*   content: ""; */
+/*   position: absolute; */
+/*   top: var(--hoverline-top); */
+/*   width: 100%; */
+/*   height: 2px; */
+/*   background: var(--fc-now-indicator-color); */
+/*   z-index: 99; */
+/*   pointer-events: none; */
+/* } */
+.fc-timegrid-body
+  .fc-timegrid-cols
+  .fc-timegrid-axis
+  .fc-timegrid-col-frame:after {
+  content: var(--hoverline-time);
+  position: absolute;
+  top: calc(var(--hoverline-top) - 9px);
+  color: var(--fc-now-indicator-color);
+  z-index: 99;
+  pointer-events: none;
+  font-size: 15px;
+  text-align: right;
+  background: var(--color-page-background);
+  border-radius: 4px;
+  right: 0;
+  padding: 0 3px;
+}
+
 * {
   @apply border-border;
 }

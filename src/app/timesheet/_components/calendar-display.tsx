@@ -5,7 +5,9 @@ import interactionPlugin from "@fullcalendar/interaction";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
+import duration from "dayjs/plugin/duration";
 dayjs.extend(isBetween);
+dayjs.extend(duration);
 import {
   type EventContentArg,
   type EventApi,
@@ -20,7 +22,7 @@ import {
 } from "~/lib/utils";
 import { useCalendarStore } from "~/app/_store";
 import { TaskListItem } from "./task-list-item";
-import { useDebounceCallback } from "usehooks-ts";
+import { useDebounceCallback, useEventListener } from "usehooks-ts";
 import {
   useCalendarEventsQuery,
   useCreateTaskMutation,
@@ -28,7 +30,11 @@ import {
 } from "~/hooks/use-task-api";
 import { type ICalendarViewInfo } from "@pnp/graph/calendars";
 import { CalendarEventItem } from "./calendar-event-item";
-import { createDuration } from "@fullcalendar/core/internal";
+import {
+  addDurations,
+  createDuration,
+  wholeDivideDurations,
+} from "@fullcalendar/core/internal";
 import {
   HoverCard,
   HoverCardTrigger,
@@ -37,6 +43,7 @@ import {
 } from "~/components/ui/hover-card";
 import { Clock } from "lucide-react";
 import { api } from "~/trpc/react";
+import { multiplyDuration } from "@fullcalendar/core/internal";
 
 export type CalendarDisplayProps = {
   view?: "timelineDayWorkHours" | "timeGridDay";
@@ -47,6 +54,7 @@ export const CalendarDisplay = ({
   date,
 }: CalendarDisplayProps) => {
   const calendarRef = useRef<FullCalendar>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
   const closestEventsAtStart = useRef<EventApi[]>([]);
   const closestEventsAtEnd = useRef<EventApi[]>([]);
   const weekOf = useCalendarStore((s) => s.weekOf);
@@ -132,8 +140,88 @@ export const CalendarDisplay = ({
     }
   }, [selectedDate]);
 
+  const [hoverLineTop, setHoverLineTop] = useState(0);
+  const debouncedSetHoverLineTop = useDebounceCallback(setHoverLineTop, 1);
+  const [hoverLineTime, setHoverLineTime] = useState("");
+  const debouncedSetHoverLineTime = useDebounceCallback(setHoverLineTime, 1);
+  useEventListener(
+    "pointerleave",
+    () => {
+      debouncedSetHoverLineTime("");
+    },
+    calendarContainerRef,
+  );
+  useEventListener(
+    "pointermove",
+    (e) => {
+      const elem =
+        calendarContainerRef?.current?.querySelector(".fc-timegrid-slots");
+      const calendarApi = calendarRef?.current?.getApi();
+      if (elem && calendarApi) {
+        const rect = elem.getBoundingClientRect();
+        const yPosition = e.pageY - rect.top + elem.scrollTop;
+        const slotMinTime = createDuration(
+          calendarApi.getOption("slotMinTime") as string,
+        );
+        const slotDuration = createDuration(
+          calendarApi.getOption("slotDuration") as string,
+        );
+        const snapDuration = createDuration(
+          calendarApi.getOption("snapDuration") as string,
+        );
+        if (slotMinTime && snapDuration && slotDuration) {
+          const elements = document.elementsFromPoint(e.clientX, e.clientY);
+          const closestSlat = elements.find((el) => {
+            return el.classList.contains("fc-timegrid-slot-lane");
+          }) as HTMLElement;
+          if (closestSlat) {
+            const slatIndex = [
+              ...closestSlat.parentElement!.parentElement!.children,
+            ].indexOf(closestSlat.parentElement!);
+
+            const slatRec = closestSlat.getBoundingClientRect();
+            const slatTop = slatRec.top - rect.top;
+            const slatBottom = slatRec.bottom - rect.top;
+            const slatHeight = slatBottom - slatTop;
+            const snapsPerSlot = wholeDivideDurations(
+              slotDuration,
+              snapDuration,
+            );
+            const partial = (yPosition - slatTop) / slatHeight; // floating point number between 0 and 1
+            const localSnapIndex = Math.floor(partial * snapsPerSlot); // the snap # relative to start of slat
+            const snapIndex = slatIndex * snapsPerSlot + localSnapIndex;
+            const time = addDurations(
+              slotMinTime,
+              multiplyDuration(snapDuration, snapIndex),
+            );
+            const formattedTime = dayjs("1970-01-01")
+              .add(time.milliseconds, "milliseconds")
+              .format("hh:mma");
+
+            debouncedSetHoverLineTop(yPosition < 0 ? 0 : yPosition);
+            debouncedSetHoverLineTime(formattedTime);
+          } else {
+            debouncedSetHoverLineTime("");
+          }
+        }
+      } else {
+        debouncedSetHoverLineTime("");
+      }
+    },
+    calendarContainerRef,
+  );
+
   return (
-    <div className="h-full">
+    <div
+      className="h-full"
+      ref={calendarContainerRef}
+      style={
+        {
+          "--hoverline-time": `"${hoverLineTime}"`,
+          "--hoverline-top": `${hoverLineTop}px`,
+        } as React.CSSProperties
+      }
+    >
       <FullCalendar
         ref={calendarRef}
         dayHeaders={false}
@@ -193,28 +281,6 @@ export const CalendarDisplay = ({
             return <span className="">{formatTime}</span>;
           } else {
           }
-        }}
-        slotLabelClassNames={(arg) => {
-          const isToday = dayjs(arg.view.currentStart).isSame(dayjs(), "day");
-          let className = "transition";
-          if (isToday) {
-            const slotDuration = arg.view.calendar.getOption("slotDuration");
-            const duration = createDuration(slotDuration as string);
-            const nowTime = dayjs().format("HH:mm");
-            const compare = dayjs(`1970-01-01T${nowTime}`);
-            if (
-              duration &&
-              compare.isBetween(
-                arg.date,
-                dayjs(arg.date).add(duration.milliseconds, "milliseconds"),
-                "milliseconds",
-                "[]",
-              )
-            ) {
-              className = "transition opacity-0";
-            }
-          }
-          return className;
         }}
         initialView={view}
         height={"100%"}
