@@ -244,6 +244,11 @@ export const CalendarDisplay = ({
             setSelectedDate(date);
           }
         }}
+        eventClassNames={() => {
+          return [
+            "transition bg-opacity-30 hover:bg-opacity-100 cursor-pointer",
+          ];
+        }}
         eventContent={(arg) => {
           return (
             <RenderContent
@@ -482,16 +487,18 @@ const RenderContent = ({
               <Clock className="inline h-auto w-3" />
             )}
             {!!arg.timeText && time}
-            <span>
-              (
-              {getHoursMinutesTextFromDates(
-                arg.event.start!,
-                endDate,
-                true,
-                isActiveTimer,
-              )}
-              )
-            </span>
+            {!arg.event.allDay && (
+              <span>
+                (
+                {getHoursMinutesTextFromDates(
+                  arg.event.start!,
+                  endDate,
+                  true,
+                  isActiveTimer,
+                )}
+                )
+              </span>
+            )}
           </div>
           <div className="fc-event-title-container">
             <div className="fc-event-title fc-sticky">

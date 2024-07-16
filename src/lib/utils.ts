@@ -101,6 +101,7 @@ export const getCalendarEvents = ({
   calendarEvents?: ICalendarViewInfo[] | null;
 }) => {
   let newEvents: EventInput[] = [];
+
   let businessHours: EventInput | null = null;
   if (schedule) {
     schedule.forEach((schedule) => {
@@ -117,26 +118,30 @@ export const getCalendarEvents = ({
         if (schedule.scheduleItems) {
           newEvents = newEvents.concat(
             schedule.scheduleItems.map((scheduleItem) => {
+              const start = `${scheduleItem.start?.dateTime}Z`;
+              const end = scheduleItem.end
+                ? `${scheduleItem.end.dateTime}Z`
+                : undefined;
+              const diff = dayjs(start).diff(end, "second");
+              // 24 hours in seconds
+              const allDay =
+                !dayjs(start).isSame(end, "day") ?? diff % 86400 === 0 ?? false;
               const mappedEvent: EventInput = {
                 extendedProps: {
                   type: CalendarEventType.SCHEDULE,
                   scheduleEvent: scheduleItem,
                 },
                 backgroundColor: "#e07a5f",
-                start: `${scheduleItem.start?.dateTime}Z`,
+                // backgroundColor: "rgba(224, 122, 95, var(--tw-bg-opacity, 1))",
+                start,
+                end,
+                allDay,
                 editable: false,
-                end: `${scheduleItem.end?.dateTime}Z`,
                 title:
                   (scheduleItem.subject
                     ? scheduleItem.subject
                     : scheduleItem.status) ?? "",
               };
-              const diff = dayjs(mappedEvent.start as Date).diff(
-                mappedEvent.end as Date,
-                "second",
-              );
-              // 24 hours in seconds
-              mappedEvent.allDay = diff % 86400 === 0 ?? false;
               return mappedEvent;
             }),
           );
@@ -147,16 +152,23 @@ export const getCalendarEvents = ({
   if (calendarEvents) {
     newEvents = newEvents.concat(
       calendarEvents.map((event) => {
+        const start = `${event.start?.dateTime}Z`;
+        const end = event.end ? `${event.end.dateTime}Z` : undefined;
+        const diff = dayjs(start).diff(end, "second");
+        // 24 hours in seconds
+        const allDay =
+          !dayjs(start).isSame(end, "day") ?? diff % 86400 === 0 ?? false;
         const mappedEvent: EventInput = {
           extendedProps: {
             type: CalendarEventType.CALENDAR_EVENT,
             event: event,
           },
-          allDay: event.isAllDay ?? false,
+          allDay,
           backgroundColor: "#e07a5f",
-          start: `${event.start?.dateTime}Z`,
+          // backgroundColor: "rgba(224, 122, 95, var(--tw-bg-opacity, 1))",
+          start,
+          end,
           editable: false,
-          end: event.end ? `${event.end.dateTime}Z` : undefined,
           title: event.subject ?? "",
         };
         return mappedEvent;
@@ -326,8 +338,6 @@ export function arrayMove<T>(array: T[], from: number, to: number): T[] {
 }
 
 export function getWeekDates(date: Date) {
-    const startDate = dayjs(date).startOf('week');
-    return Array.from({ length: 7 }, (_, i) =>
-        startDate.add(i, 'day').toDate()
-    );
+  const startDate = dayjs(date).startOf("week");
+  return Array.from({ length: 7 }, (_, i) => startDate.add(i, "day").toDate());
 }
