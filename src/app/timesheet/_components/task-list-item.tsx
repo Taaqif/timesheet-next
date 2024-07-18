@@ -40,7 +40,7 @@ import {
 } from "~/components/ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { EventTimeSheetProgress } from "./timesheet-progress";
-import { useIntersectionObserver } from "usehooks-ts";
+import { useIntersectionObserver, useOnClickOutside } from "usehooks-ts";
 import {
   type Period,
   TimePeriodSelect,
@@ -51,8 +51,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { Skeleton } from "~/components/ui/skeleton";
-import { EmptyTaskListItem } from "./empty-task-list-item";
 
 interface TimePickerPopupProps {
   date: Date | undefined;
@@ -249,6 +247,10 @@ export const TaskListItem = ({
 
   const eventRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useOnClickOutside(descriptionRef, () => {
+    descriptionRef.current?.blur();
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
