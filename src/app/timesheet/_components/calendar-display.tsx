@@ -372,6 +372,7 @@ export const CalendarDisplay = ({
         }}
         selectMirror
         nowIndicator
+        slotEventOverlap={false}
       />
     </div>
   );
