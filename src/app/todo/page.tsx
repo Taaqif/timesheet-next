@@ -8,9 +8,12 @@ export const metadata = {
 export type TodoPageProps = { params: { board: string } };
 
 export default async function page({ params }: TodoPageProps) {
+  const board = cookies().get("selected-board");
+
+  const defaultBoard = board?.value;
   return (
     <div className="h-svh">
-      <Todo selectedBoardId={params.board} />
+      <Todo selectedBoardId={params.board ?? defaultBoard} />
     </div>
   );
 }

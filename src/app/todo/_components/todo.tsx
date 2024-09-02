@@ -64,6 +64,7 @@ export function Todo({ selectedBoardId }: TodoProps) {
         const foundBoard = userBoards.find((f) => f.id === selectedBoardId);
         if (foundBoard) {
           setSelectedBoard(foundBoard);
+          router.replace(`/todo/${foundBoard.id}`);
         } else {
           router.replace("/todo");
         }
@@ -80,6 +81,10 @@ export function Todo({ selectedBoardId }: TodoProps) {
       });
       setShowBoardDialog(false);
     }
+  };
+
+  const setBoardCookie = (boardId: string) => {
+    document.cookie = `selected-board=${boardId}`;
   };
 
   const save = () => {
@@ -130,6 +135,9 @@ export function Todo({ selectedBoardId }: TodoProps) {
                     className={cn("group cursor-pointer", {
                       "font-bold": selectedBoard?.id === board.id,
                     })}
+                    onClick={() => {
+                      setBoardCookie(board.id);
+                    }}
                     href={`/todo/${board.id}`}
                   >
                     {board.name}
