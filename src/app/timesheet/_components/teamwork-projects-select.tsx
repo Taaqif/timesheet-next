@@ -77,6 +77,17 @@ export const TeamworkProjectsSelect = React.forwardRef<
       setTeamworkProjectOptions();
     }
   }, [teamworkProjects, teamworkPerson]);
+  const selectedItemRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    setTimeout(() => {
+      if (selectedItemRef) {
+        selectedItemRef.current?.scrollIntoView({
+          block: "center",
+          inline: "center",
+        });
+      }
+    }, 10);
+  }, []);
 
   const setTeamworkProjectOptions = useCallback(() => {
     const userTeamworkProjects =
@@ -241,7 +252,14 @@ export const TeamworkProjectsSelect = React.forwardRef<
                           }}
                           className="group relative"
                         >
-                          <div className="flex">
+                          <div
+                            className="flex"
+                            ref={(ref) => {
+                              if (projectId === project.id) {
+                                selectedItemRef.current = ref;
+                              }
+                            }}
+                          >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4 flex-shrink-0 group-hover:opacity-0",

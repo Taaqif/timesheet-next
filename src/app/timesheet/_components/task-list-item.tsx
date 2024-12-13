@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
-import { formatRange, type EventInput } from "@fullcalendar/core";
+import { type EventInput } from "@fullcalendar/core";
 import {
   type TasksWithTeamworkTaskSelectSchema,
   getHoursMinutesTextFromDates,
@@ -210,7 +210,6 @@ export const TaskListItem = ({
     | TasksWithTeamworkTaskSelectSchema
     | undefined;
   const isActiveTimer = event.extendedProps?.type === CalendarEventType.TIMER;
-  const isTaskNotSaved = (task && task.id < 0) ?? false;
   const { isIntersecting, ref: intersectionRef } = useIntersectionObserver({
     threshold: 0.5,
   });
@@ -271,29 +270,41 @@ export const TaskListItem = ({
     form
       .handleSubmit(async (values: z.infer<typeof formSchema>) => {
         if (task) {
+          const dirtyFields = form.formState.dirtyFields;
+          if (Object.keys(dirtyFields).length === 0) {
+            return;
+          }
+          const fieldsToSubmit = Object.keys(dirtyFields).reduce(
+            (acc, key) => {
+              // @ts-expect-error value and key should be known
+              // eslint-disable-next-line
+              acc[key] = values[key];
+              return acc;
+            },
+            {} as z.infer<typeof formSchema>,
+          );
           let title = task.title;
           if (values.projectId && !values.taskId) {
             title = `${values.projectTitle}`;
           } else if (values.taskId) {
             title = `${values.projectTitle} - ${values.taskTitle}`;
           }
+          const taskFields = {
+            title: title,
+            ...fieldsToSubmit,
+          };
+          const teamworkTaskFields = {} as Record<string, string>;
+          if (values.taskId) {
+            teamworkTaskFields.teamworkTaskId = values.taskId;
+          }
+          if (values.projectId) {
+            teamworkTaskFields.teamworkProjectId = values.projectId;
+          }
           updateTask.mutate({
+            preventInvalidateCache: true,
             id: task.id,
-            task: {
-              ...task,
-              title: title,
-              start: values.start ?? task.start,
-              end: isActiveTimer ? task.end : values.end ?? task.end,
-              description: values.description,
-              logTime: values.logTime,
-              billable: values.billable,
-            },
-            teamworkTask: {
-              ...task.teamworkTask,
-              teamworkTaskId: values.taskId ?? task.teamworkTask.teamworkTaskId,
-              teamworkProjectId:
-                values.projectId ?? task.teamworkTask.teamworkProjectId,
-            },
+            task: taskFields,
+            teamworkTask: teamworkTaskFields,
           });
         }
       })()
@@ -506,7 +517,9 @@ export const TaskListItem = ({
                         projectId={field.value}
                         onChange={(selectedProject) => {
                           field.onChange(selectedProject?.id);
-                          form.setValue("taskId", "");
+                          form.setValue("taskId", "", {
+                            shouldDirty: true,
+                          });
                           form.setValue(
                             "projectTitle",
                             `${selectedProject?.company?.name}: ${selectedProject?.name}`,
@@ -543,8 +556,12 @@ export const TaskListItem = ({
                             form.setFocus("description");
                           }, 50);
                           if (!task?.teamworkTask?.teamworkTimeEntryId) {
-                            form.setValue("billable", true);
-                            form.setValue("logTime", true);
+                            form.setValue("billable", true, {
+                              shouldDirty: true,
+                            });
+                            form.setValue("logTime", true, {
+                              shouldDirty: true,
+                            });
                           }
                           submitForm();
                         }}
@@ -604,7 +621,9 @@ export const TaskListItem = ({
                                 !task?.teamworkTask?.teamworkTimeEntryId &&
                                 checked
                               ) {
-                                form.setValue("billable", true);
+                                form.setValue("billable", true, {
+                                  shouldDirty: true,
+                                });
                               }
                               submitForm();
                             }}
