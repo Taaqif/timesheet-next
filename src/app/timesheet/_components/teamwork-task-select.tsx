@@ -82,7 +82,7 @@ const RenderTeamworkTaskWithChildren = ({
 }) => {
   const selectedTaskRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    setTimeout(() => {
+    const id = setTimeout(() => {
       if (selectedTaskRef) {
         selectedTaskRef.current?.scrollIntoView({
           block: "center",
@@ -90,6 +90,7 @@ const RenderTeamworkTaskWithChildren = ({
         });
       }
     }, 10);
+    return () => clearTimeout(id);
   }, []);
   return (
     <>

@@ -79,7 +79,10 @@ export const TeamworkProjectsSelect = React.forwardRef<
   }, [teamworkProjects, teamworkPerson]);
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    setTimeout(() => {
+    if (!open) {
+      return;
+    }
+    const id = setTimeout(() => {
       if (selectedItemRef) {
         selectedItemRef.current?.scrollIntoView({
           block: "center",
@@ -87,7 +90,8 @@ export const TeamworkProjectsSelect = React.forwardRef<
         });
       }
     }, 10);
-  }, []);
+    return () => clearTimeout(id);
+  }, [open]);
 
   const setTeamworkProjectOptions = useCallback(() => {
     const userTeamworkProjects =
