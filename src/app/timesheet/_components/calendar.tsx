@@ -135,6 +135,7 @@ export function Calendar({
     <div className="h-svh">
       <ResizablePanelGroup
         direction="horizontal"
+        autoSaveId={"react-resizable-panels"}
         onLayout={(sizes: number[]) => {
           document.cookie = `react-resizable-panels:calendar-layout=${JSON.stringify(
             sizes,
