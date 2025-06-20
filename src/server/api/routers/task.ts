@@ -73,7 +73,7 @@ const processTimeEntry = async ({
         timeEntryId: teamWorkTaskToUpdate.teamworkTimeEntryId,
       });
       timeEntryDeleted = true;
-      teamWorkTaskToUpdate.teamworkTasId = null;
+      teamWorkTaskToUpdate.teamworkTaskId = null;
     } else if (taskToUpdate?.logTime) {
       if (
         (teamWorkTaskToUpdate.teamworkProjectId !==
