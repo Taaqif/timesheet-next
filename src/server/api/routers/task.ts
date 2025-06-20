@@ -41,7 +41,7 @@ const getTimeEntry = (
   // if there is a ticket attached to this task, assign it
   const matchedId = createdTask.title?.match(/#(\d{8})/);
   if (matchedId?.[1]) {
-    timeEntry.ticketId = +matchedId[1];
+    timeEntry.deskTicketId = +matchedId[1];
   }
   return timeEntry;
 };
@@ -73,7 +73,7 @@ const processTimeEntry = async ({
         timeEntryId: teamWorkTaskToUpdate.teamworkTimeEntryId,
       });
       timeEntryDeleted = true;
-      teamWorkTaskToUpdate.teamworkTaskId = null;
+      teamWorkTaskToUpdate.teamworkTasId = null;
     } else if (taskToUpdate?.logTime) {
       if (
         (teamWorkTaskToUpdate.teamworkProjectId !==
