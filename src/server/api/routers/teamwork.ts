@@ -200,6 +200,7 @@ export interface TimeEntry {
   "person-id"?: string;
   date: string;
   deskTicketId?: number;
+  ticketId?: number;
   time: string;
   hours: number;
   minutes: number;
@@ -210,6 +211,7 @@ export interface TimeEntry {
 const TimeEntrySchema = z.object({
   description: z.string().optional(),
   deskTicketId: z.number().optional(),
+  ticketId: z.number().optional(),
   "person-id": z.string().optional(),
   date: z.string(),
   time: z.string(),

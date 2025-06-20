@@ -42,6 +42,7 @@ const getTimeEntry = (
   const matchedId = createdTask.title?.match(/#(\d{8})/);
   if (matchedId?.[1]) {
     timeEntry.deskTicketId = +matchedId[1];
+    timeEntry.ticketId = +matchedId[1];
   }
   return timeEntry;
 };
